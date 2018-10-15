@@ -18,7 +18,6 @@ init:
 test:
 	python /usr/local/bin/nosetests tests --with-coverage --cover-html --cover-package=gpar -v --logging-filter=gpar
 
-
 clean:
 	rm -rf .coverage cover
 	rm -rf doc/_build doc/source doc/readme.rst
