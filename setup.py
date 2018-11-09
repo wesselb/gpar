@@ -16,7 +16,7 @@ setup(
     description='Implementation of the Gaussian Process Autoregressive Regression Model',
     long_description=readme,
     author='Wessel Bruinsma',
-    author_email='skeleton_author_email',
+    author_email='wessel.p.bruinsma@gmail.com',
     url='https://github.com/wesselb/gpar',
     license=license,
     packages=find_packages(exclude=('tests', 'docs'))
