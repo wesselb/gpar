@@ -24,7 +24,7 @@ sample = gpar.sample(x)
 gpar |= Data(x, sample)
 
 # Predict by sampling.
-samples = [gpar.sample(x) for _ in range(50)]
+samples = [gpar.sample(x, latent=True) for _ in range(50)]
 means = np.mean(samples, axis=0)
 lowers = np.percentile(samples, 2.5, axis=0)
 uppers = np.percentile(samples, 100 - 2.5, axis=0)

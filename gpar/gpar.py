@@ -85,11 +85,13 @@ class GPAR(Referentiable):
 
         return gpar
 
-    def sample(self, x):
+    def sample(self, x, latent=False):
         """Sample.
 
         Args:
             x (tensor): Inputs to sample at.
+            latent (bool, optional): Sample latent function. Defaults to
+                `False`.
 
         Returns:
             tensor: Sample.
@@ -99,16 +101,20 @@ class GPAR(Referentiable):
         for model in self.layers:
             # Construct model.
             f, noise = model()
-            f_noisy = f + GP(noise * Delta(), graph=f.graph)
+            e = GP(noise * Delta(), graph=f.graph)
+
+            # Sample current output.
+            sample_f = f(xs).sample()
+            sample_y = sample_f + e(xs).sample()
 
             # Update sample.
-            y = f_noisy(xs).sample()
+            this_sample = sample_f if latent else sample_y
             if sample is None:
-                sample = y
+                sample = this_sample
             else:
-                sample = B.concat([sample, y], axis=1)
+                sample = B.concat([sample, this_sample], axis=1)
 
             # Update inputs.
-            xs = B.concat([xs, y], axis=1)
+            xs = B.concat([xs, sample_y], axis=1)
 
         return sample
