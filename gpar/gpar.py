@@ -57,6 +57,7 @@ class GPAR(Referentiable):
         self.replace = replace
         self.impute = impute
         self.layers = []
+        self.logpdfs = None
 
         # Parse inputs of inducing points.
         if x_sparse is None:
@@ -100,13 +101,20 @@ class GPAR(Referentiable):
     def __or__(self, data):
         """Condition.
 
+        Populates the field :attr:`GPAR.logpdfs`.
+
         Args:
             data (:class:`.data.Data`): Data to condition on.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        gpar, xs, xs_sparse = self.copy(), data.x, self.x_sparse
+        gpar = self.copy()
+        xs = data.x
+        xs_sparse = self.x_sparse
+
+        # Set the logpdfs to an empty list because they will be computed.
+        gpar.logpdfs = []
 
         for (y, mask), model in zip(data.per_output(self.impute), self.layers):
             # Filter inputs according to the mask.
@@ -124,8 +132,10 @@ class GPAR(Referentiable):
                                 e,
                                 f(xs[available]),
                                 y[available])
+                gpar.logpdfs.append(obs.elbo)
             else:
                 obs = Obs(f_noisy(xs[available]), y[available])
+                gpar.logpdfs.append(obs.x.logpdf(obs.y))
             f_post = f | obs
 
             # Update inputs of inducing points.
@@ -150,6 +160,17 @@ class GPAR(Referentiable):
             xs = B.concat([xs, y], axis=1)
 
         return gpar
+
+    def logpdf(self, data):
+        """Compute the logpdf.
+
+        Args:
+            data (:class:`.data.Data`): Data to compute logpdfs of.
+
+        Returns:
+            list[float]: Logpdfs.
+        """
+        return (self | data).logpdfs
 
     def sample(self, x, latent=False):
         """Sample.
