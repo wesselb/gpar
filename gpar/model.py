@@ -53,23 +53,24 @@ class GPAR(Referentiable):
     """
     _dispatch = Dispatcher(in_class=Self)
 
-    def __init__(self, replace=False, impute=False, x_sparse=None):
+    def __init__(self, replace=False, impute=False, x_ind=None):
         self.replace = replace
         self.impute = impute
         self.layers = []
-        self.logpdfs = None
 
         # Parse inputs of inducing points.
-        if x_sparse is None:
-            self.x_sparse = None
+        if x_ind is None:
+            self.sparse = False
+            self.x_ind = None
         else:
-            if B.rank(x_sparse) == 1:
-                self.x_sparse = B.expand_dims(x_sparse, 1)
-            elif B.rank(x_sparse) == 2:
-                self.x_sparse = x_sparse
+            self.sparse = True
+            if B.rank(x_ind) == 1:
+                self.x_ind = B.expand_dims(x_ind, 1)
+            elif B.rank(x_ind) == 2:
+                self.x_ind = x_ind
             else:
                 raise ValueError('Invalid rank {} for locations of the '
-                                 'inducing points.'.format(B.rank(x_sparse)))
+                                 'inducing points.'.format(B.rank(x_ind)))
 
     def copy(self):
         """Create a new GPAR model with the same configuration.
@@ -79,7 +80,7 @@ class GPAR(Referentiable):
         """
         gpar = GPAR(replace=self.replace,
                     impute=self.impute,
-                    x_sparse=self.x_sparse)
+                    x_ind=self.x_ind)
         return gpar
 
     @_dispatch(FunctionType)
@@ -101,20 +102,13 @@ class GPAR(Referentiable):
     def __or__(self, data):
         """Condition.
 
-        Populates the field :attr:`GPAR.logpdfs`.
-
         Args:
             data (:class:`.data.Data`): Data to condition on.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        gpar = self.copy()
-        xs = data.x
-        xs_sparse = self.x_sparse
-
-        # Set the logpdfs to an empty list because they will be computed.
-        gpar.logpdfs = []
+        gpar, xs, xs_ind = self.copy(), data.x, self.x_ind
 
         for (y, mask), model in zip(data.per_output(self.impute), self.layers):
             # Filter inputs according to the mask.
@@ -125,52 +119,75 @@ class GPAR(Referentiable):
             e = GP(noise * Delta(), graph=f.graph)
             f_noisy = f + e
 
-            # Condition on available data.
-            available = ~np.isnan(y[:, 0])
-            if xs_sparse is not None:
-                obs = SparseObs(f(xs_sparse),
-                                e,
-                                f(xs[available]),
-                                y[available])
-                gpar.logpdfs.append(obs.elbo)
+            # Condition model.
+            avail = ~np.isnan(y[:, 0])  # Filter for available data.
+            if self.sparse:
+                obs = SparseObs(f(xs_ind), e, f(xs[avail]), y[avail])
             else:
-                obs = Obs(f_noisy(xs[available]), y[available])
-                gpar.logpdfs.append(obs.x.logpdf(obs.y))
+                obs = Obs(f_noisy(xs[avail]), y[avail])
             f_post = f | obs
-
-            # Update inputs of inducing points.
-            if xs_sparse is not None:
-                xs_sparse = B.concat([xs_sparse,
-                                      f_post.mean(xs_sparse)], axis=1)
 
             # Update model.
             gpar.layers.append(_construct_model_generator(f_post, noise))
 
-            if self.impute and self.replace:
-                # Impute missing data and replace available data:
-                y = f_post.mean(xs)
-            elif self.impute:
-                # Just impute missing data.
-                y = _merge(y, f_post.mean(xs[~available]), ~available)
-            elif self.replace:
-                # Just replace available data.
-                y = _merge(y, f_post.mean(xs[available]), available)
-
             # Update inputs.
-            xs = B.concat([xs, y], axis=1)
+            xs, xs_ind = self._update_inputs(xs, xs_ind, y, f_post)
 
         return gpar
 
-    def logpdf(self, data):
+    @_dispatch(Data)
+    def logpdf(self, data, only_last_layer=False):
         """Compute the logpdf.
 
         Args:
-            data (:class:`.data.Data`): Data to compute logpdfs of.
+            data (:class:`.data.Data`): Data to compute logpdf of.
+            only_last_layer (bool, optiona): Compute the pdf of only the last
+                layer. Defaults to `False`.
 
         Returns:
-            list[float]: Logpdfs.
+            :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        return (self | data).logpdfs
+        logpdf, xs, xs_ind = 0, data.x, self.x_ind
+
+        for i, ((y, mask), model) in enumerate(zip(data.per_output(self.impute),
+                                                   self.layers)):
+            # Filter inputs according to the mask.
+            xs = xs[mask]
+
+            # Construct model.
+            f, noise = model()
+            e = GP(noise * Delta(), graph=f.graph)
+            f_noisy = f + e
+
+            # Check whether this is the last layer.
+            last_layer = i == len(self.layers) - 1
+            # Check whether a posterior is needed.
+            need_posterior = self.impute or self.replace or self.sparse
+            # Check whether the logpdf should be accumulated.
+            accumulate = (last_layer and only_last_layer) or ~only_last_layer
+
+            # Compute observations if needed.
+            if need_posterior or accumulate:
+                avail = ~np.isnan(y[:, 0])  # Filter for available data.
+                if self.sparse:
+                    obs = SparseObs(f(xs_ind), e, f(xs[avail]), y[avail])
+                else:
+                    obs = Obs(f_noisy(xs[avail]), y[avail])
+
+            # Accumate logpdf if needed.
+            if accumulate:
+                if self.sparse:
+                    logpdf += obs.elbo
+                else:
+                    logpdf += obs.x.logpdf(obs.y)
+
+            # Compute posterior if needed.
+            f_post = (f | obs) if need_posterior else None
+
+            # Update inputs.
+            xs, xs_ind = self._update_inputs(xs, xs_ind, y, f_post)
+
+        return logpdf
 
     def sample(self, x, latent=False):
         """Sample.
@@ -209,3 +226,25 @@ class GPAR(Referentiable):
             xs = B.concat([xs, y_sample], axis=1)
 
         return sample
+
+    def _update_inputs(self, xs, xs_ind, y, f_post):
+        available = ~np.isnan(y[:, 0])
+
+        # Update inputs of inducing points.
+        if xs_ind is not None:
+            xs_ind = B.concat([xs_ind, f_post.mean(xs_ind)], axis=1)
+
+        if self.impute and self.replace:
+            # Impute missing data and replace available data:
+            y = f_post.mean(xs)
+        elif self.impute:
+            # Just impute missing data.
+            y = _merge(y, f_post.mean(xs[~available]), ~available)
+        elif self.replace:
+            # Just replace available data.
+            y = _merge(y, f_post.mean(xs[available]), available)
+
+        # Update inputs.
+        xs = B.concat([xs, y], axis=1)
+
+        return xs, xs_ind
