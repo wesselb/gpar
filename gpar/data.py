@@ -29,22 +29,32 @@ class Data(object):
         self.m = x.shape[1]  # Number of features
         self.p = y.shape[1]  # Number of outputs
 
-    def per_output(self):
+    def per_output(self, impute=False):
         """Return observations per output, respecting that the data must be
         closed downwards.
+
+        Args:
+            impute (bool, optional): Also return missing observations that would
+                make the data closed downwards.
 
         Returns:
             generator: Generator that generates tuples containing the
                 observations per layer and a mask which observations are not
                 missing relative to the previous layer.
         """
-        mask = np.ones(self.n).astype(np.bool)
         y = self.y
 
         for i in range(self.p):
-            # Update mask and outputs.
-            mask = ~np.isnan(y[mask, i])
-            y = y[mask]
+            # Check availability.
+            mask = ~np.isnan(y[:, i])
 
-            # Give them.
-            yield y, mask
+            # Take into account future observations.
+            if impute:
+                future = np.any(~np.isnan(y[:, i + 1:]), axis=1)
+                mask |= future
+
+            # Give stuff back.
+            yield y[mask, i:i + 1], mask
+
+            # Filter observations.
+            y = y[mask]
