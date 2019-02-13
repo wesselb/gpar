@@ -5,12 +5,10 @@ from __future__ import absolute_import, division, print_function
 import logging
 from types import FunctionType
 
+import numpy as np
 from lab import B
 from plum import Dispatcher, Referentiable, Self
 from stheno import Delta, GP, Obs, SparseObs
-import numpy as np
-
-from .data import Data
 
 __all__ = ['GPAR']
 log = logging.getLogger(__name__)
@@ -48,8 +46,8 @@ class GPAR(Referentiable):
             the data. Defaults to `False`.
         impute (bool, optional): Impute missing data points with the predictive
             mean to make the data set closed downwards. Defaults to `False`.
-        x_sparse (tensor, optional): Locations of inducing points for a sparse
-            approximation. Defaults to `None`.
+        x_sparse (:class:`.data.Data`, optional): Locations of inducing points
+            for a sparse approximation. Defaults to `None`.
     """
     _dispatch = Dispatcher(in_class=Self)
 
@@ -59,18 +57,8 @@ class GPAR(Referentiable):
         self.layers = []
 
         # Parse inputs of inducing points.
-        if x_ind is None:
-            self.sparse = False
-            self.x_ind = None
-        else:
-            self.sparse = True
-            if B.rank(x_ind) == 1:
-                self.x_ind = B.expand_dims(x_ind, 1)
-            elif B.rank(x_ind) == 2:
-                self.x_ind = x_ind
-            else:
-                raise ValueError('Invalid rank {} for locations of the '
-                                 'inducing points.'.format(B.rank(x_ind)))
+        self.sparse = x_ind is not None
+        self.x_ind = None if x_ind is None else x_ind
 
     def copy(self):
         """Create a new GPAR model with the same configuration.
@@ -98,29 +86,30 @@ class GPAR(Referentiable):
         gpar.layers = list(self.layers) + [model_constructor]
         return gpar
 
-    @_dispatch(Data)
-    def __or__(self, data):
-        """Condition.
+    def __or__(self, x_and_y):
+        """Condition on data.
 
         Args:
-            data (:class:`.data.Data`): Data to condition on.
+            x (tensor): Inputs.
+            y (tensor): Outputs.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        gpar, xs, xs_ind = self.copy(), data.x, self.x_ind
+        x, y = x_and_y  # Unpack tuple argument.
+        gpar, xs, xs_ind = self.copy(), x, self.x_ind
 
-        for (y, mask), model in zip(data.per_output(self.impute), self.layers):
+        for (y, mask), model in zip(per_output(y, self.impute), self.layers):
             # Filter inputs according to the mask.
             xs = xs[mask]
 
             # Construct model.
             f, noise = model()
-            e = GP(noise * Delta(), graph=f.graph)
+            e = GP(Delta() * noise, graph=f.graph)
             f_noisy = f + e
 
             # Condition model.
-            avail = ~np.isnan(y[:, 0])  # Filter for available data.
+            avail = ~B.isnan(y[:, 0])  # Filter for available data.
             if self.sparse:
                 obs = SparseObs(f(xs_ind), e, f(xs[avail]), y[avail])
             else:
@@ -135,28 +124,28 @@ class GPAR(Referentiable):
 
         return gpar
 
-    @_dispatch(Data)
-    def logpdf(self, data, only_last_layer=False):
+    def logpdf(self, x, y, only_last_layer=False):
         """Compute the logpdf.
 
         Args:
-            data (:class:`.data.Data`): Data to compute logpdf of.
+            x (tensor): Inputs.
+            y (tensor): Outputs.
             only_last_layer (bool, optiona): Compute the pdf of only the last
                 layer. Defaults to `False`.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        logpdf, xs, xs_ind = 0, data.x, self.x_ind
+        logpdf, xs, xs_ind = 0, x, self.x_ind
 
-        for i, ((y, mask), model) in enumerate(zip(data.per_output(self.impute),
+        for i, ((y, mask), model) in enumerate(zip(per_output(y, self.impute),
                                                    self.layers)):
             # Filter inputs according to the mask.
             xs = xs[mask]
 
             # Construct model.
             f, noise = model()
-            e = GP(noise * Delta(), graph=f.graph)
+            e = GP(Delta() * noise, graph=f.graph)
             f_noisy = f + e
 
             # Check whether this is the last layer.
@@ -168,7 +157,7 @@ class GPAR(Referentiable):
 
             # Compute observations if needed.
             if need_posterior or accumulate:
-                avail = ~np.isnan(y[:, 0])  # Filter for available data.
+                avail = ~B.isnan(y[:, 0])  # Filter for available data.
                 if self.sparse:
                     obs = SparseObs(f(xs_ind), e, f(xs[avail]), y[avail])
                 else:
@@ -205,7 +194,7 @@ class GPAR(Referentiable):
         for model in self.layers:
             # Construct model.
             f, noise = model()
-            e = GP(noise * Delta(), graph=f.graph)
+            e = GP(Delta() * noise, graph=f.graph)
 
             # Sample current output.
             f_sample = f(xs).sample()
@@ -248,3 +237,35 @@ class GPAR(Referentiable):
         xs = B.concat([xs, y], axis=1)
 
         return xs, xs_ind
+
+
+def per_output(y, impute=False):
+    """Return observations per output, respecting that the data must be
+    closed downwards.
+
+    Args:
+        y (tensor): Outputs.
+        impute (bool, optional): Also return missing observations that would
+            make the data closed downwards.
+
+    Returns:
+        generator: Generator that generates tuples containing the
+            observations per layer and a mask which observations are not
+            missing relative to the previous layer.
+    """
+    available = ~B.isnan(y)  # Available data points
+    p = B.shape_int(y)[1]  # Number of outputs
+
+    for i in range(p):
+        # Check availability.
+        mask = available[:, i]
+
+        # Take into account future observations if necessary.
+        if impute and i < p - 1:
+            mask |= B.any(available[:, i + 1:], axis=1)
+
+        # Give stuff back.
+        yield y[mask, i:i + 1], mask
+
+        # Filter observations.
+        y = y[mask]

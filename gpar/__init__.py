@@ -2,5 +2,5 @@
 
 from __future__ import absolute_import, division, print_function
 
-from .gpar import *
-from .data import *
+from .model import *
+from .regression import *
