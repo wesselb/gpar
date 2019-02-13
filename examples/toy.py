@@ -1,40 +1,19 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from gpar.regression import GPARRegressor
 
-from gpar import GPAR, Data
-
-from stheno import GP, EQ
-
-x = np.linspace(0, 10, 100)[:, None]
-
-
-def gp_eq():
-    return GP(EQ() > 0.5), 0.1
-
-
-# Construct a GPAR model.
-gpar = GPAR()
-gpar = gpar.add_layer(gp_eq)
-gpar = gpar.add_layer(gp_eq)
-
-# Sample GPAR.
-sample = gpar.sample(x)
-
-# Condition on a sample.
-gpar |= Data(x, sample)
-
-# Predict by sampling.
-samples = [gpar.sample(x, latent=True) for _ in range(50)]
-means = np.mean(samples, axis=0)
-lowers = np.percentile(samples, 2.5, axis=0)
-uppers = np.percentile(samples, 100 - 2.5, axis=0)
+x = np.linspace(0, 10, 100)
+model = GPARRegressor(scale=0.5, nonlinear_scale=0.1, replace=True)
+sample = model.sample(x, p=4)
+model.fit(x, sample)
+means = model.predict(x)
+lowers, uppers = model.lowers, model.uppers
 
 # Plot the result.
-x = x[:, 0]
 plt.figure(figsize=(10, 5))
 
-for i in range(2):
-    plt.subplot(1, 2, i + 1)
+for i in range(4):
+    plt.subplot(2, 2, i + 1)
     plt.title('Output {}'.format(i + 1))
     plt.scatter(x, sample[:, i], label='Observations', c='tab:green')
     plt.plot(x, means[:, i], label='Prediction', c='tab:red')
