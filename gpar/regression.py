@@ -27,32 +27,32 @@ def model_generator(vs,
                     noise):
     def model():
         # Start out with a constant kernel.
-        kernel = vs.pos(name=(p, 'constant'), group=p, init=noise)
+        kernel = vs.bnd(name=(p, 'constant'), group=p, init=noise)
 
         # Add nonlinear kernel over inputs.
-        scales = vs.pos(name=(p, 'I/NL/scales'), group=p,
+        scales = vs.bnd(name=(p, 'I/NL/scales'), group=p,
                         init=scale * B.ones(m))
-        variance = vs.pos(name=(p, 'I/NL/var'), group=p, init=1.)
+        variance = vs.bnd(name=(p, 'I/NL/var'), group=p, init=1.)
         inds = list(range(m))  # TODO: only do this if p > 1
         kernel += variance * EQ().stretch(scales).select(inds)
 
         # Add linear kernel if asked for.
         if linear:
-            slopes = vs.pos(name=(p, 'IO/L/slopes'), group=p,
+            slopes = vs.bnd(name=(p, 'IO/L/slopes'), group=p,
                             init=linear_slope * B.ones(m + p - 1))
             kernel += Linear().stretch(1 / slopes)
 
         # Add nonlinear kernel over outputs if asked for.
         if nonlinear and p > 1:
-            scales = vs.pos(name=(p, 'O/NL/scales'), group=p,
+            scales = vs.bnd(name=(p, 'O/NL/scales'), group=p,
                             init=nonlinear_scale * B.ones(p - 1))
-            variance = vs.pos(name=(p, 'O/NL/var'), group=p, init=1.)
+            variance = vs.bnd(name=(p, 'O/NL/var'), group=p, init=1.)
             inds = list(range(m, m + p - 1))
             kernel += variance * EQ().stretch(scales).select(inds)
 
         # Return model and noise.
         return GP(kernel=kernel, graph=Graph()), \
-               vs.pos(name=(p, 'noise'), group=p, init=noise)
+               vs.bnd(name=(p, 'noise'), group=p, init=noise)
 
     return model
 
@@ -87,8 +87,7 @@ class GPARRegressor(object):
                  nonlinear_scale=0.1,
                  noise=0.1,
                  greedy=False,
-                 x_ind=None,
-                 num_samples=100):
+                 x_ind=None):
         # Model configuration.
         self.replace = replace
         self.impute = impute
@@ -106,6 +105,7 @@ class GPARRegressor(object):
 
         # Model fitting.
         self.vs = Vars(dtype=torch.float64)
+        self.is_fit = False
         self.x = None  # Inputs of training data
         self.y = None  # Outputs of training data
         self.n = None  # Number of data points
@@ -113,7 +113,6 @@ class GPARRegressor(object):
         self.p = None  # Number of outputs
 
         # Prediction.
-        self.num_samples = num_samples
         self.samples = None
         self.lowers = None
         self.uppers = None
@@ -145,25 +144,28 @@ class GPARRegressor(object):
                               groups=[i],
                               trace=True)
 
+        # Store that the model is fit.
+        self.is_fit = True
+
     def sample(self, x, p):
         x = _uprank(x)
         m = x.shape[1]  # Number of input features
         gpar = construct_gpar(self, self.vs, m, p)
         return gpar.sample(x).detach().numpy()
 
-    def predict(self, x):
-        # TODO: Check that model is fit!
+    def predict(self, x, num_samples=100, latent=True):
         x = _uprank(x)
 
+        # Check that model is fit.
+        if not self.is_fit:
+            raise RuntimeError('Must fit model before predicting.')
+
         # Construct and condition GPAR.
-        gpar = construct_gpar(self, self.vs, self.m, self.p)
-        gpar = gpar | (self.x, self.y)
+        gpar = construct_gpar(self, self.vs, self.m, self.p) | (self.x, self.y)
 
         # Sample from the posterior.
-        self.samples = []
-        for i in range(self.num_samples):
-            sample = gpar.sample(x, latent=True)
-            self.samples.append(sample.detach().numpy())
+        self.samples = [gpar.sample(x, latent=latent).detach().numpy()
+                        for _ in range(num_samples)]
 
         # Save credible regions.
         self.lowers = np.percentile(self.samples, 2.5, axis=0)
