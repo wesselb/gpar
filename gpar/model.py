@@ -20,15 +20,16 @@ def _merge(x, updates, to_update):
 
     # Generate an index mapping to fix the ordering.
     original_i = 0
-    update_i = sum(~to_update)
+    update_i = B.sum(~to_update)
     indices = []
     for i in range(len(to_update)):
+        # Careful not to update the indices in-place!
         if to_update[i]:
             indices.append(update_i)
-            update_i += 1
+            update_i = update_i + 1
         else:
             indices.append(original_i)
-            original_i += 1
+            original_i = original_i + 1
 
     # Perform the fix.
     return B.take(concat, indices)
@@ -226,10 +227,10 @@ class GPAR(Referentiable):
         if self.impute and self.replace:
             # Impute missing data and replace available data:
             y = f_post.mean(xs)
-        elif self.impute:
+        elif self.impute and B.any(~available):
             # Just impute missing data.
             y = _merge(y, f_post.mean(xs[~available]), ~available)
-        elif self.replace:
+        elif self.replace and B.any(available):
             # Just replace available data.
             y = _merge(y, f_post.mean(xs[available]), available)
 
@@ -262,7 +263,8 @@ def per_output(y, impute=False):
 
         # Take into account future observations if necessary.
         if impute and i < p - 1:
-            mask |= B.any(available[:, i + 1:], axis=1)
+            # Careful not to update the mask in-place!
+            mask = mask | B.any(available[:, i + 1:], axis=1)
 
         # Give stuff back.
         yield y[mask, i:i + 1], mask
