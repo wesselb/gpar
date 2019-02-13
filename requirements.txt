@@ -1,6 +1,9 @@
 nose
 coveralls
 numpy
+autograd
+scipy
+torch
 git+git://github.com/wesselb/plum@master#egg=plum
 git+git://github.com/wesselb/lab@master#egg=lab
 git+git://github.com/wesselb/stheno@master#egg=stheno
