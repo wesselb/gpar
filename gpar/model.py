@@ -254,11 +254,11 @@ def per_output(y, impute=False):
             observations per layer and a mask which observations are not
             missing relative to the previous layer.
     """
-    available = ~B.isnan(y)  # Available data points
     p = B.shape_int(y)[1]  # Number of outputs
 
     for i in range(p):
         # Check availability.
+        available = ~B.isnan(y)
         mask = available[:, i]
 
         # Take into account future observations if necessary.
