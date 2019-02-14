@@ -27,7 +27,7 @@ docremove:
 	git branch -D gh-pages
 	git push origin --delete gh-pages
 
-docupdate: autodoc docmake
+docupdate: docmake
 	$(eval BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
 	rm -rf docs/_build/html_new
 	mv docs/_build/html docs/_build/html_new
