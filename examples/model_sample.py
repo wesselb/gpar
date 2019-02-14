@@ -11,7 +11,7 @@ model = GPARRegressor(scale=0.1,
                       replace=False)
 
 # Sample observations and discard some.
-y = model.sample_prior(x, p=3)
+y = model.sample(x, p=3)
 y_obs = y.copy()
 y_obs[np.random.permutation(100)[:25], 0] = np.nan
 y_obs[np.random.permutation(100)[:50], 1] = np.nan
