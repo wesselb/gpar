@@ -48,9 +48,10 @@ def _model_generator(vs,
                      p,
                      scale,
                      linear,
-                     linear_slope,
+                     linear_scale,
                      nonlinear,
                      nonlinear_scale,
+                     nonlinear_with_inputs,
                      noise):
     def model():
         # Start out with a constant kernel.
@@ -61,21 +62,34 @@ def _model_generator(vs,
                         init=_vector_from_init(scale, m))
         variance = vs.bnd(name=(p, 'I/NL/var'), group=p, init=1.)
         input_kernel = variance * EQ().stretch(scales)
-        kernel += input_kernel.select(list(range(m))) if p > 1 else input_kernel
+        inds = list(range(m))
+        kernel += input_kernel.select(inds) if p > 1 else input_kernel
 
         # Add linear kernel if asked for.
         if linear:
-            slopes = vs.bnd(name=(p, 'IO/L/slopes'), group=p,
-                            init=_vector_from_init(linear_slope, m + p - 1))
-            kernel += Linear().stretch(1 / slopes)
+            scales = vs.bnd(name=(p, 'IO/L/slopes'), group=p,
+                            init=_vector_from_init(linear_scale, m + p - 1))
+            kernel += Linear().stretch(scales)
 
         # Add nonlinear kernel over outputs if asked for.
         if nonlinear and p > 1:
-            scales = vs.bnd(name=(p, 'O/NL/scales'), group=p,
-                            init=_vector_from_init(nonlinear_scale, p - 1))
-            variance = vs.bnd(name=(p, 'O/NL/var'), group=p, init=1.)
-            inds = list(range(m, m + p - 1))
-            kernel += variance * EQ().stretch(scales).select(inds)
+            if nonlinear_with_inputs:
+                # Nonlinear dependencies depend on the inputs.
+                variance = vs.bnd(name=(p, 'IO/NL/var'), group=p, init=1.)
+                init_scales = np.concatenate((
+                    _vector_from_init(scale, m),
+                    _vector_from_init(nonlinear_scale, p - 1)
+                ), axis=0)
+                scales = vs.bnd(name=(p, 'IO/NL/scales'), group=p,
+                                init=init_scales)
+                kernel += variance * EQ().stretch(scales)
+            else:
+                # Nonlinear dependencies do not depend on the inputs.
+                variance = vs.bnd(name=(p, 'O/NL/var'), group=p, init=1.)
+                scales = vs.bnd(name=(p, 'O/NL/scales'), group=p,
+                                init=_vector_from_init(nonlinear_scale, p - 1))
+                inds = list(range(m, m + p - 1))
+                kernel += variance * EQ().stretch(scales).select(inds)
 
         # Figure out initialisation for noise.
         if np.size(noise) > 1:
@@ -123,12 +137,14 @@ class GPARRegressor(object):
             the inputs. Defaults to `1.0`.
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
-        linear_slope (tensor, optional): Initial value(s) for the slope(s) of
+        linear_scale (tensor, optional): Initial value(s) for the scale(s) of
             the linear dependencies. Defaults to `0.1`.
         nonlinear (bool, optional): Use nonlinear dependencies between outputs.
             Defaults to `True`.
         nonlinear_scale (tensor, optional): Initial value(s) for the length
             scale(s) over the outputs. Defaults to `0.1`.
+        nonlinear_with_inputs (bool, optional): Make the nonlinear dependencies
+            between the outputs dependent on the inputs. Defaults to `False`.
         noise (tensor, optional): Initial value(s) for the observation noise(s).
             Defaults to `0.1`.
         x_ind (tensor, optional): Locations of inducing points. Set to `None`
@@ -155,9 +171,10 @@ class GPARRegressor(object):
                  impute=True,
                  scale=1.0,
                  linear=True,
-                 linear_slope=0.1,
+                 linear_scale=0.1,
                  nonlinear=True,
                  nonlinear_scale=0.1,
+                 nonlinear_with_inputs=False,
                  noise=0.1,
                  x_ind=None):
         # Model configuration.
@@ -168,9 +185,10 @@ class GPARRegressor(object):
         self.model_config = {
             'scale': scale,
             'linear': linear,
-            'linear_slope': linear_slope,
+            'linear_scale': linear_scale,
             'nonlinear': nonlinear,
             'nonlinear_scale': nonlinear_scale,
+            'nonlinear_with_inputs': nonlinear_with_inputs,
             'noise': noise
         }
 
