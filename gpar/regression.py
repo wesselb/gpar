@@ -67,7 +67,7 @@ def _model_generator(vs,
 
         # Add linear kernel if asked for.
         if linear:
-            scales = vs.bnd(name=(p, 'IO/L/slopes'), group=p,
+            scales = vs.bnd(name=(p, 'IO/L/scales'), group=p,
                             init=_vector_from_init(linear_scale, m + p - 1))
             kernel += Linear().stretch(scales)
 
@@ -138,7 +138,7 @@ class GPARRegressor(object):
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
         linear_scale (tensor, optional): Initial value(s) for the scale(s) of
-            the linear dependencies. Defaults to `0.1`.
+            the linear dependencies. Defaults to `100.`.
         nonlinear (bool, optional): Use nonlinear dependencies between outputs.
             Defaults to `True`.
         nonlinear_scale (tensor, optional): Initial value(s) for the length
@@ -171,7 +171,7 @@ class GPARRegressor(object):
                  impute=True,
                  scale=1.0,
                  linear=True,
-                 linear_scale=0.1,
+                 linear_scale=100.,
                  nonlinear=True,
                  nonlinear_scale=0.1,
                  nonlinear_with_inputs=False,
@@ -215,7 +215,7 @@ class GPARRegressor(object):
     def fit(self,
             x,
             y,
-            progressive=False,
+            progressive=True,
             greedy=False,
             **kw_args):
         """Fit the model to data.
@@ -226,7 +226,7 @@ class GPARRegressor(object):
             x (tensor): Inputs of training data.
             y (tensor): Outputs of training data.
             progressive (bool, optional): Train layer by layer instead of all
-                layers at once. Defaults to `False`.
+                layers at once. Defaults to `True`.
             greedy (bool, optional): Greedily determine the ordering of the
                 outputs. Defaults to `False`.
         """
