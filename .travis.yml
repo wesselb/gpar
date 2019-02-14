@@ -5,6 +5,6 @@ python:
 install:
   - pip install --no-cache-dir -U -r requirements.txt | cat
 script:
-  - nosetests tests --with-coverage --cover-package=skeleton_name
+  - nosetests tests --with-coverage --cover-package=gpar
 after_success:
   - coveralls
