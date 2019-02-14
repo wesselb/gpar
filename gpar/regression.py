@@ -112,19 +112,11 @@ class GPARRegressor(object):
         self.m = None  # Number of input features
         self.p = None  # Number of outputs
 
-        # Prediction.
-        self.samples = None
-        self.lowers = None
-        self.uppers = None
-
-    def fit(self, x, y):
+    def fit(self, x, y, progressive=False):
         # Store data.
         self.x, self.y = _uprank(x), _uprank(y)
         self.n, self.m = self.x.shape
         self.p = self.y.shape[1]
-
-        # Check whether to only optimise the last layer.
-        only_last = not (self.replace or self.impute or self.sparse)
 
         # Determine extra variables to optimise at every step.
         if self.sparse:
@@ -132,47 +124,73 @@ class GPARRegressor(object):
         else:
             names = []
 
-        # Fit layer by layer.
-        for i in range(1, self.p + 1):
+        # Optimise layers by layer or all layers simultaneously.
+        if progressive:
+            # Check whether to only optimise the last layer.
+            only_last = not (self.replace or self.impute or self.sparse)
+
+            # Fit layer by layer.
+            for i in range(1, self.p + 1):
+                def objective(vs):
+                    gpar = construct_gpar(self, vs, self.m, i)
+                    return -gpar.logpdf(self.x, self.y,
+                                        only_last_layer=only_last)
+
+                minimise_l_bfgs_b(objective,
+                                  self.vs,
+                                  names=names,
+                                  groups=[i],
+                                  trace=True)
+        else:
+            # Fit all layers simultaneously.
             def objective(vs):
-                gpar = construct_gpar(self, vs, self.m, i)
-                return -gpar.logpdf(self.x, self.y, only_last_layer=only_last)
+                gpar = construct_gpar(self, vs, self.m, self.p)
+                return -gpar.logpdf(self.x, self.y, only_last_layer=False)
 
             minimise_l_bfgs_b(objective,
                               self.vs,
                               names=names,
-                              groups=[i],
+                              groups=list(range(1, self.p + 1)),
                               trace=True)
 
         # Store that the model is fit.
         self.is_fit = True
 
-    def sample(self, x, p):
+    def sample_prior(self, x, p):
         x = _uprank(x)
         m = x.shape[1]  # Number of input features
         gpar = construct_gpar(self, self.vs, m, p)
         return gpar.sample(x).detach().numpy()
 
-    def predict(self, x, num_samples=100, latent=True):
-        x = _uprank(x)
-
+    def sample_posterior(self, x, num_samples=100, latent=True):
         # Check that model is fit.
         if not self.is_fit:
-            raise RuntimeError('Must fit model before predicting.')
+            raise RuntimeError('Must fit model before sampling form the '
+                               'posterior.')
 
-        # Construct and condition GPAR.
+        # Construct posterior GPAR.
         gpar = construct_gpar(self, self.vs, self.m, self.p) | (self.x, self.y)
 
         # Sample from the posterior.
-        self.samples = [gpar.sample(x, latent=latent).detach().numpy()
-                        for _ in range(num_samples)]
+        return [gpar.sample(_uprank(x), latent=latent).detach().numpy()
+                for _ in range(num_samples)]
 
-        # Save credible regions.
-        self.lowers = np.percentile(self.samples, 2.5, axis=0)
-        self.uppers = np.percentile(self.samples, 100 - 2.5, axis=0)
+    def predict(self, x, num_samples=100, latent=True, credible_bounds=False):
+        # Sample from posterior.
+        samples = self.sample_posterior(x,
+                                        num_samples=num_samples,
+                                        latent=latent)
 
-        # Return predictive mean.
-        return np.mean(self.samples, axis=0)
+        # Compute mean.
+        mean = np.mean(samples, axis=0)
+
+        if credible_bounds:
+            # Also return lower and upper credible bounds if asked for.
+            lowers = np.percentile(samples, 2.5, axis=0)
+            uppers = np.percentile(samples, 100 - 2.5, axis=0)
+            return mean, lowers, uppers
+        else:
+            return mean
 
 
 def _uprank(x):
