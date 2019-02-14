@@ -6,11 +6,12 @@
 
 Implementation of the Gaussian Process Autoregressive Regression Model
 
-## Basic Usage
+## Installation
+The package is tested for Python 2.7 and Python 3.6, which are the versions 
+recommended to use.
 
-Like so:
-
-```python
->>> print('Hello, world!')
-Hello, world!
 ```
+git clone https://github.com/wesselb/gpar && cd gpar && make install
+```
+
+Updating afterwards can be done by pulling the repo.
