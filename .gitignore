@@ -8,8 +8,12 @@ venv
 *.egg-info
 
 # Documentation and coverage
-doc/_build
+docs/_build
+docs/_static
+docs/source
+docs/index.rst
 cover
+
 
 # Other
 .DS_Store
