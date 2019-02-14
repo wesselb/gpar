@@ -1,4 +1,4 @@
-.PHONY: autodoc doc docopen docinit docopen init install test clean
+.PHONY: autodoc doc docopen docinit docremove docupdate docopen init install test clean
 
 autodoc:
 	rm -rf docs/source
@@ -18,10 +18,14 @@ docinit:
 		| awk '$$4 !~ /\.nojekyll|docs|index\.html/ { print $$4 }' \
 		| xargs -I {} git rm -r {}
 	touch .nojekyll
-	git add .nojekyll
 	echo '<meta http-equiv="refresh" content="0; url=./docs/_build/html/index.html" />' > index.html
 	git commit -m "Branch cleaned for docs"
+	git add .nojekyll index.html
 	git push origin gh-pages
+
+docremove:
+	git branch -D gh-pages
+	git push origin --delete gh-pages
 
 docupdate: autodoc doc
 	git checkout gh-pages
