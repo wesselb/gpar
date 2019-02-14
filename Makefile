@@ -28,7 +28,10 @@ docremove:
 	git push origin --delete gh-pages
 
 docupdate: autodoc doc
+	mv  docs/_build/html docs/_build/html_new
 	git checkout gh-pages
+	rm -rf docs/_build/html
+	mv  docs/_build/html_new docs/_build/html
 	git add -f docs/_build/html
 	git commit -m "Update docs at $$(date +'%d %b %Y, %H:%M')"
 	git push origin gh-pages
