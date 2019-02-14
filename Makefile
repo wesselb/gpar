@@ -25,9 +25,9 @@ docinit:
 
 docupdate: autodoc doc
 	git checkout gh-pages
-	# git add -f docs/_build/html
-	# git commit -m "Update docs at $(date +'%d %b %Y, %H:%M')"
-	# git checkout master
+	git add -f docs/_build/html
+	git commit -m "Update docs at $(date +'%d %b %Y, %H:%M')"
+	git checkout master
 
 init:
 	pip install -r requirements.txt
