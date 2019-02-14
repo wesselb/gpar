@@ -24,7 +24,7 @@ model = GPARRegressor(scale=0.1,
                       noise=0.1,
                       impute=True,
                       replace=True)
-model.fit(x_obs, y_obs)
+model.fit(x_obs, y_obs, trace=True)
 means, lowers, uppers = model.predict(x, num_samples=200, credible_bounds=True)
 
 # Plot the result.

@@ -16,7 +16,7 @@ y_obs[np.random.permutation(100)[:50], 1] = np.nan
 y_obs[np.random.permutation(100)[:75], 2] = np.nan
 
 # Fit model and predict.
-model.fit(x, y)
+model.fit(x, y, trace=True)
 means, lowers, uppers = \
     model.predict(x, num_samples=200, latent=False, credible_bounds=True)
 
