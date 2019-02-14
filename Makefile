@@ -21,13 +21,12 @@ docinit:
 	git add .nojekyll
 	echo '<meta http-equiv="refresh" content="0; url=./docs/_build/html/index.html" />\n' > index.html
 	git commit -m "Branch cleaned for docs"
-	git checkout master
 
 docupdate: autodoc doc
 	git checkout gh-pages
 	git add -f docs/_build/html
 	git commit -m "Update docs at $(date +'%d %b %Y, %H:%M')"
-	git checkout master
+	git push origin gh-pages
 
 init:
 	pip install -r requirements.txt
