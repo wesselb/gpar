@@ -13,6 +13,7 @@ docopen:
 	open docs/_build/html/index.html
 
 docinit:
+	$(eval BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
 	git checkout -b gh-pages
 	git ls-tree HEAD \
 		| awk '$$4 !~ /\.nojekyll|docs|index\.html/ { print $$4 }' \
@@ -22,19 +23,23 @@ docinit:
 	git commit -m "Branch cleaned for docs"
 	git add .nojekyll index.html
 	git push origin gh-pages
+	git checkout $(BRANCH)
 
 docremove:
 	git branch -D gh-pages
 	git push origin --delete gh-pages
 
 docupdate: autodoc doc
-	mv  docs/_build/html docs/_build/html_new
+	$(eval BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
+	rm -rf docs/_build/html_new
+	mv docs/_build/html docs/_build/html_new
 	git checkout gh-pages
 	rm -rf docs/_build/html
 	mv  docs/_build/html_new docs/_build/html
 	git add -f docs/_build/html
 	git commit -m "Update docs at $$(date +'%d %b %Y, %H:%M')"
 	git push origin gh-pages
+	git checkout $(BRANCH)
 
 init:
 	pip install -r requirements.txt
