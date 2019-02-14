@@ -6,9 +6,7 @@ x = np.linspace(0, 1, 100)
 model = GPARRegressor(scale=0.1,
                       linear=False,
                       nonlinear_scale=0.1,
-                      noise=0.1,
-                      impute=False,
-                      replace=False)
+                      noise=0.1)
 
 # Sample observations and discard some.
 y = model.sample(x, p=3)
