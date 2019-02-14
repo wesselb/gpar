@@ -19,8 +19,9 @@ docinit:
 		| xargs -I {} git rm -r {}
 	touch .nojekyll
 	git add .nojekyll
-	echo '<meta http-equiv="refresh" content="0; url=./docs/_build/html/index.html" />\n' > index.html
+	echo '<meta http-equiv="refresh" content="0; url=./docs/_build/html/index.html" />' > index.html
 	git commit -m "Branch cleaned for docs"
+	git push origin gh-pages
 
 docupdate: autodoc doc
 	git checkout gh-pages
