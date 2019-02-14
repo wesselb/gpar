@@ -1,12 +1,10 @@
-.PHONY: autodoc doc docopen docinit docremove docupdate docopen init install test clean
+.PHONY: docmake docopen docinit docremove docupdate init install test clean
 
-autodoc:
+docmake:
 	rm -rf docs/source
 	sphinx-apidoc -eMT -o docs/source/ gpar
 	rm docs/source/gpar.rst
 	pandoc --from=markdown --to=rst --output=docs/readme.rst README.md
-
-doc:
 	cd docs && make html
 
 docopen:
@@ -29,13 +27,13 @@ docremove:
 	git branch -D gh-pages
 	git push origin --delete gh-pages
 
-docupdate: autodoc doc
+docupdate: autodoc docmake
 	$(eval BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
 	rm -rf docs/_build/html_new
 	mv docs/_build/html docs/_build/html_new
 	git checkout gh-pages
 	rm -rf docs/_build/html
-	mv  docs/_build/html_new docs/_build/html
+	mv docs/_build/html_new docs/_build/html
 	git add -f docs/_build/html
 	git commit -m "Update docs at $$(date +'%d %b %Y, %H:%M')"
 	git push origin gh-pages
@@ -48,7 +46,7 @@ install:
 	pip install -r requirements.txt -e .
 
 test:
-	python /usr/local/bin/nosetests tests --with-coverage --cover-html --cover-package=gpar -v --logging-filter=gpar
+	python -m nose tests --with-coverage --cover-html --cover-package=gpar -v --logging-filter=gpar
 
 clean:
 	rm -rf docs/_build docs/source docs/readme.rst
