@@ -15,6 +15,9 @@ from .model import GPAR
 __all__ = ['GPARRegressor']
 log = logging.getLogger(__name__)
 
+# Increase the regularisation a little bit to make it all more robust.
+B.epsilon = 1e-8
+
 
 def _uprank(x):
     if np.ndim(x) > 2:
@@ -22,6 +25,22 @@ def _uprank(x):
     while 0 <= np.ndim(x) < 2:
         x = np.expand_dims(x, 1)
     return B.array(x)
+
+
+def _vector_from_init(init, length):
+    # If only a single value is given, create ones.
+    if np.size(init) == 1:
+        return init * np.ones(length)
+
+    # Multiple values are given. Check that enough values are available.
+    init = np.squeeze(init)
+    if np.ndim(init) != 1:
+        raise ValueError('Hyperparameters can be at most rank one.')
+    if np.size(init) < length:
+        raise ValueError('Not enough hyperparameters specified.')
+
+    # Return initialisation.
+    return np.array(init)[:length]
 
 
 def _model_generator(vs,
@@ -35,11 +54,11 @@ def _model_generator(vs,
                      noise):
     def model():
         # Start out with a constant kernel.
-        kernel = vs.bnd(name=(p, 'constant'), group=p, init=noise)
+        kernel = vs.bnd(name=(p, 'constant'), group=p, init=1e-2)
 
         # Add nonlinear kernel over inputs.
         scales = vs.bnd(name=(p, 'I/NL/scales'), group=p,
-                        init=scale * B.ones(m))
+                        init=_vector_from_init(scale, m))
         variance = vs.bnd(name=(p, 'I/NL/var'), group=p, init=1.)
         input_kernel = variance * EQ().stretch(scales)
         kernel += input_kernel.select(list(range(m))) if p > 1 else input_kernel
@@ -47,20 +66,30 @@ def _model_generator(vs,
         # Add linear kernel if asked for.
         if linear:
             slopes = vs.bnd(name=(p, 'IO/L/slopes'), group=p,
-                            init=linear_slope * B.ones(m + p - 1))
+                            init=_vector_from_init(linear_slope, m + p - 1))
             kernel += Linear().stretch(1 / slopes)
 
         # Add nonlinear kernel over outputs if asked for.
         if nonlinear and p > 1:
             scales = vs.bnd(name=(p, 'O/NL/scales'), group=p,
-                            init=nonlinear_scale * B.ones(p - 1))
+                            init=_vector_from_init(nonlinear_scale, p - 1))
             variance = vs.bnd(name=(p, 'O/NL/var'), group=p, init=1.)
             inds = list(range(m, m + p - 1))
             kernel += variance * EQ().stretch(scales).select(inds)
 
+        # Figure out initialisation for noise.
+        if np.size(noise) > 1:
+            if np.ndim(noise) == 1:
+                noise_init = noise[p - 1]
+            else:
+                raise ValueError('Incorrect rank {} of noise.'
+                                 ''.format(np.ndim(noise)))
+        else:
+            noise_init = noise
+
         # Return model and noise.
         return GP(kernel=kernel, graph=Graph()), \
-               vs.bnd(name=(p, 'noise'), group=p, init=noise)
+               vs.bnd(name=(p, 'noise'), group=p, init=noise_init)
 
     return model
 
@@ -90,17 +119,17 @@ class GPARRegressor(object):
         impute (bool, optional): Impute data with predictive means to make the
             data set closed downwards. Helps the model deal with missing data.
             Defaults to `True`.
-        scale (float, optional): Initial value for the length scale over the
-            inputs. Defaults to `1.0`.
+        scale (tensor, optional): Initial value(s) for the length scale(s) over
+            the inputs. Defaults to `1.0`.
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
-        linear_slope (float, optional): Initial value for the slope of the
-            linear dependencies. Defaults to `0.1`.
+        linear_slope (tensor, optional): Initial value(s) for the slope(s) of
+            the linear dependencies. Defaults to `0.1`.
         nonlinear (bool, optional): Use nonlinear dependencies between outputs.
             Defaults to `True`.
-        nonlinear_scale (float, optional): Initial value to the length scale
-            over the outputs. Defaults to `0.1`.
-        noise (float, optional): Initial value for the observation noise.
+        nonlinear_scale (tensor, optional): Initial value(s) for the length
+            scale(s) over the outputs. Defaults to `0.1`.
+        noise (tensor, optional): Initial value(s) for the observation noise(s).
             Defaults to `0.1`.
         x_ind (tensor, optional): Locations of inducing points. Set to `None`
             if inducing points should not be used. Defaults to `None`.
@@ -154,8 +183,26 @@ class GPARRegressor(object):
         self.m = None  # Number of input features
         self.p = None  # Number of outputs
 
-    def fit(self, x, y, progressive=False, greedy=False):
+    def get_variables(self):
+        """Construct a dictionary containing all the hyperparameters.
+
+        Returns:
+            dict: Dictionary mapping variable names to variable values.
+        """
+        variables = {}
+        for name in self.vs.names.keys():
+            variables[name] = self.vs[name].detach().numpy()
+        return variables
+
+    def fit(self,
+            x,
+            y,
+            progressive=False,
+            greedy=False,
+            **kw_args):
         """Fit the model to data.
+
+        Further takes in keyword arguments for `Varz.minimise_l_bfgs_b`.
 
         Args:
             x (tensor): Inputs of training data.
@@ -195,7 +242,7 @@ class GPARRegressor(object):
                                   self.vs,
                                   names=names,
                                   groups=[i],
-                                  trace=True)
+                                  **kw_args)
         else:
             # Fit all layers simultaneously.
             def objective(vs):
@@ -206,7 +253,7 @@ class GPARRegressor(object):
                               self.vs,
                               names=names,
                               groups=list(range(1, self.p + 1)),
-                              trace=True)
+                              **kw_args)
 
         # Store that the model is fit.
         self.is_fit = True
