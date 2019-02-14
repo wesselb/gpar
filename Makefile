@@ -1,9 +1,11 @@
 .PHONY: docmake docopen docinit docremove docupdate init install test clean
 
+PACKAGE := gpar
+
 docmake:
 	rm -rf docs/source
-	sphinx-apidoc -eMT -o docs/source/ gpar
-	rm docs/source/gpar.rst
+	sphinx-apidoc -eMT -o docs/source/ $(PACKAGE)
+	rm docs/source/$(PACKAGE).rst
 	pandoc --from=markdown --to=rst --output=docs/readme.rst README.md
 	cd docs && make html
 
@@ -46,7 +48,7 @@ install:
 	pip install -r requirements.txt -e .
 
 test:
-	python -m nose tests --with-coverage --cover-html --cover-package=gpar -v --logging-filter=gpar
+	python -m nose tests --with-coverage --cover-html --cover-package=$(PACKAGE) -v --logging-filter=$(PACKAGE)
 
 clean:
 	rm -rf docs/_build docs/source docs/readme.rst
