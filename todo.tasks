@@ -1,2 +1,10 @@
- ☐ Also rename `gpar` folder.
- ☐ Remove clutter, e.g. `.git` and `.idea`.
+TODO:
+    ☐ Docs
+    ☐ Tests
+
+Features:
+    ☐ Greedy fitting
+    ☐ Search over multiple hyperparameters
+    ☐ Ability to exclude hyperparameters from optimisation
+    ☐ Normalise/unnormalise data to make work with defaults values of hypers
+    ☐ Ability to specify transforms
