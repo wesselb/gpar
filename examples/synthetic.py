@@ -22,11 +22,10 @@ model = GPARRegressor(scale=0.1,
                       linear_slope=0.1,
                       nonlinear_scale=0.1,
                       noise=0.1,
-                      impute=False,
-                      replace=False)
+                      impute=True,
+                      replace=True)
 model.fit(x_obs, y_obs)
-means = model.predict(x, num_samples=200)
-lowers, uppers = model.lowers, model.uppers
+means, lowers, uppers = model.predict(x, num_samples=200, credible_bounds=True)
 
 # Plot the result.
 plt.figure(figsize=(10, 5))

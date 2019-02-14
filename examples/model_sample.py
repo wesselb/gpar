@@ -6,18 +6,21 @@ x = np.linspace(0, 1, 100)
 model = GPARRegressor(scale=0.1,
                       linear=False,
                       nonlinear_scale=0.1,
-                      noise=0.1)
+                      noise=0.1,
+                      impute=False,
+                      replace=False)
 
 # Sample observations and discard some.
-y = model.sample(x, p=3)
+y = model.sample_prior(x, p=3)
 y_obs = y.copy()
 y_obs[np.random.permutation(100)[:25], 0] = np.nan
 y_obs[np.random.permutation(100)[:50], 1] = np.nan
 y_obs[np.random.permutation(100)[:75], 2] = np.nan
 
+# Fit model and predict.
 model.fit(x, y)
-means = model.predict(x, num_samples=200, latent=False)
-lowers, uppers = model.lowers, model.uppers
+means, lowers, uppers = \
+    model.predict(x, num_samples=200, latent=False, credible_bounds=True)
 
 # Plot the result.
 plt.figure(figsize=(10, 5))
