@@ -1,18 +1,19 @@
 .PHONY: autodoc doc docopen docinit docopen init install test clean
 
 autodoc:
-	rm -rf doc/source
-	sphinx-apidoc -eMT -o doc/source/ gpar
-	rm doc/source/gpar.rst
-	pandoc --from=markdown --to=rst --output=doc/readme.rst README.md
+	rm -rf docs/source
+	sphinx-apidoc -eMT -o docs/source/ gpar
+	rm docs/source/gpar.rst
+	pandoc --from=markdown --to=rst --output=docs/readme.rst README.md
 
 doc:
-	cd doc && make html
+	cd docs && make html
 
 docopen:
-	open doc/_build/html/index.html
+	open docs/_build/html/index.html
 
 docinit:
+	git checkout -b gh-pages
 	git ls-tree HEAD \
 		| awk '$4 !~ /\.gitignore|\.nojekyll|Makefile|docs|index\.html/ { print $4 }' \
 		| xargs -I {} git rm -r {}
@@ -20,10 +21,13 @@ docinit:
 	git add .nojekyll
 	echo '<meta http-equiv="refresh" content="0; url=./docs/_build/html/index.html" />\n' > index.html
 	git commit -m "Branch cleaned for docs"
+	git checkout master
 
-docupdate:
-	git add -f docs/_build/html
-	git commit -m "Update docs at $(date +'%d %b %Y, %H:%M')"
+docupdate: autodoc doc
+	git checkout gh-pages
+	# git add -f docs/_build/html
+	# git commit -m "Update docs at $(date +'%d %b %Y, %H:%M')"
+	# git checkout master
 
 init:
 	pip install -r requirements.txt
