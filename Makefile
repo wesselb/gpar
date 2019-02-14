@@ -1,4 +1,4 @@
-.PHONY: autodoc doc init test docopen clean
+.PHONY: autodoc doc docopen init install test clean
 
 autodoc:
 	rm -rf doc/source
@@ -14,6 +14,9 @@ docopen:
 
 init:
 	pip install -r requirements.txt
+
+install:
+	pip install -r requirements.txt -e .
 
 test:
 	python /usr/local/bin/nosetests tests --with-coverage --cover-html --cover-package=gpar -v --logging-filter=gpar
