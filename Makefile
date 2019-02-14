@@ -15,7 +15,7 @@ docopen:
 docinit:
 	git checkout -b gh-pages
 	git ls-tree HEAD \
-		| awk '$4 !~ /\.gitignore|\.nojekyll|Makefile|docs|index\.html/ { print $4 }' \
+		| awk '$$4 !~ /\.nojekyll|docs|index\.html/ { print $$4 }' \
 		| xargs -I {} git rm -r {}
 	touch .nojekyll
 	git add .nojekyll
