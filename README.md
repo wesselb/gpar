@@ -14,4 +14,5 @@ recommended to use.
 git clone https://github.com/wesselb/gpar && cd gpar && make install
 ```
 
-Updating afterwards can be done by pulling the repo.
+Try running `python examples/synthetic.py` afterwards to see if everything 
+works; this example assumes that `matplotlib` is installed.
