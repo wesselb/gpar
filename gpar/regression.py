@@ -41,9 +41,10 @@ def _vector_from_init(init, length):
 
 
 def _model_generator(vs,
-                     m,
-                     p,
+                     m,  # This is the _number_ of inputs.
+                     pi,  # This is the _index_ of the output modelled.
                      scale,
+                     scale_tie,
                      linear,
                      linear_scale,
                      linear_with_inputs,
@@ -53,47 +54,53 @@ def _model_generator(vs,
                      markov,
                      noise):
     def model():
-        # Build in the Markov structure.
-        p_start = 0 if markov is None else max(p - 1 - markov, 0)
+        # Start with a zero kernel.
+        kernel = 0
+
+        # Build in the Markov structure: juggle with the indices of the outputs.
+        p_last = pi - 1  # Index of last output that is given as input.
+        p_start = 0 if markov is None else max(p_last - (markov - 1), 0)
+        p_num = p_last - p_start + 1
+
+        # Determine the indices corresponding to the outputs and inputs.
+        m_inds = list(range(m))
+        p_inds = list(range(m + p_start, m + p_last + 1))
 
         # Add nonlinear kernel over inputs.
-        scales = vs.bnd(name=(p, 'I/NL/scales'), group=p,
+        variance = vs.bnd(name=(pi, 'I/NL/var'), group=pi, init=1.)
+        scales = vs.bnd(name=(0 if scale_tie else pi, 'I/NL/scales'),
+                        group=0 if scale_tie else pi,
                         init=_vector_from_init(scale, m))
-        variance = vs.bnd(name=(p, 'I/NL/var'), group=p, init=1.)
-        kernel = variance * EQ().stretch(scales).select(list(range(m)))
+        kernel += variance * EQ().stretch(scales).select(m_inds)
 
         # Add linear kernel and outputs if asked for.
-        if linear and p > 1:
-            scales = vs.bnd(name=(p, 'O/L/scales'), group=p,
-                            init=_vector_from_init(linear_scale,
-                                                   p - 1 - p_start))
-            inds = list(range(m + p_start, m + p - 1))
-            kernel_linear = Linear().stretch(scales).select(inds)
+        if linear and pi > 0:
+            scales = vs.bnd(name=(pi, 'O/L/scales'), group=pi,
+                            init=_vector_from_init(linear_scale, p_num))
+            kernel_linear = Linear().stretch(scales).select(p_inds)
 
             if linear_with_inputs:
                 # Linear dependencies depend on the inputs.
-                scales = vs.bnd(name=(p, 'I/L/scales'), group=p,
+                scales = vs.bnd(name=(pi, 'O/L/input_scales'), group=pi,
                                 init=_vector_from_init(scale, m))
-                kernel_linear *= EQ().stretch(scales).select(list(range(m)))
+                kernel_linear *= EQ().stretch(scales).select(m_inds)
 
             # Add to the result.
             kernel += kernel_linear
 
         # Add nonlinear kernel over outputs if asked for.
-        if nonlinear and p > 1:
+        if nonlinear and pi > 0:
             # Nonlinear dependencies do not depend on the inputs.
-            variance = vs.bnd(name=(p, 'O/NL/var'), group=p, init=1.)
-            scales = vs.bnd(name=(p, 'O/NL/scales'), group=p,
-                            init=_vector_from_init(nonlinear_scale,
-                                                   p - 1 - p_start))
-            inds = list(range(m + p_start, m + p - 1))
-            kernel_nonlinear = variance * EQ().stretch(scales).select(inds)
+            variance = vs.bnd(name=(pi, 'O/NL/var'), group=pi, init=1.)
+            scales = vs.bnd(name=(pi, 'O/NL/scales'), group=pi,
+                            init=_vector_from_init(nonlinear_scale, p_num))
+            kernel_nonlinear = variance * EQ().stretch(scales).select(p_inds)
 
             if nonlinear_with_inputs:
                 # Nonlinear dependencies depend on the inputs.
-                scales = vs.bnd(name=(p, 'I/NL/scales'), group=p,
+                scales = vs.bnd(name=(pi, 'O/NL/input_scales'), group=pi,
                                 init=_vector_from_init(scale, m))
-                kernel_nonlinear *= EQ().stretch(scales).select(list(range(m)))
+                kernel_nonlinear *= EQ().stretch(scales).select(m_inds)
 
             # Add to the result.
             kernel += kernel_nonlinear
@@ -101,7 +108,7 @@ def _model_generator(vs,
         # Figure out initialisation for noise.
         if np.size(noise) > 1:
             if np.ndim(noise) == 1:
-                noise_init = noise[p - 1]
+                noise_init = noise[pi]
             else:
                 raise ValueError('Incorrect rank {} of noise.'
                                  ''.format(np.ndim(noise)))
@@ -110,7 +117,7 @@ def _model_generator(vs,
 
         # Return model and noise.
         return GP(kernel=kernel, graph=Graph()), \
-               vs.bnd(name=(p, 'noise'), group=p, init=noise_init)
+               vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init)
 
     return model
 
@@ -124,8 +131,8 @@ def _construct_gpar(reg, vs, m, p):
 
     # Construct GPAR model layer by layer.
     gpar = GPAR(replace=reg.replace, impute=reg.impute, x_ind=x_ind)
-    for i in range(1, p + 1):
-        gpar = gpar.add_layer(_model_generator(vs, m, i, **reg.model_config))
+    for pi in range(p):
+        gpar = gpar.add_layer(_model_generator(vs, m, pi, **reg.model_config))
 
     # Return GPAR model.
     return gpar
@@ -142,6 +149,8 @@ class GPARRegressor(object):
             Defaults to `True`.
         scale (tensor, optional): Initial value(s) for the length scale(s) over
             the inputs. Defaults to `1.0`.
+        scale_tie (bool, optional): Tie the length scale(s) over the inputs.
+            Defaults to `False`.
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
         linear_scale (tensor, optional): Initial value(s) for the scale(s) of
@@ -181,6 +190,7 @@ class GPARRegressor(object):
                  replace=True,
                  impute=True,
                  scale=1.0,
+                 scale_tie=False,
                  linear=True,
                  linear_scale=100.0,
                  linear_with_inputs=False,
@@ -197,6 +207,7 @@ class GPARRegressor(object):
         self.x_ind = None if x_ind is None else _uprank(x_ind)
         self.model_config = {
             'scale': scale,
+            'scale_tie': scale_tie,
             'linear': linear,
             'linear_scale': linear_scale,
             'linear_with_inputs': linear_with_inputs,
@@ -259,14 +270,15 @@ class GPARRegressor(object):
             only_last = not self.sparse
 
             # Fit layer by layer.
-            for i in range(1, self.p + 1):
+            for pi in range(self.p):
                 def objective(vs):
-                    gpar = _construct_gpar(self, vs, self.m, i)
+                    # `_construct_gpar` takes in the _number_ of outputs.
+                    gpar = _construct_gpar(self, vs, self.m, pi + 1)
                     return -gpar.logpdf(self.x, self.y,
                                         only_last_layer=only_last)
 
                 # Determine extra variables to optimise.
-                if self.sparse and i == 1:
+                if self.sparse and pi == 0:
                     names = ['inducing_points']
                 else:
                     names = []
@@ -274,7 +286,7 @@ class GPARRegressor(object):
                 minimise_l_bfgs_b(objective,
                                   self.vs,
                                   names=names,
-                                  groups=[i],
+                                  groups=[pi],
                                   **kw_args)
         else:
             # Determine extra variables to optimise.
@@ -288,7 +300,7 @@ class GPARRegressor(object):
             minimise_l_bfgs_b(objective,
                               self.vs,
                               names=names,
-                              groups=list(range(1, self.p + 1)),
+                              groups=list(range(self.p)),
                               **kw_args)
 
         # Store that the model is fit.
@@ -358,8 +370,10 @@ class GPARRegressor(object):
                 lower credible bounds, and upper credible bounds.
         """
         # Sample from posterior.
-        samples = self.sample(
-            x, num_samples=num_samples, latent=latent, posterior=True)
+        samples = self.sample(x,
+                              num_samples=num_samples,
+                              latent=latent,
+                              posterior=True)
 
         # Compute mean.
         mean = np.mean(samples, axis=0)
