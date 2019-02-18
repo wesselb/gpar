@@ -15,9 +15,6 @@ from .model import GPAR
 __all__ = ['GPARRegressor']
 log = logging.getLogger(__name__)
 
-# Increase the regularisation a little bit to make it all more robust.
-B.epsilon = 1e-8
-
 
 def _uprank(x):
     if np.ndim(x) > 2:
@@ -49,27 +46,33 @@ def _model_generator(vs,
                      scale,
                      linear,
                      linear_scale,
+                     linear_with_inputs,
                      nonlinear,
                      nonlinear_scale,
                      nonlinear_with_inputs,
                      noise):
     def model():
-        # Start out with a constant kernel.
-        kernel = vs.bnd(name=(p, 'constant'), group=p, init=1e-2)
-
         # Add nonlinear kernel over inputs.
         scales = vs.bnd(name=(p, 'I/NL/scales'), group=p,
                         init=_vector_from_init(scale, m))
         variance = vs.bnd(name=(p, 'I/NL/var'), group=p, init=1.)
-        input_kernel = variance * EQ().stretch(scales)
-        inds = list(range(m))
-        kernel += input_kernel.select(inds) if p > 1 else input_kernel
+        kernel = variance * EQ().stretch(scales).select(list(range(m)))
 
-        # Add linear kernel if asked for.
+        # Add linear kernel over inputs and outputs if asked for.
         if linear:
             scales = vs.bnd(name=(p, 'IO/L/scales'), group=p,
                             init=_vector_from_init(linear_scale, m + p - 1))
-            kernel += Linear().stretch(scales)
+            kernel_linear = Linear().stretch(scales)
+
+            if linear_with_inputs:
+                # Linear dependencies depend on the inputs. Note that we do not
+                # need a variance.
+                scales = vs.bnd(name=(p, 'I/L/scales'), group=p,
+                                init=_vector_from_init(scale, m))
+                kernel_linear *= EQ().stretch(scales).select(list(range(m)))
+
+            # Add to the result.
+            kernel += kernel_linear
 
         # Add nonlinear kernel over outputs if asked for.
         if nonlinear and p > 1:
@@ -139,6 +142,8 @@ class GPARRegressor(object):
             Defaults to `True`.
         linear_scale (tensor, optional): Initial value(s) for the scale(s) of
             the linear dependencies. Defaults to `100.`.
+        linear_with_inputs (bool, optional): Make the linear dependencies
+            between the outputs dependent on the inputs. Defaults to `False`.
         nonlinear (bool, optional): Use nonlinear dependencies between outputs.
             Defaults to `True`.
         nonlinear_scale (tensor, optional): Initial value(s) for the length
@@ -172,7 +177,8 @@ class GPARRegressor(object):
                  scale=1.0,
                  linear=True,
                  linear_scale=100.,
-                 nonlinear=True,
+                 linear_with_inputs=False,
+                 nonlinear=False,
                  nonlinear_scale=0.1,
                  nonlinear_with_inputs=False,
                  noise=0.1,
@@ -186,6 +192,7 @@ class GPARRegressor(object):
             'scale': scale,
             'linear': linear,
             'linear_scale': linear_scale,
+            'linear_with_inputs': linear_with_inputs,
             'nonlinear': nonlinear,
             'nonlinear_scale': nonlinear_scale,
             'nonlinear_with_inputs': nonlinear_with_inputs,
@@ -313,8 +320,14 @@ class GPARRegressor(object):
             gpar = _construct_gpar(self, self.vs, B.shape_int(x)[1], p)
 
         # Sample and return.
-        samples = [gpar.sample(x, latent=latent).detach().numpy()
-                   for _ in range(num_samples)]
+        i, samples = 0, []
+        while i < num_samples:
+            try:
+                samples.append(gpar.sample(x, latent=latent).detach().numpy())
+                i += 1
+            except Exception as e:
+                log.warning('Caught exception during sampling: "{}".'.format(e))
+
         return samples[0] if num_samples == 1 else samples
 
     def predict(self, x, num_samples=100, latent=True, credible_bounds=False):
