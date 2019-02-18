@@ -50,23 +50,28 @@ def _model_generator(vs,
                      nonlinear,
                      nonlinear_scale,
                      nonlinear_with_inputs,
+                     markov,
                      noise):
     def model():
+        # Build in the Markov structure.
+        p_start = 0 if markov is None else max(p - 1 - markov, 0)
+
         # Add nonlinear kernel over inputs.
         scales = vs.bnd(name=(p, 'I/NL/scales'), group=p,
                         init=_vector_from_init(scale, m))
         variance = vs.bnd(name=(p, 'I/NL/var'), group=p, init=1.)
         kernel = variance * EQ().stretch(scales).select(list(range(m)))
 
-        # Add linear kernel over inputs and outputs if asked for.
-        if linear:
-            scales = vs.bnd(name=(p, 'IO/L/scales'), group=p,
-                            init=_vector_from_init(linear_scale, m + p - 1))
-            kernel_linear = Linear().stretch(scales)
+        # Add linear kernel and outputs if asked for.
+        if linear and p > 1:
+            scales = vs.bnd(name=(p, 'O/L/scales'), group=p,
+                            init=_vector_from_init(linear_scale,
+                                                   p - 1 - p_start))
+            inds = list(range(m + p_start, m + p - 1))
+            kernel_linear = Linear().stretch(scales).select(inds)
 
             if linear_with_inputs:
-                # Linear dependencies depend on the inputs. Note that we do not
-                # need a variance.
+                # Linear dependencies depend on the inputs.
                 scales = vs.bnd(name=(p, 'I/L/scales'), group=p,
                                 init=_vector_from_init(scale, m))
                 kernel_linear *= EQ().stretch(scales).select(list(range(m)))
@@ -76,23 +81,22 @@ def _model_generator(vs,
 
         # Add nonlinear kernel over outputs if asked for.
         if nonlinear and p > 1:
+            # Nonlinear dependencies do not depend on the inputs.
+            variance = vs.bnd(name=(p, 'O/NL/var'), group=p, init=1.)
+            scales = vs.bnd(name=(p, 'O/NL/scales'), group=p,
+                            init=_vector_from_init(nonlinear_scale,
+                                                   p - 1 - p_start))
+            inds = list(range(m + p_start, m + p - 1))
+            kernel_nonlinear = variance * EQ().stretch(scales).select(inds)
+
             if nonlinear_with_inputs:
                 # Nonlinear dependencies depend on the inputs.
-                variance = vs.bnd(name=(p, 'IO/NL/var'), group=p, init=1.)
-                init_scales = np.concatenate((
-                    _vector_from_init(scale, m),
-                    _vector_from_init(nonlinear_scale, p - 1)
-                ), axis=0)
-                scales = vs.bnd(name=(p, 'IO/NL/scales'), group=p,
-                                init=init_scales)
-                kernel += variance * EQ().stretch(scales)
-            else:
-                # Nonlinear dependencies do not depend on the inputs.
-                variance = vs.bnd(name=(p, 'O/NL/var'), group=p, init=1.)
-                scales = vs.bnd(name=(p, 'O/NL/scales'), group=p,
-                                init=_vector_from_init(nonlinear_scale, p - 1))
-                inds = list(range(m, m + p - 1))
-                kernel += variance * EQ().stretch(scales).select(inds)
+                scales = vs.bnd(name=(p, 'I/NL/scales'), group=p,
+                                init=_vector_from_init(scale, m))
+                kernel_nonlinear *= EQ().stretch(scales).select(list(range(m)))
+
+            # Add to the result.
+            kernel += kernel_nonlinear
 
         # Figure out initialisation for noise.
         if np.size(noise) > 1:
@@ -141,7 +145,7 @@ class GPARRegressor(object):
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
         linear_scale (tensor, optional): Initial value(s) for the scale(s) of
-            the linear dependencies. Defaults to `100.`.
+            the linear dependencies. Defaults to `100.0`.
         linear_with_inputs (bool, optional): Make the linear dependencies
             between the outputs dependent on the inputs. Defaults to `False`.
         nonlinear (bool, optional): Use nonlinear dependencies between outputs.
@@ -150,8 +154,10 @@ class GPARRegressor(object):
             scale(s) over the outputs. Defaults to `0.1`.
         nonlinear_with_inputs (bool, optional): Make the nonlinear dependencies
             between the outputs dependent on the inputs. Defaults to `False`.
+        markov (int, optional): Markov order of conditionals. Set to `None` to
+            have a fully connected structure. Defaults to `None`.
         noise (tensor, optional): Initial value(s) for the observation noise(s).
-            Defaults to `0.1`.
+            Defaults to `0.01`.
         x_ind (tensor, optional): Locations of inducing points. Set to `None`
             if inducing points should not be used. Defaults to `None`.
 
@@ -176,12 +182,13 @@ class GPARRegressor(object):
                  impute=True,
                  scale=1.0,
                  linear=True,
-                 linear_scale=100.,
+                 linear_scale=100.0,
                  linear_with_inputs=False,
                  nonlinear=False,
                  nonlinear_scale=0.1,
                  nonlinear_with_inputs=False,
-                 noise=0.1,
+                 markov=None,
+                 noise=0.01,
                  x_ind=None):
         # Model configuration.
         self.replace = replace
@@ -196,6 +203,7 @@ class GPARRegressor(object):
             'nonlinear': nonlinear,
             'nonlinear_scale': nonlinear_scale,
             'nonlinear_with_inputs': nonlinear_with_inputs,
+            'markov': markov,
             'noise': noise
         }
 
@@ -245,16 +253,10 @@ class GPARRegressor(object):
         self.n, self.m = self.x.shape
         self.p = self.y.shape[1]
 
-        # Determine extra variables to optimise at every step.
-        if self.sparse:
-            names = ['inducing_points']
-        else:
-            names = []
-
         # Optimise layers by layer or all layers simultaneously.
         if progressive:
             # Check whether to only optimise the last layer.
-            only_last = not (self.replace or self.impute or self.sparse)
+            only_last = not self.sparse
 
             # Fit layer by layer.
             for i in range(1, self.p + 1):
@@ -263,12 +265,21 @@ class GPARRegressor(object):
                     return -gpar.logpdf(self.x, self.y,
                                         only_last_layer=only_last)
 
+                # Determine extra variables to optimise.
+                if self.sparse and i == 1:
+                    names = ['inducing_points']
+                else:
+                    names = []
+
                 minimise_l_bfgs_b(objective,
                                   self.vs,
                                   names=names,
                                   groups=[i],
                                   **kw_args)
         else:
+            # Determine extra variables to optimise.
+            names = ['inducing_points'] if self.sparse else []
+
             # Fit all layers simultaneously.
             def objective(vs):
                 gpar = _construct_gpar(self, vs, self.m, self.p)
