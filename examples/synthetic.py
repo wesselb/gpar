@@ -19,8 +19,8 @@ x_obs, y_obs = x[::8], y[::8]
 
 # Fit and predict GPAR.
 model = GPARRegressor(scale=0.1,
-                      linear_scale=10.,
-                      nonlinear_scale=0.1,
+                      linear=True, linear_scale=10.,
+                      nonlinear=True, nonlinear_scale=0.1,
                       noise=0.1,
                       impute=True,
                       replace=True)
