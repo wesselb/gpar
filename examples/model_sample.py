@@ -5,6 +5,7 @@ from gpar.regression import GPARRegressor
 x = np.linspace(0, 1, 100)
 model = GPARRegressor(scale=0.1,
                       linear=False,
+                      nonlinear=True,
                       nonlinear_scale=0.1,
                       noise=0.1)
 
