@@ -47,7 +47,7 @@ class GPAR(Referentiable):
             the data. Defaults to `False`.
         impute (bool, optional): Impute missing data points with the predictive
             mean to make the data set closed downwards. Defaults to `False`.
-        x_sparse (:class:`.data.Data`, optional): Locations of inducing points
+        x_ind (tensor, optional): Locations of inducing points
             for a sparse approximation. Defaults to `None`.
     """
     _dispatch = Dispatcher(in_class=Self)
@@ -131,7 +131,7 @@ class GPAR(Referentiable):
         Args:
             x (tensor): Inputs.
             y (tensor): Outputs.
-            only_last_layer (bool, optiona): Compute the pdf of only the last
+            only_last_layer (bool, optional): Compute the pdf of only the last
                 layer. Defaults to `False`.
 
         Returns:
