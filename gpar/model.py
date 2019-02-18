@@ -210,7 +210,7 @@ class GPAR(Referentiable):
 
             # Replace data.
             if self.replace:
-                y_sample = f.mean(xs)
+                y_sample = (f | (xs, f_sample)).mean(xs)
 
             # Update inputs.
             xs = B.concat([xs, y_sample], axis=1)
