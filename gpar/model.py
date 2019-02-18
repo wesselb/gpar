@@ -196,6 +196,7 @@ class GPAR(Referentiable):
             # Construct model.
             f, noise = model()
             e = GP(Delta() * noise, graph=f.graph)
+            f_noisy = f + e
 
             # Sample current output.
             f_sample = f(xs).sample()
@@ -210,7 +211,7 @@ class GPAR(Referentiable):
 
             # Replace data.
             if self.replace:
-                y_sample = (f | (xs, f_sample)).mean(xs)
+                y_sample = (f | (f_noisy(xs), y_sample)).mean(xs)
 
             # Update inputs.
             xs = B.concat([xs, y_sample], axis=1)
