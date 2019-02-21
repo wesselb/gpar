@@ -306,6 +306,28 @@ class GPARRegressor(object):
         # Store that the model is fit.
         self.is_fit = True
 
+    def logpdf(self, x, y, unbiased_sample=True):
+        """Compute the logpdf of observations.
+
+        Args:
+            x (tensor): Inputs.
+            y (tensor): Outputs.
+            unbiased_sample (bool, optional): Compute an unbiased estimate of
+                the logpdf. This make a difference when `y` is not closed
+                downwards. Defaults to `True`.
+
+        Returns
+            float: Estimate of the logpdf.
+        """
+        x, y = _uprank(x), _uprank(y)
+        m, p = x.shape[0], y.shape[1]
+
+        # Construct GPAR and sample logpdf.
+        gpar = _construct_gpar(self, self.vs, m, p)
+        return -gpar.logpdf(x, y,
+                            only_last_layer=True,
+                            unbiased_sample=unbiased_sample).detach_().numpy()
+
     def sample(self, x, p=None, posterior=False, num_samples=1, latent=False):
         """Sample from the prior or posterior.
 
