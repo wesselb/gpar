@@ -125,7 +125,7 @@ class GPAR(Referentiable):
 
         return gpar
 
-    def logpdf(self, x, y, only_last_layer=False):
+    def logpdf(self, x, y, only_last_layer=False, unbiased_sample=False):
         """Compute the logpdf.
 
         Args:
@@ -133,6 +133,8 @@ class GPAR(Referentiable):
             y (tensor): Outputs.
             only_last_layer (bool, optional): Compute the pdf of only the last
                 layer. Defaults to `False`.
+            unbiased_sample (bool, optional): Compute an unbiased sample of the
+                logpdf. Defaults to `False`.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
@@ -148,6 +150,14 @@ class GPAR(Referentiable):
             f, noise = model()
             e = GP(Delta() * noise, graph=f.graph)
             f_noisy = f + e
+
+            # If an unbiased estimate of the logpdf must be produced, sample
+            # missing observations.
+            if unbiased_sample:
+                missing = B.isnan(y[:, 0])  # Check for missing data.
+                if B.any(missing):
+                    # Impute missing data with samples.
+                    y = _merge(y, f_noisy(xs[missing]).sample(), missing)
 
             # Check whether this is the last layer.
             last_layer = i == len(self.layers) - 1
@@ -219,7 +229,7 @@ class GPAR(Referentiable):
         return sample
 
     def _update_inputs(self, xs, xs_ind, y, f_post):
-        available = ~np.isnan(y[:, 0])
+        available = ~B.isnan(y[:, 0])
 
         # Update inputs of inducing points.
         if xs_ind is not None:

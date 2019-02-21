@@ -320,7 +320,7 @@ class GPARRegressor(object):
             float: Estimate of the logpdf.
         """
         x, y = _uprank(x), _uprank(y)
-        m, p = x.shape[0], y.shape[1]
+        m, p = x.shape[1], y.shape[1]
 
         # Construct GPAR and sample logpdf.
         gpar = _construct_gpar(self, self.vs, m, p)
