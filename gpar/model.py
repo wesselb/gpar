@@ -151,28 +151,21 @@ class GPAR(Referentiable):
             e = GP(Delta() * noise, graph=f.graph)
             f_noisy = f + e
 
-            # If an unbiased estimate of the logpdf must be produced, sample
-            # missing observations.
-            if unbiased_sample:
-                missing = B.isnan(y[:, 0])  # Check for missing data.
-                if B.any(missing):
-                    # Impute missing data with samples.
-                    y = _merge(y, f_noisy(xs[missing]).sample(), missing)
-
             # Check whether this is the last layer.
             last_layer = i == len(self.layers) - 1
             # Check whether a posterior is needed.
             need_posterior = self.impute or self.replace or self.sparse
             # Check whether the logpdf should be accumulated.
             accumulate = (last_layer and only_last_layer) or ~only_last_layer
+            # Check for missing data.
+            miss = B.isnan(y[:, 0])
 
             # Compute observations if needed.
             if need_posterior or accumulate:
-                avail = ~B.isnan(y[:, 0])  # Filter for available data.
                 if self.sparse:
-                    obs = SparseObs(f(xs_ind), e, f(xs[avail]), y[avail])
+                    obs = SparseObs(f(xs_ind), e, f(xs[~miss]), y[~miss])
                 else:
-                    obs = Obs(f_noisy(xs[avail]), y[avail])
+                    obs = Obs(f_noisy(xs[~miss]), y[~miss])
 
             # Accumate logpdf if needed.
             if accumulate:
@@ -183,6 +176,17 @@ class GPAR(Referentiable):
 
             # Compute posterior if needed.
             f_post = (f | obs) if need_posterior else None
+
+            # For an unbiased estimate, sample missing data.
+            if unbiased_sample and B.any(miss):
+                y = _merge(y, f_noisy(xs[miss]).sample(), miss)
+
+                # Update the posterior if it was produced.
+                if f_post is not None:
+                    if self.sparse:
+                        f_post |= SparseObs(f(xs_ind), e, f(xs[miss]), y[miss])
+                    else:
+                        f_post |= Obs(f_noisy(xs[miss]), y[miss])
 
             # Update inputs.
             xs, xs_ind = self._update_inputs(xs, xs_ind, y, f_post)
