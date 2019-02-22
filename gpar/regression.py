@@ -306,7 +306,7 @@ class GPARRegressor(object):
         # Store that the model is fit.
         self.is_fit = True
 
-    def logpdf(self, x, y, unbiased_sample=True):
+    def logpdf(self, x, y, unbiased_sample=True, posterior=False):
         """Compute the logpdf of observations.
 
         Args:
@@ -315,6 +315,8 @@ class GPARRegressor(object):
             unbiased_sample (bool, optional): Compute an unbiased estimate of
                 the logpdf. This make a difference when `y` is not closed
                 downwards. Defaults to `True`.
+            posterior (bool, optional): Compute logpdf under the posterior
+                instead of the prior. Defaults to `False.
 
         Returns
             float: Estimate of the logpdf.
@@ -322,8 +324,14 @@ class GPARRegressor(object):
         x, y = _uprank(x), _uprank(y)
         m, p = x.shape[1], y.shape[1]
 
+        if posterior and not self.is_fit:
+            raise RuntimeError('Must fit model before computing the logpdf '
+                               'under the posterior.')
+
         # Construct GPAR and sample logpdf.
         gpar = _construct_gpar(self, self.vs, m, p)
+        if posterior:
+            gpar = gpar | (self.x, self.y)
         return -gpar.logpdf(x, y,
                             only_last_layer=True,
                             unbiased_sample=unbiased_sample).detach_().numpy()
