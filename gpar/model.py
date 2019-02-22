@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function
 import logging
 from types import FunctionType
 
-import numpy as np
 from lab import B
 from plum import Dispatcher, Referentiable, Self
 from stheno import Delta, GP, Obs, SparseObs
@@ -35,7 +34,7 @@ def _merge(x, updates, to_update):
     return B.take(concat, indices)
 
 
-def _construct_model_generator(f, noise):
+def _construct_model(f, noise):
     return lambda: (f, noise)
 
 
@@ -97,31 +96,16 @@ class GPAR(Referentiable):
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        x, y = x_and_y  # Unpack tuple argument.
-        gpar, xs, xs_ind = self.copy(), x, self.x_ind
+        x, y = x_and_y
+        gpar = self.copy()
+        state = GPARState(gpar, x, self.x_ind)
 
         for (y, mask), model in zip(per_output(y, self.impute), self.layers):
-            # Filter inputs according to the mask.
-            xs = xs[mask]
+            state.next_layer(model, mask)
+            state.observe(y)
 
-            # Construct model.
-            f, noise = model()
-            e = GP(Delta() * noise, graph=f.graph)
-            f_noisy = f + e
-
-            # Condition model.
-            avail = ~B.isnan(y[:, 0])  # Filter for available data.
-            if self.sparse:
-                obs = SparseObs(f(xs_ind), e, f(xs[avail]), y[avail])
-            else:
-                obs = Obs(f_noisy(xs[avail]), y[avail])
-            f_post = f | obs
-
-            # Update model.
-            gpar.layers.append(_construct_model_generator(f_post, noise))
-
-            # Update inputs.
-            xs, xs_ind = self._update_inputs(xs, xs_ind, y, f_post)
+            # Update with the posterior.
+            gpar.layers.append(_construct_model(state.f, state.noise))
 
         return gpar
 
@@ -139,57 +123,22 @@ class GPAR(Referentiable):
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        logpdf, xs, xs_ind = 0, x, self.x_ind
+        logpdf = 0
+        state = GPARState(self, x, self.x_ind)
 
         for i, ((y, mask), model) in enumerate(zip(per_output(y, self.impute),
                                                    self.layers)):
-            # Filter inputs according to the mask.
-            xs = xs[mask]
+            state.next_layer(model, mask)
+            state.observe(y)
 
-            # Construct model.
-            f, noise = model()
-            e = GP(Delta() * noise, graph=f.graph)
-            f_noisy = f + e
-
-            # Check whether this is the last layer.
+            # Accumulate logpdf.
             last_layer = i == len(self.layers) - 1
-            # Check whether a posterior is needed.
-            need_posterior = self.impute or self.replace or self.sparse
-            # Check whether the logpdf should be accumulated.
-            accumulate = (last_layer and only_last_layer) or ~only_last_layer
-            # Check for missing data.
-            miss = B.isnan(y[:, 0])
+            if ~only_last_layer or (last_layer and only_last_layer):
+                logpdf += state.compute_logpdf()
 
-            # Compute observations if needed.
-            if need_posterior or accumulate:
-                if self.sparse:
-                    obs = SparseObs(f(xs_ind), e, f(xs[~miss]), y[~miss])
-                else:
-                    obs = Obs(f_noisy(xs[~miss]), y[~miss])
-
-            # Accumate logpdf if needed.
-            if accumulate:
-                if self.sparse:
-                    logpdf += obs.elbo
-                else:
-                    logpdf += obs.x.logpdf(obs.y)
-
-            # Compute posterior if needed.
-            f_post = (f | obs) if need_posterior else None
-
-            # For an unbiased estimate, sample missing data.
-            if unbiased_sample and B.any(miss):
-                y = _merge(y, f_noisy(xs[miss]).sample(), miss)
-
-                # Update the posterior if it was produced.
-                if f_post is not None:
-                    if self.sparse:
-                        f_post |= SparseObs(f(xs_ind), e, f(xs[miss]), y[miss])
-                    else:
-                        f_post |= Obs(f_noisy(xs[miss]), y[miss])
-
-            # Update inputs.
-            xs, xs_ind = self._update_inputs(xs, xs_ind, y, f_post)
+            # Sample missing data for an unbiased sample of the logpdf.
+            if unbiased_sample:
+                state.sample_missing()
 
         return logpdf
 
@@ -204,55 +153,181 @@ class GPAR(Referentiable):
         Returns:
             tensor: Sample.
         """
-        sample, xs = None, x
+        sample = B.zeros((B.shape(x)[0], 0), dtype=B.dtype(x))
+        state = GPARState(self, x, self.x_ind)
 
         for model in self.layers:
-            # Construct model.
-            f, noise = model()
-            e = GP(Delta() * noise, graph=f.graph)
-            f_noisy = f + e
+            state.next_layer(model)
 
-            # Sample current output.
-            f_sample = f(xs).sample()
-            y_sample = f_sample + e(xs).sample()
+            # Sample the current layer.
+            f_sample, y_sample = state.sample(state.x)
+            sample = B.concat([sample, f_sample if latent else y_sample],
+                              axis=1)
 
-            # Update sample.
-            selected_sample = f_sample if latent else y_sample
-            if sample is None:
-                sample = selected_sample
-            else:
-                sample = B.concat([sample, selected_sample], axis=1)
-
-            # Replace data.
-            if self.replace:
-                y_sample = (f | (f_noisy(xs), y_sample)).mean(xs)
-
-            # Update inputs.
-            xs = B.concat([xs, y_sample], axis=1)
+            # Feed sample into the next layer.
+            state.observe(y_sample)
 
         return sample
 
-    def _update_inputs(self, xs, xs_ind, y, f_post):
-        available = ~B.isnan(y[:, 0])
 
+class GPARState(object):
+    """Constructing GPAR to do various things involves maintaining a fairly
+    complicated state. This class implements that state.
+
+    Args:
+        gpar (:class:`.model.GPAR`): GPAR model.
+        x (tensor): Inputs of the training data.
+        x_ind (tensor): Inputs of the inducing points.
+    """
+
+    def __init__(self, gpar, x, x_ind):
+        self.gpar = gpar
+        self.x = x
+        self.x_ind = x_ind
+        self.first_layer = True
+
+        # Model components:
+        self.graph = None
+        self.noise = None
+        self.e = None
+        # The latent and observed function will not be exposed directly. This
+        # is to implement lazy computation the posterior.
+        self._f = None
+        self._f_noisy = None
+        self._obs = None  # Observations on which is conditioned.
+        self._obs_queue = None  # Observations on which need to be conditioned.
+
+        # Observations of the current layer:
+        self.y = None
+        self.available = None
+
+    def next_layer(self, model, mask=None):
+        """Move to the next layer.
+
+        Args:
+            model (function): Model constructor.
+            mask (tensor, optional): Boolean mask that determines which data
+                points to keep with respect to the previous layer. If not
+                specified, all data points are kept.
+        """
+        # If this is not the first layer, update concatenate the previous
+        # outputs to the inputs.
+        if not self.first_layer:
+            self._update_inputs()
+        else:
+            self.first_layer = False
+
+        # Filter inputs according to mask if one is given.
+        if mask is not None:
+            self.x = self.x[mask]
+
+        # Empty observation queue.
+        self._obs = []
+        self._obs_queue = []
+
+        # Construct model.
+        self._f, self.noise = model()
+        self.graph = self._f.graph
+        self.e = GP(Delta() * self.noise, graph=self.f.graph)
+        self._f_noisy = self.f + self.e
+
+    @property
+    def f(self):
+        """Latent process."""
+        self._process_obs_queue()
+        return self._f
+
+    @property
+    def f_noisy(self):
+        """Observed process."""
+        self._process_obs_queue()
+        return self._f_noisy
+
+    def _process_obs_queue(self):
+        for x, y in self._obs_queue:
+            obs = self._generate_obs(x, y)
+            self._f |= obs
+            self._f_noisy |= obs
+            self._obs.append(obs)
+        self._obs_queue = []
+
+    def _generate_obs(self, x, y):
+        if self.gpar.sparse:
+            return SparseObs(self._f(self.x_ind), self.e, self._f(x), y)
+        else:
+            return Obs(self._f_noisy(x), y)
+
+    def _update_inputs(self):
         # Update inputs of inducing points.
-        if xs_ind is not None:
-            xs_ind = B.concat([xs_ind, f_post.mean(xs_ind)], axis=1)
+        if self.gpar.sparse:
+            self.x_ind = B.concat([self.x_ind,
+                                   self.f.mean(self.x_ind)], axis=1)
 
-        if self.impute and self.replace:
-            # Impute missing data and replace available data:
-            y = f_post.mean(xs)
-        elif self.impute and B.any(~available):
+        if self.gpar.impute and self.gpar.replace:
+            # Impute missing data and replace available data.
+            self.y = self.f.mean(self.x)
+
+        elif self.gpar.impute and B.any(~self.available):
             # Just impute missing data.
-            y = _merge(y, f_post.mean(xs[~available]), ~available)
-        elif self.replace and B.any(available):
+            self.y = _merge(self.y,
+                            self.f.mean(self.x[~self.available]),
+                            ~self.available)
+
+        elif self.gpar.replace and B.any(self.available):
             # Just replace available data.
-            y = _merge(y, f_post.mean(xs[available]), available)
+            self.y = _merge(self.y,
+                            self.f.mean(self.x[self.available]),
+                            self.available)
 
-        # Update inputs.
-        xs = B.concat([xs, y], axis=1)
+        # Finally, actually update inputs.
+        self.x = B.concat([self.x, self.y], axis=1)
 
-        return xs, xs_ind
+    def observe(self, y):
+        """Observe values for the current layer.
+
+        Args:
+            y (tensor): Observations.
+        """
+        # Save observations and add to observation queue for the posterior.
+        self.y = y
+        self.available = ~B.isnan(y[:, 0])
+        self._obs_queue.append((self.x[self.available],
+                                self.y[self.available]))
+
+    def compute_logpdf(self):
+        """Compute the logpdf of the observations.
+
+        Returns:
+            float: Logpdf of observations.
+        """
+        self._process_obs_queue()
+        return sum([self.graph.logpdf(obs) for obs in self._obs])
+
+    def sample(self, x):
+        """Sample at particular inputs.
+
+        Args:
+            x (tensor): Inputs to sample at.
+
+        Returns:
+            tensor: Sample.
+        """
+        # Ancestral sampling is more efficient than joint sampling.
+        f_sample = self.f(x).sample()
+        e_sample = self.e(x).sample()
+        return f_sample, f_sample + e_sample
+
+    def sample_missing(self):
+        """Sample missing observations."""
+        if B.any(~self.available):
+            # Sample missing data.
+            _, y_missing = self.sample(self.x[~self.available])
+
+            # Merge into the observations.
+            self.y = _merge(self.y, y_missing, ~self.available)
+
+            # Condition on the delta.
+            self._obs_queue.append((self.x[~self.available], y_missing))
 
 
 def per_output(y, impute=False):
