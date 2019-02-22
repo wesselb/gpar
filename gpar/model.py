@@ -3,10 +3,8 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from types import FunctionType
 
 from lab import B
-from plum import Dispatcher, Referentiable, Self
 from stheno import Delta, GP, Obs, SparseObs
 
 __all__ = ['GPAR']
@@ -18,17 +16,18 @@ def _merge(x, updates, to_update):
     concat = B.concat([x[~to_update], updates], axis=0)
 
     # Generate an index mapping to fix the ordering.
-    original_i = 0
-    update_i = B.sum(~to_update)
+    i_original = 0
+    i_update = B.sum(~to_update)
     indices = []
     for i in range(len(to_update)):
-        # Careful not to update the indices in-place!
+        # Careful not to update the indices in-place! This generates trouble
+        # with PyTorch.
         if to_update[i]:
-            indices.append(update_i)
-            update_i = update_i + 1
+            indices.append(i_update)
+            i_update = i_update + 1
         else:
-            indices.append(original_i)
-            original_i = original_i + 1
+            indices.append(i_original)
+            i_original = i_original + 1
 
     # Perform the fix.
     return B.take(concat, indices)
@@ -38,7 +37,7 @@ def _construct_model(f, noise):
     return lambda: (f, noise)
 
 
-class GPAR(Referentiable):
+class GPAR(object):
     """Basic GPAR model.
 
     Args:
@@ -49,7 +48,6 @@ class GPAR(Referentiable):
         x_ind (tensor, optional): Locations of inducing points
             for a sparse approximation. Defaults to `None`.
     """
-    _dispatch = Dispatcher(in_class=Self)
 
     def __init__(self, replace=False, impute=False, x_ind=None):
         self.replace = replace
@@ -71,7 +69,6 @@ class GPAR(Referentiable):
                     x_ind=self.x_ind)
         return gpar
 
-    @_dispatch(FunctionType)
     def add_layer(self, model_constructor):
         """Add a layer.
 
@@ -105,7 +102,7 @@ class GPAR(Referentiable):
             state.observe(y)
 
             # Update with the posterior.
-            gpar.layers.append(_construct_model(state.f, state.noise))
+            gpar.layers.append(_construct_model(state.f_post, state.noise))
 
         return gpar
 
@@ -118,16 +115,16 @@ class GPAR(Referentiable):
             only_last_layer (bool, optional): Compute the pdf of only the last
                 layer. Defaults to `False`.
             unbiased_sample (bool, optional): Compute an unbiased sample of the
-                logpdf. Defaults to `False`.
+                pdf, _not_ logpdf. Defaults to `False`.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        logpdf = 0
+        logpdf = B.cast(0, dtype=B.dtype(x))
         state = GPARState(self, x, self.x_ind)
 
-        for i, ((y, mask), model) in enumerate(zip(per_output(y, self.impute),
-                                                   self.layers)):
+        y_per_output = per_output(y, self.impute or unbiased_sample)
+        for i, ((y, mask), model) in enumerate(zip(y_per_output, self.layers)):
             state.next_layer(model, mask)
             state.observe(y)
 
@@ -138,7 +135,7 @@ class GPAR(Referentiable):
 
             # Sample missing data for an unbiased sample of the logpdf.
             if unbiased_sample:
-                state.sample_missing()
+                state.sample_posterior_missing()
 
         return logpdf
 
@@ -160,12 +157,11 @@ class GPAR(Referentiable):
             state.next_layer(model)
 
             # Sample the current layer.
-            f_sample, y_sample = state.sample(state.x)
-            sample = B.concat([sample, f_sample if latent else y_sample],
-                              axis=1)
+            f, y = state.sample_prior(state.x)
+            sample = B.concat([sample, f if latent else y], axis=1)
 
             # Feed sample into the next layer.
-            state.observe(y_sample)
+            state.observe(y)
 
         return sample
 
@@ -190,16 +186,18 @@ class GPARState(object):
         self.graph = None
         self.noise = None
         self.e = None
-        # The latent and observed function will not be exposed directly. This
-        # is to implement lazy computation the posterior.
-        self._f = None
-        self._f_noisy = None
-        self._obs = None  # Observations on which is conditioned.
-        self._obs_queue = None  # Observations on which need to be conditioned.
+        self.f = None
+        self.f_noisy = None
 
         # Observations of the current layer:
         self.y = None
-        self.available = None
+
+        # The posterior of the latent and observed function will not be exposed
+        # directly, to implement lazy computation of the posterior.
+        self._f_post = None
+        self._f_noisy_post = None
+        self._obs = None
+        self._obs_args = None
 
     def next_layer(self, model, mask=None):
         """Move to the next layer.
@@ -214,73 +212,105 @@ class GPARState(object):
         # outputs to the inputs.
         if not self.first_layer:
             self._update_inputs()
+
+            # Clear observations:
+            self.y = None
+
+            # Clear posterior:
+            self._f_post = None
+            self._f_noisy_post = None
+            self._obs = None
+            self._obs_args = None
         else:
             self.first_layer = False
 
-        # Filter inputs according to mask if one is given.
+        # Filter inputs according to a mask if one is given.
         if mask is not None:
             self.x = self.x[mask]
 
-        # Empty observation queue.
-        self._obs = []
-        self._obs_queue = []
-
         # Construct model.
-        self._f, self.noise = model()
-        self.graph = self._f.graph
+        self.f, self.noise = model()
+        self.graph = self.f.graph
         self.e = GP(Delta() * self.noise, graph=self.f.graph)
-        self._f_noisy = self.f + self.e
+        self.f_noisy = self.f + self.e
 
     @property
-    def f(self):
+    def f_post(self):
         """Latent process."""
-        self._process_obs_queue()
-        return self._f
+        # If no observations are available, simply return the prior.
+        if self.obs is None:
+            return self.f
+
+        # Construct posterior lazily.
+        if self._f_post is None:
+            self._f_post = self.f | self.obs
+        return self._f_post
 
     @property
-    def f_noisy(self):
+    def f_noisy_post(self):
         """Observed process."""
-        self._process_obs_queue()
-        return self._f_noisy
+        # If no observations are available, simply return the prior.
+        if self.obs is None:
+            return self.f_noisy
 
-    def _process_obs_queue(self):
-        for x, y in self._obs_queue:
-            obs = self._generate_obs(x, y)
-            self._f |= obs
-            self._f_noisy |= obs
-            self._obs.append(obs)
-        self._obs_queue = []
+        # Construct posterior lazily.
+        if self._f_noisy_post is None:
+            self._f_noisy_post = self.f_noisy | self.obs
+        return self._f_noisy_post
 
-    def _generate_obs(self, x, y):
-        if self.gpar.sparse:
-            return SparseObs(self._f(self.x_ind), self.e, self._f(x), y)
-        else:
-            return Obs(self._f_noisy(x), y)
+    @property
+    def obs(self):
+        # If no observations are available, simply return `None` to indicate
+        # that that is the case.
+        if self._obs_args is None:
+            return None
+
+        # Lazily compute observations.
+        if self._obs is None:
+            x, y = self._obs_args  # Extract arguments from `self._obs_args`!
+            if self.gpar.sparse:
+                self._obs = SparseObs(self.f(self.x_ind), self.e, self.f(x), y)
+            else:
+                self._obs = Obs(self.f_noisy(x), y)
+        return self._obs
 
     def _update_inputs(self):
+        available = ~B.isnan(self.y[:, 0])
+
         # Update inputs of inducing points.
         if self.gpar.sparse:
             self.x_ind = B.concat([self.x_ind,
-                                   self.f.mean(self.x_ind)], axis=1)
+                                   self.estimate(self.x_ind)], axis=1)
 
+        # Impute missing data and replace available data.
         if self.gpar.impute and self.gpar.replace:
-            # Impute missing data and replace available data.
-            self.y = self.f.mean(self.x)
+            self.y = self.estimate(self.x)
 
-        elif self.gpar.impute and B.any(~self.available):
-            # Just impute missing data.
+        # Just impute missing data.
+        elif self.gpar.impute and B.any(~available):
             self.y = _merge(self.y,
-                            self.f.mean(self.x[~self.available]),
-                            ~self.available)
+                            self.estimate(self.x[~available]),
+                            ~available)
 
-        elif self.gpar.replace and B.any(self.available):
-            # Just replace available data.
+        # Just replace available data.
+        elif self.gpar.replace and B.any(available):
             self.y = _merge(self.y,
-                            self.f.mean(self.x[self.available]),
-                            self.available)
+                            self.estimate(self.x[available]),
+                            available)
 
         # Finally, actually update inputs.
         self.x = B.concat([self.x, self.y], axis=1)
+
+    def estimate(self, x):
+        """Estimate the latent function.
+
+        Args:
+            x (tensor): Inputs to estimate latent function at.
+
+        Returns:
+            tensor: Estimate of latent function.
+        """
+        return self.f_post.mean(x)
 
     def observe(self, y):
         """Observe values for the current layer.
@@ -288,11 +318,14 @@ class GPARState(object):
         Args:
             y (tensor): Observations.
         """
-        # Save observations and add to observation queue for the posterior.
+        # Save observations.
         self.y = y
-        self.available = ~B.isnan(y[:, 0])
-        self._obs_queue.append((self.x[self.available],
-                                self.y[self.available]))
+
+        # If there are any observations, save them in `self._obs_args` for lazy
+        # computation of the posterior.
+        available = ~B.isnan(y[:, 0])
+        if B.any(available):
+            self._obs_args = (self.x[available], self.y[available])
 
     def compute_logpdf(self):
         """Compute the logpdf of the observations.
@@ -300,11 +333,13 @@ class GPARState(object):
         Returns:
             float: Logpdf of observations.
         """
-        self._process_obs_queue()
-        return sum([self.graph.logpdf(obs) for obs in self._obs])
+        if self.obs is None:
+            return 0
+        else:
+            return self.graph.logpdf(self.obs)
 
-    def sample(self, x):
-        """Sample at particular inputs.
+    def sample_prior(self, x):
+        """Sample from the _prior_.
 
         Args:
             x (tensor): Inputs to sample at.
@@ -317,26 +352,25 @@ class GPARState(object):
         e_sample = self.e(x).sample()
         return f_sample, f_sample + e_sample
 
-    def sample_missing(self):
-        """Sample missing observations."""
-        if B.any(~self.available):
+    def sample_posterior_missing(self):
+        """Sample missing observations from the _posterior_."""
+        missing = B.isnan(self.y[:, 0])
+
+        if B.any(missing):
             # Sample missing data.
-            _, y_missing = self.sample(self.x[~self.available])
+            y_missing = self.f_noisy_post(self.x[missing]).sample()
 
             # Merge into the observations.
-            self.y = _merge(self.y, y_missing, ~self.available)
-
-            # Condition on the delta.
-            self._obs_queue.append((self.x[~self.available], y_missing))
+            self.y = _merge(self.y, y_missing, missing)
 
 
-def per_output(y, impute=False):
+def per_output(y, keep=False):
     """Return observations per output, respecting that the data must be
     closed downwards.
 
     Args:
         y (tensor): Outputs.
-        impute (bool, optional): Also return missing observations that would
+        keep (bool, optional): Also return missing observations that would
             make the data closed downwards.
 
     Returns:
@@ -347,14 +381,16 @@ def per_output(y, impute=False):
     p = B.shape_int(y)[1]  # Number of outputs
 
     for i in range(p):
-        # Check availability.
+        # Check current and future availability.
         available = ~B.isnan(y)
+        future = B.any(available[:, i + 1:], axis=1)
+
+        # Initialise the mask to current availability.
         mask = available[:, i]
 
         # Take into account future observations if necessary.
-        if impute and i < p - 1:
-            # Careful not to update the mask in-place!
-            mask = mask | B.any(available[:, i + 1:], axis=1)
+        if keep and i < p - 1:  # Check whether this is the last output.
+            mask = mask | future
 
         # Give stuff back.
         yield y[mask, i:i + 1], mask
