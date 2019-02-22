@@ -365,14 +365,8 @@ class GPARRegressor(object):
             gpar = _construct_gpar(self, self.vs, B.shape_int(x)[1], p)
 
         # Sample and return.
-        i, samples = 0, []
-        while i < num_samples:
-            try:
-                samples.append(gpar.sample(x, latent=latent).detach().numpy())
-                i += 1
-            except Exception as e:
-                log.warning('Caught exception during sampling: "{}".'.format(e))
-
+        samples = [gpar.sample(x, latent=latent).detach().numpy()
+                   for _ in range(num_samples)]
         return samples[0] if num_samples == 1 else samples
 
     def predict(self, x, num_samples=100, latent=True, credible_bounds=False):
