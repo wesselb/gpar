@@ -315,7 +315,7 @@ class GPARRegressor(object):
             sample_missing (bool, optional): Sample missing data to compute an
                 unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.
             posterior (bool, optional): Compute logpdf under the posterior
-                instead of the prior. Defaults to `False.
+                instead of the prior. Defaults to `False`.
 
         Returns
             float: Estimate of the logpdf.
