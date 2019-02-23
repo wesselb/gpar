@@ -313,8 +313,8 @@ class GPARRegressor(object):
             x (tensor): Inputs.
             y (tensor): Outputs.
             unbiased_sample (bool, optional): Compute an unbiased estimate of
-                the logpdf. This make a difference when `y` is not closed
-                downwards. Defaults to `True`.
+                the pdf, _not_ logpdf. This make a difference when `y` is not
+                closed downwards. Defaults to `True`.
             posterior (bool, optional): Compute logpdf under the posterior
                 instead of the prior. Defaults to `False.
 
@@ -332,9 +332,9 @@ class GPARRegressor(object):
         gpar = _construct_gpar(self, self.vs, m, p)
         if posterior:
             gpar = gpar | (self.x, self.y)
-        return -gpar.logpdf(x, y,
-                            only_last_layer=True,
-                            unbiased_sample=unbiased_sample).detach_().numpy()
+        return gpar.logpdf(x, y,
+                           only_last_layer=False,
+                           unbiased_sample=unbiased_sample).detach_().numpy()
 
     def sample(self, x, p=None, posterior=False, num_samples=1, latent=False):
         """Sample from the prior or posterior.
