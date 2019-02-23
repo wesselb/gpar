@@ -125,17 +125,15 @@ class GPAR(object):
 
         y_per_output = per_output(y, self.impute or unbiased_sample)
         for i, ((y, mask), model) in enumerate(zip(y_per_output, self.layers)):
-            state.next_layer(model, mask)
+
+            # Sample missing to yield an unbiased estimate.
+            state.next_layer(model, mask, sample_missing=unbiased_sample)
             state.observe(y)
 
             # Accumulate logpdf.
             last_layer = i == len(self.layers) - 1
             if ~only_last_layer or (last_layer and only_last_layer):
                 logpdf += state.compute_logpdf()
-
-            # Sample missing data for an unbiased sample of the logpdf.
-            if unbiased_sample:
-                state.sample_posterior_missing()
 
         return logpdf
 
@@ -157,7 +155,7 @@ class GPAR(object):
             state.next_layer(model)
 
             # Sample the current layer.
-            f, y = state.sample_prior(state.x)
+            f, y = state.sample(state.x)
             sample = B.concat([sample, f if latent else y], axis=1)
 
             # Feed sample into the next layer.
@@ -199,7 +197,7 @@ class GPARState(object):
         self._obs = None
         self._obs_args = None
 
-    def next_layer(self, model, mask=None):
+    def next_layer(self, model, mask=None, sample_missing=False):
         """Move to the next layer.
 
         Args:
@@ -207,11 +205,13 @@ class GPARState(object):
             mask (tensor, optional): Boolean mask that determines which data
                 points to keep with respect to the previous layer. If not
                 specified, all data points are kept.
+            sample_missing (bool, optional): Sample missing data. Defaults to
+                `False`.
         """
         # If this is not the first layer, update concatenate the previous
         # outputs to the inputs.
         if not self.first_layer:
-            self._update_inputs()
+            self._update_inputs(sample_missing=sample_missing)
 
             # Clear observations:
             self.y = None
@@ -274,43 +274,42 @@ class GPARState(object):
                 self._obs = Obs(self.f_noisy(x), y)
         return self._obs
 
-    def _update_inputs(self):
+    def _update_inputs(self, sample_missing):
         available = ~B.isnan(self.y[:, 0])
+
+        # TODO: After imputation, should GPAR condition on the imputed data?
+        # TODO: Should this happen before updating of sparse inputs?
 
         # Update inputs of inducing points.
         if self.gpar.sparse:
             self.x_ind = B.concat([self.x_ind,
-                                   self.estimate(self.x_ind)], axis=1)
+                                   self.f_post.mean(self.x_ind)], axis=1)
+
+        # Sample missing data
+        if sample_missing and B.any(~available):
+            self.y = _merge(self.y,
+                            self.f_noisy_post(self.x[~available]).sample(),
+                            ~available)
+            available = ~B.isnan(self.y[:, 0])
 
         # Impute missing data and replace available data.
         if self.gpar.impute and self.gpar.replace:
-            self.y = self.estimate(self.x)
+            self.y = self.f_post.mean(self.x)
+        else:
+            # Just impute missing data.
+            if self.gpar.impute and B.any(~available):
+                self.y = _merge(self.y,
+                                self.f_post.mean(self.x[~available]),
+                                ~available)
 
-        # Just impute missing data.
-        elif self.gpar.impute and B.any(~available):
-            self.y = _merge(self.y,
-                            self.estimate(self.x[~available]),
-                            ~available)
-
-        # Just replace available data.
-        elif self.gpar.replace and B.any(available):
-            self.y = _merge(self.y,
-                            self.estimate(self.x[available]),
-                            available)
+            # Just replace available data.
+            if self.gpar.replace and B.any(available):
+                self.y = _merge(self.y,
+                                self.f_post.mean(self.x[available]),
+                                available)
 
         # Finally, actually update inputs.
         self.x = B.concat([self.x, self.y], axis=1)
-
-    def estimate(self, x):
-        """Estimate the latent function.
-
-        Args:
-            x (tensor): Inputs to estimate latent function at.
-
-        Returns:
-            tensor: Estimate of latent function.
-        """
-        return self.f_post.mean(x)
 
     def observe(self, y):
         """Observe values for the current layer.
@@ -338,7 +337,7 @@ class GPARState(object):
         else:
             return self.graph.logpdf(self.obs)
 
-    def sample_prior(self, x):
+    def sample(self, x):
         """Sample from the _prior_.
 
         Args:
@@ -351,17 +350,6 @@ class GPARState(object):
         f_sample = self.f(x).sample()
         e_sample = self.e(x).sample()
         return f_sample, f_sample + e_sample
-
-    def sample_posterior_missing(self):
-        """Sample missing observations from the _posterior_."""
-        missing = B.isnan(self.y[:, 0])
-
-        if B.any(missing):
-            # Sample missing data.
-            y_missing = self.f_noisy_post(self.x[missing]).sample()
-
-            # Merge into the observations.
-            self.y = _merge(self.y, y_missing, missing)
 
 
 def per_output(y, keep=False):
