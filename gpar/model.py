@@ -106,7 +106,7 @@ class GPAR(object):
 
         return gpar
 
-    def logpdf(self, x, y, only_last_layer=False, unbiased_sample=False):
+    def logpdf(self, x, y, only_last_layer=False, sample_missing=False):
         """Compute the logpdf.
 
         Args:
@@ -114,8 +114,8 @@ class GPAR(object):
             y (tensor): Outputs.
             only_last_layer (bool, optional): Compute the pdf of only the last
                 layer. Defaults to `False`.
-            unbiased_sample (bool, optional): Compute an unbiased sample of the
-                pdf, _not_ logpdf. Defaults to `False`.
+            sample_missing (bool, optional): Sample missing data to compute an
+                unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
@@ -123,11 +123,11 @@ class GPAR(object):
         logpdf = B.cast(0, dtype=B.dtype(x))
         state = GPARState(self, x, self.x_ind)
 
-        y_per_output = per_output(y, self.impute or unbiased_sample)
+        y_per_output = per_output(y, self.impute or sample_missing)
         for i, ((y, mask), model) in enumerate(zip(y_per_output, self.layers)):
 
             # Sample missing to yield an unbiased estimate.
-            state.next_layer(model, mask, sample_missing=unbiased_sample)
+            state.next_layer(model, mask, sample_missing=sample_missing)
             state.observe(y)
 
             # Accumulate logpdf.
