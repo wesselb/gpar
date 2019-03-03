@@ -73,7 +73,7 @@ def _model_generator(vs,
                         init=_vector_from_init(scale, m))
         kernel += variance * EQ().stretch(scales).select(m_inds)
 
-        # Add linear kernel and outputs if asked for.
+        # Add linear kernel over outputs if asked for.
         if linear and pi > 0:
             scales = vs.bnd(name=(pi, 'O/L/scales'), group=pi,
                             init=_vector_from_init(linear_scale, p_num))
