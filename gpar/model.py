@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from lab import B
-from stheno import Delta, GP, Obs, SparseObs
+from stheno import Delta, GP, Obs, SparseObs, dense
 
 __all__ = ['GPAR']
 log = logging.getLogger(__name__)
@@ -280,26 +280,29 @@ class GPARState(object):
         # Update inputs of inducing points.
         if self.gpar.sparse:
             self.x_ind = B.concat([self.x_ind,
-                                   self.f_post.mean(self.x_ind)], axis=1)
+                                   self._estimate(self.x_ind)], axis=1)
 
         # Impute missing data and replace available data.
         if self.gpar.impute and self.gpar.replace:
-            self.y = self.f_post.mean(self.x)
+            self.y = self._estimate(self.x)
         else:
             # Just impute missing data.
             if self.gpar.impute and B.any(~available):
                 self.y = _merge(self.y,
-                                self.f_post.mean(self.x[~available]),
+                                self._estimate(self.x[~available]),
                                 ~available)
 
             # Just replace available data.
             if self.gpar.replace and B.any(available):
                 self.y = _merge(self.y,
-                                self.f_post.mean(self.x[available]),
+                                self._estimate(self.x[available]),
                                 available)
 
         # Finally, actually update inputs.
         self.x = B.concat([self.x, self.y], axis=1)
+
+    def _estimate(self, x):
+        return dense(self.f_post.mean(x))
 
     def observe(self, y):
         """Observe values for the current layer.
