@@ -45,6 +45,7 @@ def _model_generator(vs,
                      pi,  # This is the _index_ of the output modelled.
                      scale,
                      scale_tie,
+                     input_nonlinear,
                      linear,
                      linear_scale,
                      linear_with_inputs,
@@ -66,12 +67,17 @@ def _model_generator(vs,
         m_inds = list(range(m))
         p_inds = list(range(m + p_start, m + p_last + 1))
 
-        # Add nonlinear kernel over inputs.
-        variance = vs.bnd(name=(pi, 'I/NL/var'), group=pi, init=1.)
-        scales = vs.bnd(name=(0 if scale_tie else pi, 'I/NL/scales'),
+        # Add nonlinear or linear kernel over inputs.
+        scales = vs.bnd(name=(0 if scale_tie else pi, 'I/scales'),
                         group=0 if scale_tie else pi,
                         init=_vector_from_init(scale, m))
-        kernel += variance * EQ().stretch(scales).select(m_inds)
+        if input_nonlinear:
+            # Add nonlinear linear over inputs.
+            variance = vs.bnd(name=(pi, 'I/var'), group=pi, init=1.)
+            kernel += variance * EQ().stretch(scales).select(m_inds)
+        else:
+            # Add linear kernel over inputs.
+            kernel += Linear().stretch(scales).select(m_inds)
 
         # Add linear kernel over outputs if asked for.
         if linear and pi > 0:
@@ -151,6 +157,8 @@ class GPARRegressor(object):
             the inputs. Defaults to `1.0`.
         scale_tie (bool, optional): Tie the length scale(s) over the inputs.
             Defaults to `False`.
+        input_nonlinear (bool, optional): Use nonlinear dependencies with
+            respect to the inputs. Defaults to `True`.
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
         linear_scale (tensor, optional): Initial value(s) for the scale(s) of
@@ -191,6 +199,7 @@ class GPARRegressor(object):
                  impute=True,
                  scale=1.0,
                  scale_tie=False,
+                 input_nonlinear=True,
                  linear=True,
                  linear_scale=100.0,
                  linear_with_inputs=False,
@@ -208,6 +217,7 @@ class GPARRegressor(object):
         self.model_config = {
             'scale': scale,
             'scale_tie': scale_tie,
+            'input_nonlinear': input_nonlinear,
             'linear': linear,
             'linear_scale': linear_scale,
             'linear_with_inputs': linear_with_inputs,
