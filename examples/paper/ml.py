@@ -59,7 +59,7 @@ model = GPARRegressor(scale=0.1,
                       nonlinear=True, nonlinear_scale=1.0,
                       noise=0.01,
                       impute=True, replace=True, normalise_y=True)
-model.fit(x_train, y_train, trace=True)
+model.fit(x_train, y_train)
 means = model.predict(x_test, num_samples=100, latent=True)
 
 # Print remaining numbers:

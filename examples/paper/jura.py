@@ -31,7 +31,7 @@ model = GPARRegressor(scale=10.,
                       noise=0.1,
                       impute=True, replace=True, normalise_y=True,
                       transform_y=log_transform)
-model.fit(x_train, y_train, trace=True, fix=False)
+model.fit(x_train, y_train, fix=False)
 means_test = model.predict(x_test, num_samples=200, latent=True)
 
 # Compute MAE.

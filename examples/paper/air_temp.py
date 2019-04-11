@@ -16,13 +16,15 @@ n_ind = [10 * 10 + 1, 10 * 15 + 1, 10 * 31 + 1][d_size]
 x_ind = np.linspace(d_all.x[:, 0].min(), d_all.x[:, 0].max(), n_ind)
 
 # Fit and predict GPAR.
+#   Note: we use D-GPAR-L-NL here, as opposed to D-GPAR-L, to make the results
+#   a little more drastic.
 model = GPARRegressor(scale=0.2,
                       linear=True, linear_scale=10.,
                       nonlinear=True, nonlinear_scale=1.,
                       noise=0.1,
                       impute=True, replace=True, normalise_y=True,
                       x_ind=x_ind)
-model.fit(d_train.x, d_train.y, trace=True)
+model.fit(d_train.x, d_train.y)
 
 # Predict for the test sets.
 preds = []
