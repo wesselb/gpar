@@ -7,5 +7,6 @@ Features:
     ☐ Search over multiple hyperparameters
     ☐ Ability to exclude hyperparameters from optimisation
     ☐ Optimisation of inducing points
+    ☐ Nice overview of trained hyperparameters
     ✓ Normalise/unnormalise data to make work with defaults values of hypers @done (19-04-11 12:17)
     ✓ Ability to specify transforms @done (19-04-11 12:17)
