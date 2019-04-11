@@ -17,3 +17,12 @@ cover
 # Other
 .DS_Store
 *.swp
+
+# Output of examples
+*.pdf
+
+# Projects
+examples/intel.py
+examples/data/intel
+examples/bnn.py
+examples/data/bnn
