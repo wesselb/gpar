@@ -2,9 +2,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-from lab.torch import B
-from gpar.model import merge, construct_model, last, per_output
 import numpy as np
+from gpar.model import merge, construct_model, last, per_output
+from lab.torch import B
 
 # noinspection PyUnresolvedReferences
 from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose
