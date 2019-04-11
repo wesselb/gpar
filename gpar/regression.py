@@ -120,14 +120,8 @@ def _model_generator(vs,
 
 
 def _construct_gpar(reg, vs, m, p):
-    # Check if inducing points are used.
-    if reg.x_ind is not None:
-        x_ind = vs.get(name='inducing_points', init=reg.x_ind)
-    else:
-        x_ind = None
-
     # Construct GPAR model layer by layer.
-    gpar = GPAR(replace=reg.replace, impute=reg.impute, x_ind=x_ind)
+    gpar = GPAR(replace=reg.replace, impute=reg.impute, x_ind=reg.x_ind)
     for pi in range(p):
         gpar = gpar.add_layer(_model_generator(vs, m, pi, **reg.model_config))
 
