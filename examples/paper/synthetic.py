@@ -22,7 +22,7 @@ model = GPARRegressor(scale=0.1,
                       linear=True, linear_scale=10.,
                       nonlinear=True, nonlinear_scale=0.1,
                       noise=0.1,
-                      impute=False, replace=False)
+                      impute=False, replace=True)
 model.fit(x_obs, y_obs, trace=True)
 means, lowers, uppers = \
     model.predict(x, num_samples=100, credible_bounds=True, latent=True)
@@ -63,5 +63,5 @@ for i in range(3):
         leg.get_frame().set_linewidth(0)
 
 plt.tight_layout()
-plt.savefig('examples/experiment_synthetic_prediction.pdf')
+plt.savefig('examples/paper/synthetic_prediction.pdf')
 plt.show()
