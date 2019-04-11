@@ -6,14 +6,18 @@ import logging
 
 import numpy as np
 import torch
+from pathos.multiprocessing import ProcessPool
 from lab.torch import B
-from stheno.torch import Graph, GP, EQ, Linear
+from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear
 from varz import Vars, minimise_l_bfgs_b
 
 from .model import GPAR
 
-__all__ = ['GPARRegressor']
+__all__ = ['GPARRegressor', 'log_transform']
 log = logging.getLogger(__name__)
+
+#: Log transform for the data.
+log_transform = (B.log, B.exp)
 
 
 def _uprank(x):
@@ -45,13 +49,11 @@ def _model_generator(vs,
                      pi,  # This is the _index_ of the output modelled.
                      scale,
                      scale_tie,
-                     input_nonlinear,
                      linear,
                      linear_scale,
-                     linear_with_inputs,
                      nonlinear,
                      nonlinear_scale,
-                     nonlinear_with_inputs,
+                     rq,
                      markov,
                      noise):
     def model():
@@ -67,51 +69,37 @@ def _model_generator(vs,
         m_inds = list(range(m))
         p_inds = list(range(m + p_start, m + p_last + 1))
 
-        # Add nonlinear or linear kernel over inputs.
+        # Add nonlinear kernel over inputs.
         scales = vs.bnd(name=(0 if scale_tie else pi, 'I/scales'),
                         group=0 if scale_tie else pi,
                         init=_vector_from_init(scale, m))
-        if input_nonlinear:
-            # Add nonlinear linear over inputs.
-            variance = vs.bnd(name=(pi, 'I/var'), group=pi, init=1.)
-            kernel += variance * EQ().stretch(scales).select(m_inds)
+        variance = vs.bnd(name=(pi, 'I/var'), group=pi, init=1.)
+        if rq:
+            k = RQ(vs.bnd(name=(pi, 'I/alpha'), group=pi, init=1e-2,
+                          lower=1e-3, upper=1e3))
         else:
-            # Add linear kernel over inputs.
-            kernel += Linear().stretch(scales).select(m_inds)
+            k = EQ()
+        kernel += variance * k.stretch(scales).select(m_inds)
 
         # Add linear kernel over outputs if asked for.
         if linear and pi > 0:
             scales = vs.bnd(name=(pi, 'O/L/scales'), group=pi,
                             init=_vector_from_init(linear_scale, p_num))
-            kernel_linear = Linear().stretch(scales).select(p_inds)
-
-            if linear_with_inputs:
-                # Linear dependencies depend on the inputs.
-                scales = vs.bnd(name=(pi, 'O/L/input_scales'), group=pi,
-                                init=_vector_from_init(scale, m))
-                kernel_linear *= EQ().stretch(scales).select(m_inds)
-
-            # Add to the result.
-            kernel += kernel_linear
+            kernel += Linear().stretch(scales).select(p_inds)
 
         # Add nonlinear kernel over outputs if asked for.
         if nonlinear and pi > 0:
-            # Nonlinear dependencies do not depend on the inputs.
             variance = vs.bnd(name=(pi, 'O/NL/var'), group=pi, init=1.)
             scales = vs.bnd(name=(pi, 'O/NL/scales'), group=pi,
                             init=_vector_from_init(nonlinear_scale, p_num))
-            kernel_nonlinear = variance * EQ().stretch(scales).select(p_inds)
+            if rq:
+                k = RQ(vs.bnd(name=(pi, 'O/NL/alpha'), group=pi, init=1e-2,
+                              lower=1e-3, upper=1e3))
+            else:
+                k = EQ()
+            kernel += variance * k.stretch(scales).select(p_inds)
 
-            if nonlinear_with_inputs:
-                # Nonlinear dependencies depend on the inputs.
-                scales = vs.bnd(name=(pi, 'O/NL/input_scales'), group=pi,
-                                init=_vector_from_init(scale, m))
-                kernel_nonlinear *= EQ().stretch(scales).select(m_inds)
-
-            # Add to the result.
-            kernel += kernel_nonlinear
-
-        # Figure out initialisation for noise.
+        # Construct noise kernel.
         if np.size(noise) > 1:
             if np.ndim(noise) == 1:
                 noise_init = noise[pi]
@@ -120,10 +108,14 @@ def _model_generator(vs,
                                  ''.format(np.ndim(noise)))
         else:
             noise_init = noise
+        kernel_noise = vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init) * \
+                       Delta()
 
-        # Return model and noise.
-        return GP(kernel=kernel, graph=Graph()), \
-               vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init)
+        # Construct model and return.
+        graph = Graph()
+        f = GP(kernel, graph=graph)
+        e = GP(kernel_noise, graph=graph)
+        return f, e
 
     return model
 
@@ -157,26 +149,26 @@ class GPARRegressor(object):
             the inputs. Defaults to `1.0`.
         scale_tie (bool, optional): Tie the length scale(s) over the inputs.
             Defaults to `False`.
-        input_nonlinear (bool, optional): Use nonlinear dependencies with
-            respect to the inputs. Defaults to `True`.
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
         linear_scale (tensor, optional): Initial value(s) for the scale(s) of
             the linear dependencies. Defaults to `100.0`.
-        linear_with_inputs (bool, optional): Make the linear dependencies
-            between the outputs dependent on the inputs. Defaults to `False`.
         nonlinear (bool, optional): Use nonlinear dependencies between outputs.
             Defaults to `True`.
         nonlinear_scale (tensor, optional): Initial value(s) for the length
             scale(s) over the outputs. Defaults to `0.1`.
-        nonlinear_with_inputs (bool, optional): Make the nonlinear dependencies
-            between the outputs dependent on the inputs. Defaults to `False`.
+        rq (bool, optional): Use rational quadratic (RQ) kernels instead of
+            exponentiated quadratic (EQ) kernels. Defaults to `False`.
         markov (int, optional): Markov order of conditionals. Set to `None` to
             have a fully connected structure. Defaults to `None`.
         noise (tensor, optional): Initial value(s) for the observation noise(s).
             Defaults to `0.01`.
         x_ind (tensor, optional): Locations of inducing points. Set to `None`
             if inducing points should not be used. Defaults to `None`.
+        normalise_y (bool, optional): Normalise outputs. Defaults to `False`.
+        transform_y (tuple, optional): Tuple containing a transform and its
+            inverse, which should be applied to the data before fitting.
+            Defaults to the identity transform.
 
     Attributes:
         replace (bool): Replace observations with predictive means.
@@ -192,23 +184,24 @@ class GPARRegressor(object):
         n (int): Number of training data points.
         m (int): Number of input features.
         p (int): Number of outputs.
+        normalise_y (bool): Normalise outputs.
     """
 
     def __init__(self,
-                 replace=True,
+                 replace=False,
                  impute=True,
                  scale=1.0,
                  scale_tie=False,
-                 input_nonlinear=True,
                  linear=True,
                  linear_scale=100.0,
-                 linear_with_inputs=False,
                  nonlinear=False,
-                 nonlinear_scale=0.1,
-                 nonlinear_with_inputs=False,
+                 nonlinear_scale=1.0,
+                 rq=False,
                  markov=None,
-                 noise=0.01,
-                 x_ind=None):
+                 noise=0.1,
+                 x_ind=None,
+                 normalise_y=False,
+                 transform_y=(lambda x: x, lambda x: x)):
         # Model configuration.
         self.replace = replace
         self.impute = impute
@@ -217,13 +210,11 @@ class GPARRegressor(object):
         self.model_config = {
             'scale': scale,
             'scale_tie': scale_tie,
-            'input_nonlinear': input_nonlinear,
             'linear': linear,
             'linear_scale': linear_scale,
-            'linear_with_inputs': linear_with_inputs,
             'nonlinear': nonlinear,
             'nonlinear_scale': nonlinear_scale,
-            'nonlinear_with_inputs': nonlinear_with_inputs,
+            'rq': rq,
             'markov': markov,
             'noise': noise
         }
@@ -236,6 +227,10 @@ class GPARRegressor(object):
         self.n = None  # Number of data points
         self.m = None  # Number of input features
         self.p = None  # Number of outputs
+
+        # Output normalisation and transformation.
+        self.normalise_y = normalise_y
+        self._transform_y, self._untransform_y = transform_y
 
     def get_variables(self):
         """Construct a dictionary containing all the hyperparameters.
@@ -251,8 +246,8 @@ class GPARRegressor(object):
     def fit(self,
             x,
             y,
-            progressive=True,
             greedy=False,
+            fix=True,
             **kw_args):
         """Fit the model to data.
 
@@ -261,56 +256,78 @@ class GPARRegressor(object):
         Args:
             x (tensor): Inputs of training data.
             y (tensor): Outputs of training data.
-            progressive (bool, optional): Train layer by layer instead of all
-                layers at once. Defaults to `True`.
             greedy (bool, optional): Greedily determine the ordering of the
                 outputs. Defaults to `False`.
+            fix (bool, optional): Fix the parameters of a layer after
+                training it. If set to `False`, the likelihood are
+                accumulated and all parameters are optimised at every step.
+                Defaults to `True`.
         """
         if greedy:
             raise NotImplementedError('Greedy search is not implemented yet.')
 
         # Store data.
-        self.x, self.y = _uprank(x), _uprank(y)
+        self.x, self.y = _uprank(x), self._transform_y(_uprank(y))
         self.n, self.m = self.x.shape
         self.p = self.y.shape[1]
 
-        # Optimise layers by layer or all layers simultaneously.
-        if progressive:
-            # Check whether to only optimise the last layer.
-            only_last = not self.sparse
+        # Perform normalisation, carefully handling missing values.
+        if self.normalise_y:
+            means, stds = [], []
+            for i in range(self.p):
+                # Filter missing observations.
+                available = ~B.isnan(self.y[:, i])
+                y_i = self.y[available, i]
 
-            # Fit layer by layer.
-            for pi in range(self.p):
-                def objective(vs):
-                    # `_construct_gpar` takes in the _number_ of outputs.
-                    gpar = _construct_gpar(self, vs, self.m, pi + 1)
-                    return -gpar.logpdf(self.x, self.y,
-                                        only_last_layer=only_last)
+                # Calculate mean and std.
+                means.append(B.mean(y_i))
+                stds.append(B.std(y_i))
 
-                # Determine extra variables to optimise.
-                if self.sparse and pi == 0:
-                    names = ['inducing_points']
-                else:
-                    names = []
+            # Stack into a vector and create normalisers.
+            means, stds = B.stack(means)[None, :], B.stack(stds)[None, :]
 
-                minimise_l_bfgs_b(objective,
-                                  self.vs,
-                                  names=names,
-                                  groups=[pi],
-                                  **kw_args)
-        else:
-            # Determine extra variables to optimise.
-            names = ['inducing_points'] if self.sparse else []
+            def normalise_y(y_):
+                return (y_ - means) / stds
 
-            # Fit all layers simultaneously.
+            def unnormalise_y(y_):
+                return y_ * stds + means
+
+            # Perform normalisation.
+            self.y = normalise_y(self.y)
+
+            # Compose existing transforms with normalisation.
+            transform_y, untransform_y = self._transform_y, self._untransform_y
+            self._transform_y = lambda y_: normalise_y(transform_y(y_))
+            self._untransform_y = lambda y_: untransform_y(unnormalise_y(y_))
+
+        # Fit layer by layer.
+        #   Note: `_construct_gpar` takes in the *number* of outputs.
+        for pi in range(self.p):
+            # If we fix parameters of previous layers, we can precompute the
+            # inputs. This speeds up the optimisation massively.
+            if fix:
+                gpar = _construct_gpar(self, self.vs, self.m, pi + 1)
+                fixed_x, fixed_x_ind = gpar.logpdf(self.x, self.y,
+                                                   only_last_layer=True,
+                                                   outputs=list(range(pi)),
+                                                   return_inputs=True)
+
             def objective(vs):
-                gpar = _construct_gpar(self, vs, self.m, self.p)
-                return -gpar.logpdf(self.x, self.y, only_last_layer=False)
+                gpar = _construct_gpar(self, vs, self.m, pi + 1)
+                # If the parameters of the previous layers are fixed, use the
+                # precomputed inputs.
+                if fix:
+                    return -gpar.logpdf(fixed_x, self.y,
+                                        only_last_layer=fix,
+                                        outputs=[pi],
+                                        x_ind=fixed_x_ind)
+                else:
+                    return -gpar.logpdf(self.x, self.y, only_last_layer=False)
 
+            # Perform the optimisation.
             minimise_l_bfgs_b(objective,
                               self.vs,
-                              names=names,
-                              groups=list(range(self.p)),
+                              groups=[pi] if fix else list(range(pi + 1)),
                               **kw_args)
 
         # Store that the model is fit.
@@ -330,7 +347,7 @@ class GPARRegressor(object):
         Returns
             float: Estimate of the logpdf.
         """
-        x, y = _uprank(x), _uprank(y)
+        x, y = _uprank(x), self._transform_y(_uprank(y))
         m, p = x.shape[1], y.shape[1]
 
         if posterior and not self.is_fit:
@@ -381,8 +398,9 @@ class GPARRegressor(object):
             # Construct prior GPAR.
             gpar = _construct_gpar(self, self.vs, B.shape_int(x)[1], p)
 
-        # Sample and return.
-        samples = [gpar.sample(x, latent=latent).detach().numpy()
+        # Perform sampling.
+        samples = [self._untransform_y(gpar.sample(x, latent=latent))
+                       .detach_().numpy()
                    for _ in range(num_samples)]
         return samples[0] if num_samples == 1 else samples
 
