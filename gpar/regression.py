@@ -317,7 +317,7 @@ class GPARRegressor(object):
                 # precomputed inputs.
                 if fix:
                     return -gpar.logpdf(fixed_x, self.y,
-                                        only_last_layer=fix,
+                                        only_last_layer=True,
                                         outputs=[pi],
                                         x_ind=fixed_x_ind)
                 else:
