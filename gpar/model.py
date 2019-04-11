@@ -117,7 +117,7 @@ class GPAR(object):
 
         Args:
             model_constructor (function): Constructor of the model, which should
-                return a tuple containing the GP and the noise.
+                return a tuple containing the latent and noise process.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
@@ -147,7 +147,7 @@ class GPAR(object):
 
             # Update with posterior.
             f_post = f | obs
-            e_new = GP(e.kernel, graph=f.graph)
+            e_new = GP(e.kernel, e.mean, graph=f.graph)
             gpar.layers.append(_construct_model(f_post, e_new))
 
             # Update inputs.
