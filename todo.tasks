@@ -6,5 +6,6 @@ Features:
     ☐ Greedy fitting
     ☐ Search over multiple hyperparameters
     ☐ Ability to exclude hyperparameters from optimisation
-    ☐ Normalise/unnormalise data to make work with defaults values of hypers
-    ☐ Ability to specify transforms
+    ☐ Optimisation of inducing points
+    ✓ Normalise/unnormalise data to make work with defaults values of hypers @done (19-04-11 12:17)
+    ✓ Ability to specify transforms @done (19-04-11 12:17)
