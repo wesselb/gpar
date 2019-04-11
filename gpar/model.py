@@ -11,7 +11,7 @@ __all__ = ['GPAR']
 log = logging.getLogger(__name__)
 
 
-def _merge(x, updates, to_update):
+def merge(x, updates, to_update):
     """Merge updates into a tensor.
 
     Args:
@@ -44,7 +44,7 @@ def _merge(x, updates, to_update):
     return B.take(concat, indices)
 
 
-def _construct_model(f, e):
+def construct_model(f, e):
     """Convenience function that returns a model constructor.
 
     Args:
@@ -57,7 +57,7 @@ def _construct_model(f, e):
     return lambda: (f, e)
 
 
-def _last(xs, select=None):
+def last(xs, select=None):
     """Zip a list with a boolean indicating whether it is the last element.
 
     Args:
@@ -140,7 +140,7 @@ class GPAR(object):
         gpar, x_ind = self.copy(), self.x_ind
 
         for last, ((y, mask), model) in \
-                _last(zip(per_output(y, self.impute), self.layers)):
+                last(zip(per_output(y, self.impute), self.layers)):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
             obs = self._obs(x, x_ind, y, f, e)  # Construct observations.
@@ -148,7 +148,7 @@ class GPAR(object):
             # Update with posterior.
             f_post = f | obs
             e_new = GP(e.kernel, e.mean, graph=f.graph)
-            gpar.layers.append(_construct_model(f_post, e_new))
+            gpar.layers.append(construct_model(f_post, e_new))
 
             # Update inputs.
             if not last:
@@ -194,7 +194,7 @@ class GPAR(object):
 
         y_per_output = per_output(y, self.impute or sample_missing)
         for last, ((y, mask), model) in \
-                _last(zip(y_per_output, self.layers), select=outputs):
+                last(zip(y_per_output, self.layers), select=outputs):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
             obs = self._obs(x, x_ind, y, f, e)  # Construct observations.
@@ -207,7 +207,7 @@ class GPAR(object):
                 # Sample missing data for an unbiased sample of the pdf.
                 missing = B.isnan(y[:, 0])
                 if sample_missing and B.any(missing):
-                    y = _merge(y, ((f + e) | obs)(x[missing]).sample(), missing)
+                    y = merge(y, ((f + e) | obs)(x[missing]).sample(), missing)
 
                 # Update inputs.
                 x, x_ind = self._update_inputs(x, x_ind, y, f, obs)
@@ -229,7 +229,7 @@ class GPAR(object):
         sample = B.zeros((B.shape(x)[0], 0), dtype=B.dtype(x))
         x_ind = self.x_ind
 
-        for last, model in _last(self.layers):
+        for last, model in last(self.layers):
             f, e = model()  # Construct model.
 
             if latent:
@@ -274,11 +274,11 @@ class GPAR(object):
         else:
             # Just impute missing data.
             if self.impute and B.any(~available):
-                y = _merge(y, estimate(x[~available]), ~available)
+                y = merge(y, estimate(x[~available]), ~available)
 
             # Just replace available data.
             if self.replace and B.any(available):
-                y = _merge(y, estimate(x[available]), available)
+                y = merge(y, estimate(x[available]), available)
 
         # Finally, actually update inputs.
         x = B.concat([x, y], axis=1)
