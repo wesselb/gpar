@@ -18,8 +18,9 @@ cover
 .DS_Store
 *.swp
 
-# Output of examples
+# Output and cache
 *.pdf
+*.pickle
 
 # Projects
 examples/intel.py
