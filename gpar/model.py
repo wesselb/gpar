@@ -46,7 +46,7 @@ def _merge(x, updates, to_update):
 
 def _construct_model(f, e):
     """Convenience function that returns a model constructor.
-    
+
     Args:
         f (:class:`stheno.GP`): Latent process.
         e (:class:`stheno.GP`): Noise process.
@@ -69,11 +69,15 @@ def _last(xs, select=None):
         list: `xs` zipped with a boolean on the left.
     """
     # Zip with bools indicated whether it is the last element.
+    xs = list(xs)  # Generators cause the zip call to fail.
     is_last = [False for _ in xs]
     is_last[-1] = True
     xs_with_last = list(zip(is_last, xs))
     # Only return a subset if asked for.
-    return xs_with_last if select is None else [xs_with_last[i] for i in select]
+    if select is None:
+        return xs_with_last
+    else:
+        return [xs_with_last[i] for i in select]
 
 
 class GPAR(object):
