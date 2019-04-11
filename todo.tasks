@@ -3,6 +3,7 @@ TODO:
     ☐ Tests
 
 Features:
+    ☐ More refined kernel design system
     ☐ Greedy fitting
     ☐ Search over multiple hyperparameters
     ☐ Ability to exclude hyperparameters from optimisation
