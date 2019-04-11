@@ -5,13 +5,24 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from lab import B
-from stheno import Delta, GP, Obs, SparseObs, dense
+from stheno import GP, Obs, SparseObs
 
 __all__ = ['GPAR']
 log = logging.getLogger(__name__)
 
 
 def _merge(x, updates, to_update):
+    """Merge updates into a tensor.
+
+    Args:
+        x (tensor): Tensor to merge updates into.
+        updates (tensor): Updates.
+        to_update (tensor): A boolean array indicating which elements of `x`
+            to update and replace with the corresponding element in `updates`.
+
+    Returns:
+        tensor: Updated tensor.
+    """
     # Stack them, which screws up the order.
     concat = B.concat([x[~to_update], updates], axis=0)
 
@@ -34,18 +45,35 @@ def _merge(x, updates, to_update):
 
 
 def _construct_model(f, e):
+    """Convenience function that returns a model constructor.
+    
+    Args:
+        f (:class:`stheno.GP`): Latent process.
+        e (:class:`stheno.GP`): Noise process.
+
+    Returns:
+        function: Model constructor.
+    """
     return lambda: (f, e)
 
 
 def _last(xs, select=None):
-    xs = list(xs)
+    """Zip a list with a boolean indicating whether it is the last element.
+
+    Args:
+        xs (list): List to zip.
+        select (list[int], optional): Select particular indices from the result.
+            Defaults to returning everything.
+
+    Returns:
+        list: `xs` zipped with a boolean on the left.
+    """
+    # Zip with bools indicated whether it is the last element.
     is_last = [False for _ in xs]
     is_last[-1] = True
     xs_with_last = list(zip(is_last, xs))
-    if select is None:
-        return xs_with_last
-    else:
-        return [xs_with_last[i] for i in select]
+    # Only return a subset if asked for.
+    return xs_with_last if select is None else [xs_with_last[i] for i in select]
 
 
 class GPAR(object):
@@ -137,13 +165,25 @@ class GPAR(object):
         Args:
             x (tensor): Inputs.
             y (tensor): Outputs.
-            only_last_layer (bool, optional): Compute the pdf of only the last
-                layer. Defaults to `False`.
+            only_last_layer (bool, optional): Compute the logpdf for only the
+                last layer. Defaults to `False`.
             sample_missing (bool, optional): Sample missing data to compute an
                 unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.
+            return_inputs (bool, optional): Instead return the inputs and
+                inputs for the inducing points with previous outputs
+                concatenated. This can be used to perform precomputation.
+                Defaults to `False.
+            x_ind (tensor, optional): Inputs for the inducing points. This
+                can be used to resume a computation. Defaults to
+                :attr:`.model.GPAR.x_ind`.
+            outputs (list[int], optional): Only compute the logpdf for a
+                subset of outputs. The list specifies the indices of the
+                outputs. Defaults to computing the logpdf for all outputs.
 
         Returns:
-            :class:`.gpar.GPAR`: Updated GPAR model.
+            scalar: Logpdf. If `return_inputs` is set to `True`, instead
+                return a tuple containing the inputs and the inputs for the
+                inducing points with previous outputs concatenated
         """
         logpdf = B.cast(0, dtype=B.dtype(x))
         x_ind = self.x_ind if x_ind is None else x_ind
