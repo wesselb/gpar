@@ -6,7 +6,6 @@ import logging
 
 import numpy as np
 import torch
-from pathos.multiprocessing import ProcessPool
 from lab.torch import B
 from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear
 from varz import Vars, minimise_l_bfgs_b
