@@ -9,14 +9,19 @@ import torch
 from lab.torch import B
 from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear
 from varz import Vars, minimise_l_bfgs_b
+import sys
 
 from .model import GPAR
 
-__all__ = ['GPARRegressor', 'log_transform']
+__all__ = ['GPARRegressor', 'log_transform', 'squishing_transform']
 log = logging.getLogger(__name__)
 
 #: Log transform for the data.
 log_transform = (B.log, B.exp)
+
+# Squishing transform for the data.
+squishing_transform = (lambda x: B.sign(x) * B.log(1 + B.abs(x)),
+                       lambda x: B.sign(x) * (B.exp(B.abs(x)) - 1))
 
 
 def _uprank(x):
@@ -48,6 +53,12 @@ def _model_generator(vs,
                      pi,  # This is the _index_ of the output modelled.
                      scale,
                      scale_tie,
+                     per,
+                     per_period,
+                     per_scale,
+                     per_decay,
+                     input_linear,
+                     input_linear_scale,
                      linear,
                      linear_scale,
                      nonlinear,
@@ -68,11 +79,11 @@ def _model_generator(vs,
         m_inds = list(range(m))
         p_inds = list(range(m + p_start, m + p_last + 1))
 
-        # Add nonlinear kernel over inputs.
+        # Add nonlinear kernel over the inputs.
+        variance = vs.bnd(name=(pi, 'I/var'), group=pi, init=1.)
         scales = vs.bnd(name=(0 if scale_tie else pi, 'I/scales'),
                         group=0 if scale_tie else pi,
                         init=_vector_from_init(scale, m))
-        variance = vs.bnd(name=(pi, 'I/var'), group=pi, init=1.)
         if rq:
             k = RQ(vs.bnd(name=(pi, 'I/alpha'), group=pi, init=1e-2,
                           lower=1e-3, upper=1e3))
@@ -80,13 +91,34 @@ def _model_generator(vs,
             k = EQ()
         kernel += variance * k.stretch(scales).select(m_inds)
 
-        # Add linear kernel over outputs if asked for.
+        # Add a locally periodic kernel over the inputs.
+        if per:
+            variance = vs.bnd(name=(pi, 'I/per/var'), group=pi, init=1.)
+            scales = vs.bnd(name=(pi, 'I/per/scales'), group=pi,
+                            init=_vector_from_init(per_scale, m))
+            periods = vs.bnd(name=(pi, 'I/per/pers'), group=pi,
+                             init=_vector_from_init(per_period, m))
+            decays = vs.bnd(name=(pi, 'I/per/decay'), group=pi,
+                            init=_vector_from_init(per_decay, m))
+            kernel += variance * \
+                      EQ().stretch(scales).periodic(periods).select(m_inds) * \
+                      EQ().stretch(decays).select(m_inds)
+
+        # Add a linear kernel over the inputs.
+        if input_linear:
+            scales = vs.bnd(name=(pi, 'I/lin/scales'), group=pi,
+                            init=_vector_from_init(input_linear_scale, m))
+            shifts = vs.get(name=(pi, 'I/lin/shifts'), group=pi,
+                            init=_vector_from_init(0., m))
+            kernel += Linear().shift(shifts).stretch(scales).select(m_inds)
+
+        # Add linear kernel over the outputs.
         if linear and pi > 0:
             scales = vs.bnd(name=(pi, 'O/L/scales'), group=pi,
                             init=_vector_from_init(linear_scale, p_num))
             kernel += Linear().stretch(scales).select(p_inds)
 
-        # Add nonlinear kernel over outputs if asked for.
+        # Add nonlinear kernel over the outputs.
         if nonlinear and pi > 0:
             variance = vs.bnd(name=(pi, 'O/NL/var'), group=pi, init=1.)
             scales = vs.bnd(name=(pi, 'O/NL/scales'), group=pi,
@@ -107,8 +139,8 @@ def _model_generator(vs,
                                  ''.format(np.ndim(noise)))
         else:
             noise_init = noise
-        kernel_noise = vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init) * \
-                       Delta()
+        variance = vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init)
+        kernel_noise = variance * Delta()
 
         # Construct model and return.
         graph = Graph()
@@ -142,10 +174,23 @@ class GPARRegressor(object):
             the inputs. Defaults to `1.0`.
         scale_tie (bool, optional): Tie the length scale(s) over the inputs.
             Defaults to `False`.
+        per (bool, optional): Use a locally periodic kernel over the inputs.
+            Defaults to `False`.
+        per_period (tensor, optional): Initial value(s) for the period(s) of the
+            locally periodic kernel. Defaults to `1.0`.
+        per_scale (tensor, optional): Initial value(s) for the length scale(s)
+            of the locally periodic kernel. Defaults to `1.0`.
+        per_decay (tensor, optional): Initial value(s) for the length scale(s)
+            of the local change of the locally periodic kernel. Defaults to
+            `10.0`.
+        input_linear (bool, optional): Use a linear kernel over the inputs.
+            Defaults to `False`.
+        input_linear_scale (tensor, optional): Initial value(s) for the length
+            scale(s) of the linear kernel over the inputs. Defaults to `100.0`.
         linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
-        linear_scale (tensor, optional): Initial value(s) for the scale(s) of
-            the linear dependencies. Defaults to `100.0`.
+        linear_scale (tensor, optional): Initial value(s) for the length
+            scale(s) of the linear dependencies. Defaults to `100.0`.
         nonlinear (bool, optional): Use nonlinear dependencies between outputs.
             Defaults to `True`.
         nonlinear_scale (tensor, optional): Initial value(s) for the length
@@ -158,7 +203,7 @@ class GPARRegressor(object):
             Defaults to `0.01`.
         x_ind (tensor, optional): Locations of inducing points. Set to `None`
             if inducing points should not be used. Defaults to `None`.
-        normalise_y (bool, optional): Normalise outputs. Defaults to `False`.
+        normalise_y (bool, optional): Normalise outputs. Defaults to `True`.
         transform_y (tuple, optional): Tuple containing a transform and its
             inverse, which should be applied to the data before fitting.
             Defaults to the identity transform.
@@ -185,6 +230,12 @@ class GPARRegressor(object):
                  impute=True,
                  scale=1.0,
                  scale_tie=False,
+                 per=False,
+                 per_period=1.0,
+                 per_scale=1.0,
+                 per_decay=10.0,
+                 input_linear=False,
+                 input_linear_scale=100.0,
                  linear=True,
                  linear_scale=100.0,
                  nonlinear=False,
@@ -193,7 +244,7 @@ class GPARRegressor(object):
                  markov=None,
                  noise=0.1,
                  x_ind=None,
-                 normalise_y=False,
+                 normalise_y=True,
                  transform_y=(lambda x: x, lambda x: x)):
         # Model configuration.
         self.replace = replace
@@ -203,6 +254,12 @@ class GPARRegressor(object):
         self.model_config = {
             'scale': scale,
             'scale_tie': scale_tie,
+            'per': per,
+            'per_period': per_period,
+            'per_scale': per_scale,
+            'per_decay': per_decay,
+            'input_linear': input_linear,
+            'input_linear_scale': input_linear_scale,
             'linear': linear,
             'linear_scale': linear_scale,
             'nonlinear': nonlinear,
@@ -295,7 +352,12 @@ class GPARRegressor(object):
 
         # Fit layer by layer.
         #   Note: `_construct_gpar` takes in the *number* of outputs.
+        sys.stdout.write('Training conditionals (total: {}):'.format(self.p))
+        sys.stdout.flush()
         for pi in range(self.p):
+            sys.stdout.write(' {}'.format(pi + 1))
+            sys.stdout.flush()
+
             # If we fix parameters of previous layers, we can precompute the
             # inputs. This speeds up the optimisation massively.
             if fix:
@@ -322,6 +384,9 @@ class GPARRegressor(object):
                               self.vs,
                               groups=[pi] if fix else list(range(pi + 1)),
                               **kw_args)
+
+        # Print newline to end progress bar.
+        sys.stdout.write('\n')
 
         # Store that the model is fit.
         self.is_fit = True
@@ -392,12 +457,19 @@ class GPARRegressor(object):
             gpar = _construct_gpar(self, self.vs, B.shape_int(x)[1], p)
 
         # Perform sampling.
-        samples = [self._untransform_y(gpar.sample(x, latent=latent))
-                       .detach_().numpy()
-                   for _ in range(num_samples)]
+        samples = []
+        sys.stdout.write('Sampling (total: {}):'.format(num_samples))
+        sys.stdout.flush()
+        for i in range(num_samples):
+            sys.stdout.write(' {}'.format(i + 1))
+            sys.stdout.flush()
+            samples.append(self
+                           ._untransform_y(gpar.sample(x, latent=latent))
+                           .detach_().numpy())
+        sys.stdout.write('\n')
         return samples[0] if num_samples == 1 else samples
 
-    def predict(self, x, num_samples=100, latent=True, credible_bounds=False):
+    def predict(self, x, num_samples=100, latent=False, credible_bounds=False):
         """Predict at new inputs.
 
         Args:
