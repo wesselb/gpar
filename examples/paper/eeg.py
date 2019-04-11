@@ -20,7 +20,7 @@ model = GPARRegressor(scale=0.02,
                       linear=False, nonlinear=True, nonlinear_scale=1.0,
                       noise=0.01,
                       impute=True, replace=False, normalise_y=True)
-model.fit(x, y_train, trace=True, fix=False)
+model.fit(x, y_train, trace=True)
 means, lowers, uppers = \
     model.predict(x, num_samples=100, credible_bounds=True, latent=True)
 
