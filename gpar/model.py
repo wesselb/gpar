@@ -139,7 +139,7 @@ class GPAR(object):
         x, y = x_and_y
         gpar, x_ind = self.copy(), self.x_ind
 
-        for last, ((y, mask), model) in \
+        for is_last, ((y, mask), model) in \
                 last(zip(per_output(y, self.impute), self.layers)):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
@@ -151,7 +151,7 @@ class GPAR(object):
             gpar.layers.append(construct_model(f_post, e_new))
 
             # Update inputs.
-            if not last:
+            if not is_last:
                 x, x_ind = self._update_inputs(x, x_ind, y, f, obs)
 
         return gpar
@@ -193,19 +193,19 @@ class GPAR(object):
         x_ind = self.x_ind if x_ind is None else x_ind
 
         y_per_output = per_output(y, self.impute or sample_missing)
-        for last, ((y, mask), model) in \
+        for is_last, ((y, mask), model) in \
                 last(zip(y_per_output, self.layers), select=outputs):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
             obs = self._obs(x, x_ind, y, f, e)  # Construct observations.
 
             # Accumulate logpdf.
-            if not only_last_layer or (last and only_last_layer):
+            if not only_last_layer or (is_last and only_last_layer):
                 logpdf += f.graph.logpdf(obs)
 
-            if not last:
-                # Sample missing data for an unbiased sample of the pdf.
+            if not is_last:
                 missing = B.isnan(y[:, 0])
+                # Sample missing data for an unbiased sample of the pdf.
                 if sample_missing and B.any(missing):
                     y = merge(y, ((f + e) | obs)(x[missing]).sample(), missing)
 
@@ -229,7 +229,7 @@ class GPAR(object):
         sample = B.zeros((B.shape(x)[0], 0), dtype=B.dtype(x))
         x_ind = self.x_ind
 
-        for last, model in last(self.layers):
+        for is_last, model in last(self.layers):
             f, e = model()  # Construct model.
 
             if latent:
@@ -242,12 +242,9 @@ class GPAR(object):
                 y_sample = (f + e)(x).sample()
                 sample = B.concat([sample, y_sample], axis=1)
 
-            if not last:
-                # Construct observations.
-                obs = self._obs(x, x_ind, y_sample, f, e)
-
+            if not is_last:
                 # Update inputs.
-                x, x_ind = self._update_inputs(x, x_ind, y_sample, f, obs)
+                x, x_ind = self._update_inputs(x, x_ind, y_sample, f, None)
 
         return sample
 
@@ -262,7 +259,9 @@ class GPAR(object):
         available = ~B.isnan(y[:, 0])
 
         def estimate(x_):
-            return (f | obs).mean(x_)
+            # If observations are available, estimate using the posterior mean;
+            # otherwise, use the prior mean.
+            return ((f | obs) if obs else f).mean(x_)
 
         # Update inputs of inducing points.
         if self.sparse:

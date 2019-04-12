@@ -3,11 +3,13 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from gpar.model import merge, construct_model, last, per_output
+import torch
+from gpar.model import merge, construct_model, last, per_output, GPAR
 from lab.torch import B
+from stheno import GP, EQ, Delta, Graph, Obs, SparseObs
 
 # noinspection PyUnresolvedReferences
-from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose
+from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, approx
 
 
 def test_merge():
@@ -57,3 +59,47 @@ def test_per_output():
                y.numpy().tolist())
               for x, y in per_output(y, keep=True)]
     yield eq, result, expected
+
+
+def test_gpar_misc():
+    gpar = GPAR(x_ind=None)
+    yield eq, gpar.sparse, False
+    yield eq, gpar.x_ind, None
+
+    gpar = GPAR(x_ind=1)
+    yield eq, gpar.sparse, True
+    yield eq, gpar.x_ind, 1
+
+
+def test_gpar_obs():
+    graph = Graph()
+    f = GP(EQ(), graph=graph)
+    e = GP(1e-8 * Delta(), graph=graph)
+
+    # Check that it produces the correct observations.
+    x = B.linspace(0, 0.1, 10, dtype=torch.float64)
+    y = f(x).sample()
+
+    # Set some observations to be missing.
+    y_missing = y.clone()
+    y_missing[::2] = np.nan
+
+    # Check dense case.
+    gpar = GPAR()
+    obs = gpar._obs(x, None, y_missing, f, e)
+    yield eq, type(obs), Obs
+    yield approx, y, (f | obs).mean(x)
+
+    # Check sparse case.
+    gpar = GPAR(x_ind=x)
+    obs = gpar._obs(x, x, y_missing, f, e)
+    yield eq, type(obs), SparseObs
+    yield approx, y, (f | obs).mean(x)
+
+
+def test_gpar_update_inputs():
+    pass
+
+
+def test_gpar_conditioning():
+    pass

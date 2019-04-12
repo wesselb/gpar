@@ -8,7 +8,7 @@ import torch
 from nose.tools import assert_raises, assert_equal, assert_less, \
     assert_less_equal, assert_not_equal, assert_greater, \
     assert_greater_equal, ok_
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_almost_equal
 from plum import Dispatcher
 
 _dispatch = Dispatcher()
@@ -35,6 +35,10 @@ def convert(a):
 
 def allclose(a, b):
     assert_allclose(convert(a), convert(b))
+
+
+def approx(a, b, digits=4):
+    assert_array_almost_equal(convert(a), convert(b), decimal=digits)
 
 
 def call(f, method, args=(), res=True):
