@@ -21,12 +21,3 @@ cover
 # Output and cache
 *.pdf
 *.pickle
-
-# Projects
-examples/intel.py
-examples/data/intel
-examples/bnn.py
-examples/data/bnn
-examples/pjm.py
-examples/data/pjm.csv
-
