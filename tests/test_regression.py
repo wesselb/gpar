@@ -84,7 +84,7 @@ def test_logpdf():
 
     # Test that sampling missing gives a stochastic estimate.
     y[::2, 0] = np.nan
-    yield neq, \
-          reg.logpdf(x, y, sample_missing=True), \
-          reg.logpdf(x, y, sample_missing=True)
-    
+    yield ge, \
+          np.abs(reg.logpdf(x, y, sample_missing=True) -
+                 reg.logpdf(x, y, sample_missing=True)), \
+          1e-3

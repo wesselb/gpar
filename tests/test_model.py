@@ -234,9 +234,10 @@ def test_gpar_logpdf():
 
     # Test that sampling missing gives a stochastic estimate.
     y[1, 0] = np.nan
-    yield neq, \
-          gpar.logpdf(x, y, sample_missing=True), \
-          gpar.logpdf(x, y, sample_missing=True)
+    yield ge, \
+          B.abs(gpar.logpdf(x, y, sample_missing=True) -
+                gpar.logpdf(x, y, sample_missing=True)).numpy(), \
+          1e-3
 
 
 def test_gpar_sample():
@@ -248,10 +249,11 @@ def test_gpar_sample():
     f1, e1 = GP(EQ(), graph=graph), GP(1e-1 * Delta(), graph=graph)
     f2, e2 = GP(EQ(), graph=graph), GP(1e-1 * Delta(), graph=graph)
     gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
-    yield neq, B.sum(gpar.sample(x)), B.sum(gpar.sample(x))
-    yield neq, \
-          B.sum(gpar.sample(x, latent=True)), \
-          B.sum(gpar.sample(x, latent=True))
+    yield ge, B.abs(B.sum(gpar.sample(x)) - B.sum(gpar.sample(x))), 1e-3
+    yield ge, \
+          B.abs(B.sum(gpar.sample(x, latent=True)) -
+                B.sum(gpar.sample(x, latent=True))), \
+          1e-3
 
     # Test that posterior latent samples are around the data that is
     # conditioned on.
