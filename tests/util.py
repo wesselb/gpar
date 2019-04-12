@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 import torch
+from lab.torch import B
 from nose.tools import assert_raises, assert_equal, assert_less, \
     assert_less_equal, assert_not_equal, assert_greater, \
     assert_greater_equal, ok_
@@ -71,3 +72,16 @@ def lam(f, args=()):
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
+
+def array(x):
+    """Construct a PyTorch array of type `torch.float64`.
+
+    Args:
+        x (obj): Object to construct array from.
+
+    Returns:
+        tensor: PyTorch array of type `torch.float64`.
+
+    """
+    return B.array(x, dtype=torch.float64)

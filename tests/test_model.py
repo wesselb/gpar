@@ -9,20 +9,8 @@ from lab.torch import B
 from stheno import GP, EQ, Delta, Graph, Obs, SparseObs, ZeroKernel, Linear
 
 # noinspection PyUnresolvedReferences
-from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, approx
-
-
-def array(x):
-    """Construct a PyTorch array of type `torch.float64`.
-
-    Args:
-        x (obj): Object to construct array from.
-
-    Returns:
-        tensor: PyTorch array of type `torch.float64`.
-
-    """
-    return B.array(x, dtype=torch.float64)
+from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, \
+    approx, array
 
 
 def test_merge():

@@ -3,10 +3,19 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from gpar.regression import _uprank, _vector_from_init
+from gpar.regression import _uprank, _vector_from_init, log_transform, \
+    squishing_transform
 
 # noinspection PyUnresolvedReferences
-from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, approx
+from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, \
+    approx, array
+
+
+def test_transforms():
+    f, f_inv = log_transform
+    yield allclose, f(f_inv(array([1, 2, 3, 4]))), array([1, 2, 3, 4])
+    f, f_inv = squishing_transform
+    yield allclose, f(f_inv(array([-2, -1, 3, 4]))), array([-2, -1, 3, 4])
 
 
 def test_uprank():
