@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from gpar.model import merge, construct_model, last, per_output, GPAR
 from lab.torch import B
-from stheno import GP, EQ, Delta, Graph, Obs, SparseObs, ZeroKernel
+from stheno import GP, EQ, Delta, Graph, Obs, SparseObs, ZeroKernel, Linear
 
 # noinspection PyUnresolvedReferences
 from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, approx
@@ -195,7 +195,6 @@ def test_gpar_conditioning():
     graph = Graph()
     f1, e1 = GP(EQ(), graph=graph), GP(1e-8 * Delta(), graph=graph)
     f2, e2 = GP(EQ(), graph=graph), GP(2e-8 * Delta(), graph=graph)
-
     gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
 
     x = array([[1], [2], [3]])
@@ -221,3 +220,58 @@ def test_gpar_conditioning():
     # Test posteriors.
     yield approx, f1_post.mean(x), y[:, 0:1]
     yield approx, f2_post.mean(B.concat([x, y[:, 0:1]], axis=1)), y[:, 1:2]
+
+
+def test_gpar_logpdf():
+    graph = Graph()
+    f1, e1 = GP(EQ(), graph=graph), GP(2e-1 * Delta(), graph=graph)
+    f2, e2 = GP(Linear(), graph=graph), GP(1e-1 * Delta(), graph=graph)
+    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+
+    # Sample some data from GPAR.
+    x = B.linspace(0, 2, 10, dtype=torch.float64)[:, None]
+    y = gpar.sample(x, latent=True)
+
+    # Compute logpdf.
+    logpdf1 = (f1 + e1)(x).logpdf(y[:, 0])
+    logpdf2 = (f2 + e2)(B.concat([x, y[:, 0:1]], axis=1)).logpdf(y[:, 1])
+
+    # Test computation of GPAR.
+    yield eq, gpar.logpdf(x, y), logpdf1 + logpdf2
+    yield eq, gpar.logpdf(x, y, only_last_layer=True), logpdf2
+
+    # Test resuming computation.
+    x_int, x_ind_int = gpar.logpdf(x, y, return_inputs=True, outputs=[0])
+    yield eq, gpar.logpdf(x_int, y, x_ind=x_ind_int, outputs=[1]), logpdf2
+
+    # Test that sampling missing gives a stochastic estimate.
+    y[1, 0] = np.nan
+    yield neq, \
+          gpar.logpdf(x, y, sample_missing=True), \
+          gpar.logpdf(x, y, sample_missing=True)
+
+
+def test_gpar_sample():
+    graph = Graph()
+    x = array([1, 2, 3])[:, None]
+
+    # Test that it produces random samples. Not sure how to test for
+    # correctness.
+    f1, e1 = GP(EQ(), graph=graph), GP(1e-1 * Delta(), graph=graph)
+    f2, e2 = GP(EQ(), graph=graph), GP(1e-1 * Delta(), graph=graph)
+    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+    yield neq, B.sum(gpar.sample(x)), B.sum(gpar.sample(x))
+    yield neq, \
+          B.sum(gpar.sample(x, latent=True)), \
+          B.sum(gpar.sample(x, latent=True))
+
+    # Test that posterior latent samples are around the data that is
+    # conditioned on.
+    graph = Graph()
+    f1, e1 = GP(EQ(), graph=graph), GP(1e-8 * Delta(), graph=graph)
+    f2, e2 = GP(EQ(), graph=graph), GP(1e-8 * Delta(), graph=graph)
+    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+    y = gpar.sample(x, latent=True)
+    gpar = gpar | (x, y)
+    yield approx, gpar.sample(x), y, 3
+    yield approx, gpar.sample(x, latent=True), y, 3
