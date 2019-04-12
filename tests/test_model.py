@@ -48,17 +48,17 @@ def test_per_output():
                 ([2, 6, 10], [True, False, True, False, True, False]),
                 ([7], [False, True, False]),
                 ([], [False])]
-    result = [(x.numpy()[:, 0].tolist(), y.numpy().tolist())
-              for x, y in per_output(y, keep=False)]
+    result = [(a.numpy()[:, 0].tolist(), b.numpy().tolist())
+              for a, b in per_output(y, keep=False)]
     yield eq, result, expected
 
     expected = [([1, 3, 5, 8, 9, 11], [True, True, True, True, True, True]),
                 ([2, -1, 6, 10, -1], [True, True, True, False, True, True]),
                 ([4, 7, -1], [False, True, True, False, True]),
                 ([12], [False, False, True])]
-    result = [([-1 if np.isnan(z) else z for z in x.numpy()[:, 0].tolist()],
-               y.numpy().tolist())
-              for x, y in per_output(y, keep=True)]
+    result = [([-1 if np.isnan(c) else c for c in a.numpy()[:, 0].tolist()],
+               b.numpy().tolist())
+              for a, b in per_output(y, keep=True)]
     yield eq, result, expected
 
 
