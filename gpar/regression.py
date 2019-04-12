@@ -3,13 +3,13 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
+import sys
 
 import numpy as np
 import torch
 from lab.torch import B
-from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear
+from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear, ZeroKernel
 from varz import Vars, minimise_l_bfgs_b
-import sys
 
 from .model import GPAR
 
@@ -26,7 +26,7 @@ squishing_transform = (lambda x: B.sign(x) * B.log(1 + B.abs(x)),
 
 def _uprank(x):
     if np.ndim(x) > 2:
-        raise ValueError('Invalid rank {}.'.format(np.ndims(x)))
+        raise ValueError('Invalid rank {}.'.format(np.ndim(x)))
     while 0 <= np.ndim(x) < 2:
         x = np.expand_dims(x, 1)
     return B.array(x)
@@ -67,8 +67,9 @@ def _model_generator(vs,
                      markov,
                      noise):
     def model():
-        # Start with a zero kernel.
-        kernel = 0
+        # Start with a zero kernels.
+        kernel_inputs = ZeroKernel()  # Kernel over inputs.
+        kernel_outputs = ZeroKernel()  # Kernel over outputs.
 
         # Build in the Markov structure: juggle with the indices of the outputs.
         p_last = pi - 1  # Index of last output that is given as input.
@@ -89,7 +90,7 @@ def _model_generator(vs,
                           lower=1e-3, upper=1e3))
         else:
             k = EQ()
-        kernel += variance * k.stretch(scales).select(m_inds)
+        kernel_inputs += variance * k.stretch(scales)
 
         # Add a locally periodic kernel over the inputs.
         if per:
@@ -100,23 +101,22 @@ def _model_generator(vs,
                              init=_vector_from_init(per_period, m))
             decays = vs.bnd(name=(pi, 'I/per/decay'), group=pi,
                             init=_vector_from_init(per_decay, m))
-            kernel += variance * \
-                      EQ().stretch(scales).periodic(periods).select(m_inds) * \
-                      EQ().stretch(decays).select(m_inds)
+            kernel_inputs += variance * \
+                             EQ().stretch(scales).periodic(periods) * \
+                             EQ().stretch(decays)
 
         # Add a linear kernel over the inputs.
         if input_linear:
             scales = vs.bnd(name=(pi, 'I/lin/scales'), group=pi,
                             init=_vector_from_init(input_linear_scale, m))
-            shifts = vs.get(name=(pi, 'I/lin/shifts'), group=pi,
-                            init=_vector_from_init(0., m))
-            kernel += Linear().shift(shifts).stretch(scales).select(m_inds)
+            const = vs.get(name=(pi, 'I/lin/const'), group=pi, init=1.)
+            kernel_inputs += Linear().stretch(scales) + const
 
         # Add linear kernel over the outputs.
         if linear and pi > 0:
             scales = vs.bnd(name=(pi, 'O/L/scales'), group=pi,
                             init=_vector_from_init(linear_scale, p_num))
-            kernel += Linear().stretch(scales).select(p_inds)
+            kernel_outputs += Linear().stretch(scales)
 
         # Add nonlinear kernel over the outputs.
         if nonlinear and pi > 0:
@@ -128,7 +128,7 @@ def _model_generator(vs,
                               lower=1e-3, upper=1e3))
             else:
                 k = EQ()
-            kernel += variance * k.stretch(scales).select(p_inds)
+            kernel_outputs += variance * k.stretch(scales)
 
         # Construct noise kernel.
         if np.size(noise) > 1:
@@ -144,7 +144,8 @@ def _model_generator(vs,
 
         # Construct model and return.
         graph = Graph()
-        f = GP(kernel, graph=graph)
+        f = GP(kernel_inputs.select(m_inds) +
+               kernel_outputs.select(p_inds), graph=graph)
         e = GP(kernel_noise, graph=graph)
         return f, e
 
@@ -156,8 +157,6 @@ def _construct_gpar(reg, vs, m, p):
     gpar = GPAR(replace=reg.replace, impute=reg.impute, x_ind=reg.x_ind)
     for pi in range(p):
         gpar = gpar.add_layer(_model_generator(vs, m, pi, **reg.model_config))
-
-    # Return GPAR model.
     return gpar
 
 
@@ -226,7 +225,7 @@ class GPARRegressor(object):
     """
 
     def __init__(self,
-                 replace=False,
+                 replace=True,
                  impute=True,
                  scale=1.0,
                  scale_tie=False,
@@ -329,9 +328,15 @@ class GPARRegressor(object):
                 available = ~B.isnan(self.y[:, i])
                 y_i = self.y[available, i]
 
-                # Calculate mean and std.
+                # Calculate mean.
                 means.append(B.mean(y_i))
-                stds.append(B.std(y_i))
+
+                # Calculate std: safely handle the zero case.
+                std = B.std(y_i)
+                if std > 0:
+                    stds.append(std)
+                else:
+                    stds.append(B.cast(1, B.dtype(std)))
 
             # Stack into a vector and create normalisers.
             means, stds = B.stack(means)[None, :], B.stack(stds)[None, :]
