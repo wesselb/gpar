@@ -31,7 +31,7 @@ def merge(x, updates, to_update):
     i_update = B.sum(~to_update)
     indices = []
     for i in range(len(to_update)):
-        # Careful not to update the indices in-place! This generates trouble
+        # Careful not to update the indices in-place! That generates trouble
         # with PyTorch.
         if to_update[i]:
             indices.append(i_update)
@@ -242,8 +242,8 @@ class GPAR(object):
                 y_sample = (f + e)(x).sample()
                 sample = B.concat([sample, y_sample], axis=1)
 
+            # Update inputs.
             if not is_last:
-                # Update inputs.
                 x, x_ind = self._update_inputs(x, x_ind, y_sample, f, None)
 
         return sample
