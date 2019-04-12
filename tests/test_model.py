@@ -98,7 +98,85 @@ def test_gpar_obs():
 
 
 def test_gpar_update_inputs():
-    pass
+    graph = Graph()
+    f = GP(EQ(), graph=graph)
+
+    x = B.array([[1], [2], [3]], dtype=torch.float64)
+    y = B.array([[4], [5], [6]], dtype=torch.float64)
+    res = B.concat([x, y], axis=1)
+    x_ind = B.array([[6], [7]], dtype=torch.float64)
+    res_ind = B.array([[6, 0], [7, 0]], dtype=torch.float64)
+
+    # Check vanilla case.
+    gpar = GPAR(x_ind=x_ind)
+    yield allclose, gpar._update_inputs(x, x_ind, y, f, None), (res, res_ind)
+
+    # Check imputation with prior.
+    gpar = GPAR(impute=True, x_ind=x_ind)
+    this_y = y.clone()
+    this_y[1] = np.nan
+    this_res = res.clone()
+    this_res[1, 1] = 0
+    yield allclose, \
+          gpar._update_inputs(x, x_ind, this_y, f, None), \
+          (this_res, res_ind)
+
+    # Check replacing with prior.
+    gpar = GPAR(replace=True, x_ind=x_ind)
+    this_y = y.clone()
+    this_y[1] = np.nan
+    this_res = res.clone()
+    this_res[0, 1] = 0
+    this_res[1, 1] = np.nan
+    this_res[2, 1] = 0
+    yield allclose, \
+          gpar._update_inputs(x, x_ind, this_y, f, None), \
+          (this_res, res_ind)
+
+    # Check imputation and replacing with prior.
+    gpar = GPAR(impute=True, replace=True, x_ind=x_ind)
+    this_res = res.clone()
+    this_res[:, 1] = 0
+    yield allclose, \
+          gpar._update_inputs(x, x_ind, y, f, None), \
+          (this_res, res_ind)
+
+    # Construct observations and update result for inducing points.
+    obs = Obs(f(B.array([1, 2, 3, 6, 7], dtype=torch.float64)),
+              B.array([9, 10, 11, 12, 13], dtype=torch.float64))
+    res_ind = B.array([[6, 12], [7, 13]], dtype=torch.float64)
+
+    # Check imputation with posterior.
+    gpar = GPAR(impute=True, x_ind=x_ind)
+    this_y = y.clone()
+    this_y[1] = np.nan
+    this_res = res.clone()
+    this_res[1, 1] = 10
+    yield allclose, \
+          gpar._update_inputs(x, x_ind, this_y, f, obs), \
+          (this_res, res_ind)
+
+    # Check replacing with posterior.
+    gpar = GPAR(replace=True, x_ind=x_ind)
+    this_y = y.clone()
+    this_y[1] = np.nan
+    this_res = res.clone()
+    this_res[0, 1] = 9
+    this_res[1, 1] = np.nan
+    this_res[2, 1] = 11
+    yield allclose, \
+          gpar._update_inputs(x, x_ind, this_y, f, obs), \
+          (this_res, res_ind)
+
+    # Check imputation and replacing with posterior.
+    gpar = GPAR(impute=True, replace=True, x_ind=x_ind)
+    this_res = res.clone()
+    this_res[0, 1] = 9
+    this_res[1, 1] = 10
+    this_res[2, 1] = 11
+    yield allclose, \
+          gpar._update_inputs(x, x_ind, y, f, obs), \
+          (this_res, res_ind)
 
 
 def test_gpar_conditioning():

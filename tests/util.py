@@ -33,12 +33,32 @@ def convert(a):
     return a.numpy()
 
 
+@_dispatch(object, object)
 def allclose(a, b):
     assert_allclose(convert(a), convert(b))
 
 
+@_dispatch(tuple, tuple)
+def allclose(a, b):
+    if len(a) != len(b):
+        raise AssertionError('Inputs "{}" and "{}" are not of the same length.'
+                             ''.format(a, b))
+    for x, y in zip(a, b):
+        assert_allclose(convert(x), convert(y))
+
+
+@_dispatch(object, object, [object])
 def approx(a, b, digits=4):
     assert_array_almost_equal(convert(a), convert(b), decimal=digits)
+
+
+@_dispatch(tuple, tuple, [object])
+def approx(a, b, digits=4):
+    if len(a) != len(b):
+        raise AssertionError('Inputs "{}" and "{}" are not of the same length.'
+                             ''.format(a, b))
+    for x, y in zip(a, b):
+        approx(x, y, digits=digits)
 
 
 def call(f, method, args=(), res=True):
