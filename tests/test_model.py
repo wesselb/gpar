@@ -6,10 +6,23 @@ import numpy as np
 import torch
 from gpar.model import merge, construct_model, last, per_output, GPAR
 from lab.torch import B
-from stheno import GP, EQ, Delta, Graph, Obs, SparseObs
+from stheno import GP, EQ, Delta, Graph, Obs, SparseObs, ZeroKernel
 
 # noinspection PyUnresolvedReferences
 from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, approx
+
+
+def array(x):
+    """Construct a PyTorch array of type `torch.float64`.
+
+    Args:
+        x (obj): Object to construct array from.
+
+    Returns:
+        tensor: PyTorch array of type `torch.float64`.
+
+    """
+    return B.array(x, dtype=torch.float64)
 
 
 def test_merge():
@@ -101,11 +114,11 @@ def test_gpar_update_inputs():
     graph = Graph()
     f = GP(EQ(), graph=graph)
 
-    x = B.array([[1], [2], [3]], dtype=torch.float64)
-    y = B.array([[4], [5], [6]], dtype=torch.float64)
+    x = array([[1], [2], [3]])
+    y = array([[4], [5], [6]])
     res = B.concat([x, y], axis=1)
-    x_ind = B.array([[6], [7]], dtype=torch.float64)
-    res_ind = B.array([[6, 0], [7, 0]], dtype=torch.float64)
+    x_ind = array([[6], [7]])
+    res_ind = array([[6, 0], [7, 0]])
 
     # Check vanilla case.
     gpar = GPAR(x_ind=x_ind)
@@ -142,9 +155,8 @@ def test_gpar_update_inputs():
           (this_res, res_ind)
 
     # Construct observations and update result for inducing points.
-    obs = Obs(f(B.array([1, 2, 3, 6, 7], dtype=torch.float64)),
-              B.array([9, 10, 11, 12, 13], dtype=torch.float64))
-    res_ind = B.array([[6, 12], [7, 13]], dtype=torch.float64)
+    obs = Obs(f(array([1, 2, 3, 6, 7])), array([9, 10, 11, 12, 13]))
+    res_ind = array([[6, 12], [7, 13]])
 
     # Check imputation with posterior.
     gpar = GPAR(impute=True, x_ind=x_ind)
@@ -180,4 +192,32 @@ def test_gpar_update_inputs():
 
 
 def test_gpar_conditioning():
-    pass
+    graph = Graph()
+    f1, e1 = GP(EQ(), graph=graph), GP(1e-8 * Delta(), graph=graph)
+    f2, e2 = GP(EQ(), graph=graph), GP(2e-8 * Delta(), graph=graph)
+
+    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+
+    x = array([[1], [2], [3]])
+    y = array([[4, 5],
+               [6, 7],
+               [8, 9]])
+    gpar = gpar | (x, y)
+
+    # Extract posterior processes.
+    f1_post, e1_post = gpar.layers[0]()
+    f2_post, e2_post = gpar.layers[1]()
+
+    # Test independence of noises.
+    yield eq, graph.kernels[f1_post, e1_post], ZeroKernel()
+    yield eq, graph.kernels[f2_post, e2_post], ZeroKernel()
+
+    # Test form of noises.
+    yield eq, e1.mean, e1_post.mean
+    yield eq, e1.kernel, e1_post.kernel
+    yield eq, e2.mean, e2_post.mean
+    yield eq, e2.kernel, e2_post.kernel
+
+    # Test posteriors.
+    yield approx, f1_post.mean(x), y[:, 0:1]
+    yield approx, f2_post.mean(B.concat([x, y[:, 0:1]], axis=1)), y[:, 1:2]
