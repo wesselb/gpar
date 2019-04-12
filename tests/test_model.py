@@ -62,7 +62,7 @@ def test_per_output():
     yield eq, result, expected
 
 
-def test_gpar_misc():
+def test_misc():
     gpar = GPAR(x_ind=None)
     yield eq, gpar.sparse, False
     yield eq, gpar.x_ind, None
@@ -72,7 +72,7 @@ def test_gpar_misc():
     yield eq, gpar.x_ind, 1
 
 
-def test_gpar_obs():
+def test_obs():
     graph = Graph()
     f = GP(EQ(), graph=graph)
     e = GP(1e-8 * Delta(), graph=graph)
@@ -98,7 +98,7 @@ def test_gpar_obs():
     yield approx, y, (f | obs).mean(x)
 
 
-def test_gpar_update_inputs():
+def test_update_inputs():
     graph = Graph()
     f = GP(EQ(), graph=graph)
 
@@ -179,7 +179,7 @@ def test_gpar_update_inputs():
           (this_res, res_ind)
 
 
-def test_gpar_conditioning():
+def test_conditioning():
     graph = Graph()
     f1, e1 = GP(EQ(), graph=graph), GP(1e-8 * Delta(), graph=graph)
     f2, e2 = GP(EQ(), graph=graph), GP(2e-8 * Delta(), graph=graph)
@@ -210,7 +210,7 @@ def test_gpar_conditioning():
     yield approx, f2_post.mean(B.concat([x, y[:, 0:1]], axis=1)), y[:, 1:2]
 
 
-def test_gpar_logpdf():
+def test_logpdf():
     graph = Graph()
     f1, e1 = GP(EQ(), graph=graph), GP(2e-1 * Delta(), graph=graph)
     f2, e2 = GP(Linear(), graph=graph), GP(1e-1 * Delta(), graph=graph)
@@ -240,7 +240,7 @@ def test_gpar_logpdf():
           1e-3
 
 
-def test_gpar_sample():
+def test_sample():
     graph = Graph()
     x = array([1, 2, 3])[:, None]
 
