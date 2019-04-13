@@ -46,16 +46,12 @@ def test_get_variables():
     yield eq, list(gpar.get_variables().items()), [('variable', 1.0)]
 
 
-def test_cases():
-    pass
-
-
 def test_logpdf():
     # Sample some data from a "sensitive" GPAR.
-    reg = GPARRegressor(replace=False, impute=False, normalise_y=False,
+    reg = GPARRegressor(replace=False, impute=False,
                         nonlinear=True, nonlinear_scale=0.1,
                         linear=True, linear_scale=10.,
-                        noise=1e-4)
+                        noise=1e-4, normalise_y=False)
     x = np.linspace(0, 5, 10)
     y = reg.sample(x, p=2, latent=True)
 
@@ -77,9 +73,7 @@ def test_logpdf():
     f2_post = f2 | ((f2 + e2)(B.array(x_stack)), B.array(y[:, 1]))
     logpdf1 = (f1_post + e1_post)(B.array(x)).logpdf(B.array(y[:, 0]))
     logpdf2 = (f2_post + e2_post)(B.array(x_stack)).logpdf(B.array(y[:, 1]))
-    reg.is_fit = True
-    reg.x = B.array(x[:, None])
-    reg.y = B.array(y)
+    reg.fit(x, y, iters=0)
     yield approx, reg.logpdf(x, y, posterior=True), logpdf1 + logpdf2, 6
 
     # Test that sampling missing gives a stochastic estimate.
@@ -88,3 +82,38 @@ def test_logpdf():
           np.abs(reg.logpdf(x, y, sample_missing=True) -
                  reg.logpdf(x, y, sample_missing=True)), \
           1e-3
+
+
+def test_sample():
+    reg = GPARRegressor(replace=False, impute=False,
+                        linear=True, linear_scale=1., nonlinear=False,
+                        noise=1e-8, normalise_y=False)
+    x = np.linspace(0, 5, 10)
+
+    # Test checks.
+    yield raises, ValueError, lambda: reg.sample(x)
+    yield raises, RuntimeError, lambda: reg.sample(x, posterior=True)
+
+    # Test that output is simplified correctly.
+    yield isinstance, reg.sample(x, p=2), np.ndarray
+    yield isinstance, reg.sample(x, p=2, num_samples=2), list
+
+    # Test that it produces random samples. Not sure how to test correctness.
+    yield ge, np.sum(np.abs(reg.sample(x, p=2) - reg.sample(x, p=2))), 1e-2
+    yield ge, np.sum(np.abs(reg.sample(x, p=2, latent=True) -
+                            reg.sample(x, p=2, latent=True))), 1e-3
+
+    # Test that mean of posterior samples are around the data.
+    y = reg.sample(x, p=2)
+    reg.fit(x, y, iters=0)
+    yield approx, y, np.mean(reg.sample(x,
+                                        posterior=True,
+                                        num_samples=20), axis=0), 4
+    yield approx, y, np.mean(reg.sample(x,
+                                        latent=True,
+                                        posterior=True,
+                                        num_samples=20), axis=0), 4
+
+
+def test_cases():
+    pass
