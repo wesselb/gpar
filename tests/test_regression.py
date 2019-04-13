@@ -149,10 +149,32 @@ def test_fit():
 
     # Test that fitting runs without issues.
     vs = reg.vs.detach()
-    yield lam, lambda: reg.fit(x, y, fix=False) is None
+    yield lambda x_, y_: reg.fit(x_, y_, fix=False), x, y
     reg.vs = vs
-    yield lam, lambda: reg.fit(x, y, fix=True) is None
+    yield lambda x_, y_: reg.fit(x, y, fix=True), x, y
 
 
-def test_cases():
+def test_features():
+    # Test that optimisation runs for a full-fledged GPAR.
+    reg = GPARRegressor(replace=True, scale=1.0,
+                        per=True, per_period=1.0, per_decay=10.0,
+                        input_linear=True, input_linear_scale=0.1,
+                        linear=True, linear_scale=1.0,
+                        nonlinear=True, nonlinear_scale=1.0,
+                        rq=True, noise=0.1)
+    x = np.stack([np.linspace(0, 10, 20),
+                  np.linspace(10, 20, 20)], axis=1)
+    y = reg.sample(x, p=2)
+    yield lambda x_, y_: reg.fit(x_, y_, iters=10), x, y
+
+
+def test_scale_tying():
+    reg = GPARRegressor(scale_tie=True)
+    reg.sample(np.linspace(0, 10, 20), p=2)  # Instantiate variables.
+    vs = reg.get_variables()
+    yield ok, (0, 'I/scales') in vs
+    yield ok, (1, 'I/scales') not in vs
+
+
+def test_markov():
     pass

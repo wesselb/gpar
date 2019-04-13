@@ -97,7 +97,7 @@ def _model_generator(vs,
         if per:
             variance = vs.bnd(name=(pi, 'I/per/var'), group=pi, init=1.)
             scales = vs.bnd(name=(pi, 'I/per/scales'), group=pi,
-                            init=_vector_from_init(per_scale, m))
+                            init=_vector_from_init(per_scale, 2 * m))
             periods = vs.bnd(name=(pi, 'I/per/pers'), group=pi,
                              init=_vector_from_init(per_period, m))
             decays = vs.bnd(name=(pi, 'I/per/decay'), group=pi,
