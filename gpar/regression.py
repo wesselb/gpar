@@ -49,6 +49,19 @@ def _vector_from_init(init, length):
     return np.array(init_squeezed)[:length]
 
 
+def _determine_indices(m, pi, markov):
+    # Build in the Markov structure: juggle with the indices of the outputs.
+    p_last = pi - 1  # Index of last output that is given as input.
+    p_start = 0 if markov is None else max(p_last - (markov - 1), 0)
+    p_num = p_last - p_start + 1
+
+    # Determine the indices corresponding to the outputs and inputs.
+    m_inds = list(range(m))
+    p_inds = list(range(m + p_start, m + p_last + 1))
+
+    return m_inds, p_inds, p_num
+
+
 def _model_generator(vs,
                      m,  # This is the _number_ of inputs.
                      pi,  # This is the _index_ of the output modelled.
@@ -72,14 +85,8 @@ def _model_generator(vs,
         kernel_inputs = ZeroKernel()  # Kernel over inputs.
         kernel_outputs = ZeroKernel()  # Kernel over outputs.
 
-        # Build in the Markov structure: juggle with the indices of the outputs.
-        p_last = pi - 1  # Index of last output that is given as input.
-        p_start = 0 if markov is None else max(p_last - (markov - 1), 0)
-        p_num = p_last - p_start + 1
-
-        # Determine the indices corresponding to the outputs and inputs.
-        m_inds = list(range(m))
-        p_inds = list(range(m + p_start, m + p_last + 1))
+        # Determine indices corresponding to the inputs and outputs.
+        m_inds, p_inds, p_num = _determine_indices(m, pi, markov)
 
         # Add nonlinear kernel over the inputs.
         variance = vs.bnd(name=(pi, 'I/var'), group=pi, init=1.)
@@ -274,6 +281,7 @@ class GPARRegressor(object):
 
         # Output normalisation and transformation.
         self.normalise_y = normalise_y
+        self._unnormalise_y, self._normalise_y = lambda x: x, lambda x: x
         self._transform_y, self._untransform_y = transform_y
 
     def get_variables(self):
@@ -328,6 +336,7 @@ class GPARRegressor(object):
 
                 # Calculate std: safely handle the zero case.
                 std = B.std(y_i)
+                log.debug(std)
                 if std > 0:
                     stds.append(std)
                 else:
@@ -342,13 +351,12 @@ class GPARRegressor(object):
             def unnormalise_y(y_):
                 return y_ * stds + means
 
+            # Save normalisers.
+            self._normalise_y = normalise_y
+            self._unnormalise_y = unnormalise_y
+
             # Perform normalisation.
             self.y = normalise_y(self.y)
-
-            # Compose existing transforms with normalisation.
-            transform_y, untransform_y = self._transform_y, self._untransform_y
-            self._transform_y = lambda y_: normalise_y(transform_y(y_))
-            self._untransform_y = lambda y_: untransform_y(unnormalise_y(y_))
 
         # Fit layer by layer.
         #   Note: `_construct_gpar` takes in the *number* of outputs.
@@ -405,7 +413,7 @@ class GPARRegressor(object):
         Returns
             float: Estimate of the logpdf.
         """
-        x, y = _uprank(x), self._transform_y(_uprank(y))
+        x, y = _uprank(x), self._unnormalise_y(self._transform_y(_uprank(y)))
         m, p = x.shape[1], y.shape[1]
 
         if posterior and not self.is_fit:
@@ -456,6 +464,10 @@ class GPARRegressor(object):
             # Construct prior GPAR.
             gpar = _construct_gpar(self, self.vs, B.shape_int(x)[1], p)
 
+        # Construct function to undo normalisation and transformation.
+        def undo_transforms(y_):
+            return self._untransform_y(self._unnormalise_y(y_))
+
         # Perform sampling.
         samples = []
         sys.stdout.write('Sampling (total: {}):'.format(num_samples))
@@ -463,8 +475,7 @@ class GPARRegressor(object):
         for i in range(num_samples):
             sys.stdout.write(' {}'.format(i + 1))
             sys.stdout.flush()
-            samples.append(self
-                           ._untransform_y(gpar.sample(x, latent=latent))
+            samples.append(undo_transforms(gpar.sample(x, latent=latent))
                            .detach_().numpy())
         sys.stdout.write('\n')
         return samples[0] if num_samples == 1 else samples
