@@ -176,7 +176,7 @@ class GPAR(object):
             return_inputs (bool, optional): Instead return the inputs and
                 inputs for the inducing points with previous outputs
                 concatenated. This can be used to perform precomputation.
-                Defaults to `False.
+                Defaults to `False`.
             x_ind (tensor, optional): Inputs for the inducing points. This
                 can be used to resume a computation. Defaults to
                 :attr:`.model.GPAR.x_ind`.
