@@ -167,7 +167,7 @@ class GPARRegressor(object):
 
     Args:
         replace (bool, optional): Replace observations with predictive means.
-            Helps the model deal with noisy data points. Defaults to `True`.
+            Helps the model deal with noisy data points. Defaults to `False`.
         impute (bool, optional): Impute data with predictive means to make the
             data set closed downwards. Helps the model deal with missing data.
             Defaults to `True`.
@@ -227,7 +227,7 @@ class GPARRegressor(object):
     """
 
     def __init__(self,
-                 replace=True,
+                 replace=False,
                  impute=True,
                  scale=1.0,
                  scale_tie=False,
