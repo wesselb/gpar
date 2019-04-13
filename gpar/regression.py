@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 #: Log transform for the data.
 log_transform = (B.log, B.exp)
 
-# Squishing transform for the data.
+#: Squishing transform for the data.
 squishing_transform = (lambda x: B.sign(x) * B.log(1 + B.abs(x)),
                        lambda x: B.sign(x) * (B.exp(B.abs(x)) - 1))
 
