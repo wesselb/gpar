@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import torch
 from gpar.regression import _uprank, _vector_from_init, log_transform, \
     squishing_transform, GPARRegressor, _construct_gpar
 from lab.torch import B
@@ -121,6 +122,36 @@ def test_sample_and_predict():
     # Test that prediction is confident.
     _, lowers, uppers = reg.predict(x, num_samples=10, credible_bounds=True)
     yield ok, np.less_equal(uppers - lowers, 1e-3).all()
+
+
+def test_fit():
+    reg = GPARRegressor(replace=False, impute=False,
+                        normalise_y=True, transform_y=squishing_transform)
+    x = np.linspace(0, 5, 10)
+    y = reg.sample(x, p=2)
+
+    # TODO: Remove this once greedy search is implemented.
+    yield raises, NotImplementedError, lambda: reg.fit(x, y, greedy=True)
+
+    # Test that data is correctly transformed if it has an output with zero
+    # variance.
+    reg.fit(x, y, iters=0)
+    yield ok, (~B.isnan(reg.y)).numpy().all()
+    y_pathological = y.copy()
+    y_pathological[:, 0] = 1
+    reg.fit(x, y_pathological, iters=0)
+    yield ok, (~B.isnan(reg.y)).numpy().all()
+
+    # Test transformation of outputs.
+    z = B.linspace(-1, 1, 10, dtype=torch.float64)
+    z = B.stack([z, 2 * z], axis=1)
+    yield allclose, reg._untransform_y(reg._transform_y(z)), z
+
+    # Test that fitting runs without issues.
+    vs = reg.vs.detach()
+    yield lam, lambda: reg.fit(x, y, fix=False) is None
+    reg.vs = vs
+    yield lam, lambda: reg.fit(x, y, fix=True) is None
 
 
 def test_cases():
