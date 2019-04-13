@@ -22,7 +22,7 @@ model = GPARRegressor(scale=0.1,
                       linear=True, linear_scale=10.,
                       nonlinear=True, nonlinear_scale=0.1,
                       noise=0.1,
-                      impute=False, replace=False)
+                      impute=True, replace=True)
 model.fit(x_obs, y_obs)
 means, lowers, uppers = \
     model.predict(x, num_samples=100, credible_bounds=True, latent=True)
@@ -31,8 +31,7 @@ means, lowers, uppers = \
 igp = GPARRegressor(scale=0.1,
                     linear=True, linear_scale=10.,
                     nonlinear=True, nonlinear_scale=0.1,
-                    noise=0.1,
-                    impute=False, replace=False, markov=0)
+                    noise=0.1, markov=0)
 igp.fit(x_obs, y_obs)
 igp_means, igp_lowers, igp_uppers = \
     igp.predict(x, num_samples=100, credible_bounds=True, latent=True)
