@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import torch
 from gpar.regression import _uprank, _vector_from_init, log_transform, \
-    squishing_transform, GPARRegressor, _construct_gpar
+    squishing_transform, GPARRegressor, _construct_gpar, _determine_indices
 from lab.torch import B
 from stheno import GP
 
@@ -39,6 +39,40 @@ def test_vector_from_init():
     yield raises, \
           ValueError, \
           lambda: _vector_from_init(np.array([1, 2]), 3)
+
+
+def test_determine_indices():
+    # No Markov structure.
+    yield eq, _determine_indices(1, 0, None), ([0], [], 0)
+    yield eq, _determine_indices(1, 1, None), ([0], [1], 1)
+    yield eq, _determine_indices(1, 2, None), ([0], [1, 2], 2)
+    yield eq, _determine_indices(2, 0, None), ([0, 1], [], 0)
+    yield eq, _determine_indices(2, 1, None), ([0, 1], [2], 1)
+    yield eq, _determine_indices(2, 2, None), ([0, 1], [2, 3], 2)
+
+    # Markov order: 0.
+    yield eq, _determine_indices(1, 0, 0), ([0], [], 0)
+    yield eq, _determine_indices(1, 1, 0), ([0], [], 0)
+    yield eq, _determine_indices(1, 2, 0), ([0], [], 0)
+    yield eq, _determine_indices(2, 0, 0), ([0, 1], [], 0)
+    yield eq, _determine_indices(2, 1, 0), ([0, 1], [], 0)
+    yield eq, _determine_indices(2, 2, 0), ([0, 1], [], 0)
+
+    # Markov order: 1.
+    yield eq, _determine_indices(1, 0, 1), ([0], [], 0)
+    yield eq, _determine_indices(1, 1, 1), ([0], [1], 1)
+    yield eq, _determine_indices(1, 2, 1), ([0], [2], 1)
+    yield eq, _determine_indices(2, 0, 1), ([0, 1], [], 0)
+    yield eq, _determine_indices(2, 1, 1), ([0, 1], [2], 1)
+    yield eq, _determine_indices(2, 2, 1), ([0, 1], [3], 1)
+
+    # Markov order: 2.
+    yield eq, _determine_indices(1, 0, 2), ([0], [], 0)
+    yield eq, _determine_indices(1, 1, 2), ([0], [1], 1)
+    yield eq, _determine_indices(1, 2, 2), ([0], [1, 2], 2)
+    yield eq, _determine_indices(2, 0, 2), ([0, 1], [], 0)
+    yield eq, _determine_indices(2, 1, 2), ([0, 1], [2], 1)
+    yield eq, _determine_indices(2, 2, 2), ([0, 1], [2, 3], 2)
 
 
 def test_get_variables():
@@ -142,10 +176,11 @@ def test_fit():
     reg.fit(x, y_pathological, iters=0)
     yield ok, (~B.isnan(reg.y)).numpy().all()
 
-    # Test transformation of outputs.
+    # Test transformation and normalisation of outputs.
     z = B.linspace(-1, 1, 10, dtype=torch.float64)
     z = B.stack([z, 2 * z], axis=1)
     yield allclose, reg._untransform_y(reg._transform_y(z)), z
+    yield allclose, reg._unnormalise_y(reg._normalise_y(z)), z
 
     # Test that fitting runs without issues.
     vs = reg.vs.detach()
@@ -174,7 +209,3 @@ def test_scale_tying():
     vs = reg.get_variables()
     yield ok, (0, 'I/scales') in vs
     yield ok, (1, 'I/scales') not in vs
-
-
-def test_markov():
-    pass
