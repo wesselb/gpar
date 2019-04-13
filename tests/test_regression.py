@@ -84,7 +84,7 @@ def test_logpdf():
           1e-3
 
 
-def test_sample():
+def test_sample_and_predict():
     reg = GPARRegressor(replace=False, impute=False,
                         linear=True, linear_scale=1., nonlinear=False,
                         noise=1e-8, normalise_y=False)
@@ -113,6 +113,14 @@ def test_sample():
                                         latent=True,
                                         posterior=True,
                                         num_samples=20), axis=0), 4
+
+    # Test that prediction is around the data.
+    yield approx, y, reg.predict(x, num_samples=20), 4
+    yield approx, y, reg.predict(x, latent=True, num_samples=20), 4
+
+    # Test that prediction is confident.
+    _, lowers, uppers = reg.predict(x, num_samples=10, credible_bounds=True)
+    yield ok, np.less_equal(uppers - lowers, 1e-3).all()
 
 
 def test_cases():
