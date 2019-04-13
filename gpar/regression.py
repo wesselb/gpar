@@ -38,14 +38,15 @@ def _vector_from_init(init, length):
         return init * np.ones(length)
 
     # Multiple values are given. Check that enough values are available.
-    init = np.squeeze(init)
-    if np.ndim(init) != 1:
-        raise ValueError('Hyperparameters can be at most rank one.')
-    if np.size(init) < length:
+    init_squeezed = np.squeeze(init)
+    if np.ndim(init_squeezed) != 1:
+        raise ValueError('Incorrect shape {} of hyperparameters.'
+                         ''.format(np.shape(init)))
+    if np.size(init_squeezed) < length:  # Squeezed doesn't change size.
         raise ValueError('Not enough hyperparameters specified.')
 
     # Return initialisation.
-    return np.array(init)[:length]
+    return np.array(init_squeezed)[:length]
 
 
 def _model_generator(vs,
@@ -131,16 +132,9 @@ def _model_generator(vs,
             kernel_outputs += variance * k.stretch(scales)
 
         # Construct noise kernel.
-        if np.size(noise) > 1:
-            if np.ndim(noise) == 1:
-                noise_init = noise[pi]
-            else:
-                raise ValueError('Incorrect rank {} of noise.'
-                                 ''.format(np.ndim(noise)))
-        else:
-            noise_init = noise
-        variance = vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init,
-                          lower=1e-8)
+        variance = vs.bnd(name=(pi, 'noise'), group=pi,
+                          init=_vector_from_init(noise, pi + 1)[pi],
+                          lower=1e-8)  # Allow noise to be small.
         kernel_noise = variance * Delta()
 
         # Construct model and return.
