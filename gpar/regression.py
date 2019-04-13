@@ -139,7 +139,8 @@ def _model_generator(vs,
                                  ''.format(np.ndim(noise)))
         else:
             noise_init = noise
-        variance = vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init)
+        variance = vs.bnd(name=(pi, 'noise'), group=pi, init=noise_init,
+                          lower=1e-8)
         kernel_noise = variance * Delta()
 
         # Construct model and return.
