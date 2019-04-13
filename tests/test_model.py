@@ -249,10 +249,10 @@ def test_sample():
     f1, e1 = GP(EQ(), graph=graph), GP(1e-1 * Delta(), graph=graph)
     f2, e2 = GP(EQ(), graph=graph), GP(1e-1 * Delta(), graph=graph)
     gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
-    yield ge, B.abs(B.sum(gpar.sample(x)) - B.sum(gpar.sample(x))), 1e-3
+    yield ge, B.sum(B.abs(gpar.sample(x) - gpar.sample(x))), 1e-3
     yield ge, \
-          B.abs(B.sum(gpar.sample(x, latent=True)) -
-                B.sum(gpar.sample(x, latent=True))), \
+          B.sum(B.abs(gpar.sample(x, latent=True) -
+                      gpar.sample(x, latent=True))), \
           1e-3
 
     # Test that posterior latent samples are around the data that is
