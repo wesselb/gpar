@@ -108,6 +108,7 @@ def test_logpdf():
     f2_post = f2 | ((f2 + e2)(B.array(x_stack)), B.array(y[:, 1]))
     logpdf1 = (f1_post + e1_post)(B.array(x)).logpdf(B.array(y[:, 0]))
     logpdf2 = (f2_post + e2_post)(B.array(x_stack)).logpdf(B.array(y[:, 1]))
+    yield raises, RuntimeError, lambda: reg.logpdf(x, y, posterior=True)
     reg.fit(x, y, iters=0)
     yield approx, reg.logpdf(x, y, posterior=True), logpdf1 + logpdf2, 6
 
