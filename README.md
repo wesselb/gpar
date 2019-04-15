@@ -1,7 +1,7 @@
 # [GPAR](http://github.com/wesselb/gpar)
 
 [![Build](https://travis-ci.org/wesselb/gpar.svg?branch=master)](https://travis-ci.org/wesselb/gpar)
-[![Coverage Status](https://coveralls.io/repos/github/wesselb/gpar/badge.svg?branch=master)](https://coveralls.io/github/wesselb/gpar?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/wesselb/gpar/badge.svg?branch=master&service=github)](https://coveralls.io/github/wesselb/gpar?branch=master)
 [![Latest Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://wesselb.github.io/gpar)
 
 Implementation of the Gaussian Process Autoregressive Regression Model
