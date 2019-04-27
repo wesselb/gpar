@@ -1,0 +1,7 @@
+gpar.model module
+=================
+
+.. automodule:: gpar.model
+    :members:
+    :undoc-members:
+    :show-inheritance:

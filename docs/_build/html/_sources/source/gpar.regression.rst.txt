@@ -1,0 +1,7 @@
+gpar.regression module
+======================
+
+.. automodule:: gpar.regression
+    :members:
+    :undoc-members:
+    :show-inheritance:
