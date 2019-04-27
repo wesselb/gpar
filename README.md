@@ -8,6 +8,16 @@ Implementation of the Gaussian Process Autoregressive Regression Model
 
 See the [paper](https://arxiv.org/abs/1802.07182), and see the [docs](https://wesselb.github.io/gpar).
 
+* [Installation](#installation)
+* [Basic Usage](#basic-usage)
+* [Features](#features)
+    - [Input and Output Dependencies](#input-and-output-dependencies)
+    - [Output Transformation](#output-transformation)
+    - [Sampling](#sampling)
+    - [Logpdf Computation](#logpdf-computation)
+    - [Inducing Points](#inducing-points)
+ * [Example (`examples/paper/synthetic.py`)](#example-examples-paper-synthetic-py)
+
 ## Installation
 The package is tested for Python 2.7 and Python 3.6, which are the versions 
 recommended to use. To install the package, use the following sequence of 
