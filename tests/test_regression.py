@@ -4,28 +4,20 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import torch
-from gpar.regression import _uprank, _vector_from_init, log_transform, \
+from gpar.regression import _vector_from_init, log_transform, \
     squishing_transform, GPARRegressor, _construct_gpar, _determine_indices
 from lab.torch import B
 from stheno import GP
 
 # noinspection PyUnresolvedReferences
-from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, \
-    approx, array
+from . import eq, neq, lt, le, ge, gt, raises, ok, allclose, approx, tensor
 
 
 def test_transforms():
     f, f_inv = log_transform
-    yield allclose, f(f_inv(array([1, 2, 3, 4]))), array([1, 2, 3, 4])
+    yield allclose, f(f_inv(tensor([1, 2, 3, 4]))), tensor([1, 2, 3, 4])
     f, f_inv = squishing_transform
-    yield allclose, f(f_inv(array([-2, -1, 3, 4]))), array([-2, -1, 3, 4])
-
-
-def test_uprank():
-    yield allclose, _uprank(1), np.ones((1, 1))
-    yield allclose, _uprank(np.ones(1)), np.ones((1, 1))
-    yield allclose, _uprank(np.ones((1, 1))), np.ones((1, 1))
-    yield raises, ValueError, lambda: _uprank(np.ones((1, 1, 1)))
+    yield allclose, f(f_inv(tensor([-2, -1, 3, 4]))), tensor([-2, -1, 3, 4])
 
 
 def test_vector_from_init():
@@ -96,18 +88,18 @@ def test_logpdf():
     f2, e2 = gpar.layers[1]()
 
     # Test computation under prior.
-    logpdf1 = (f1 + e1)(B.array(x)).logpdf(B.array(y[:, 0]))
+    logpdf1 = (f1 + e1)(tensor(x)).logpdf(tensor(y[:, 0]))
     x_stack = np.concatenate([x[:, None], y[:, 0:1]], axis=1)
-    logpdf2 = (f2 + e2)(B.array(x_stack)).logpdf(B.array(y[:, 1]))
+    logpdf2 = (f2 + e2)(tensor(x_stack)).logpdf(tensor(y[:, 1]))
     yield approx, reg.logpdf(x, y), logpdf1 + logpdf2, 6
 
     # Test computation under posterior.
     e1_post = GP(e1.kernel, e1.mean, graph=e1.graph)
     e2_post = GP(e2.kernel, e2.mean, graph=e2.graph)
-    f1_post = f1 | ((f1 + e1)(B.array(x)), B.array(y[:, 0]))
-    f2_post = f2 | ((f2 + e2)(B.array(x_stack)), B.array(y[:, 1]))
-    logpdf1 = (f1_post + e1_post)(B.array(x)).logpdf(B.array(y[:, 0]))
-    logpdf2 = (f2_post + e2_post)(B.array(x_stack)).logpdf(B.array(y[:, 1]))
+    f1_post = f1 | ((f1 + e1)(tensor(x)), tensor(y[:, 0]))
+    f2_post = f2 | ((f2 + e2)(tensor(x_stack)), tensor(y[:, 1]))
+    logpdf1 = (f1_post + e1_post)(tensor(x)).logpdf(tensor(y[:, 0]))
+    logpdf2 = (f2_post + e2_post)(tensor(x_stack)).logpdf(tensor(y[:, 1]))
     yield raises, RuntimeError, lambda: reg.logpdf(x, y, posterior=True)
     reg.fit(x, y, iters=0)
     yield approx, reg.logpdf(x, y, posterior=True), logpdf1 + logpdf2, 6
@@ -178,7 +170,7 @@ def test_fit():
     yield ok, (~B.isnan(reg.y)).numpy().all()
 
     # Test transformation and normalisation of outputs.
-    z = B.linspace(-1, 1, 10, dtype=torch.float64)
+    z = torch.linspace(-1, 1, 10, dtype=torch.float64)
     z = B.stack([z, 2 * z], axis=1)
     yield allclose, reg._untransform_y(reg._transform_y(z)), z
     yield allclose, reg._unnormalise_y(reg._normalise_y(z)), z

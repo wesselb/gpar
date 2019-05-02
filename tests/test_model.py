@@ -9,18 +9,17 @@ from lab.torch import B
 from stheno import GP, EQ, Delta, Graph, Obs, SparseObs, ZeroKernel, Linear
 
 # noinspection PyUnresolvedReferences
-from . import eq, neq, lt, le, ge, gt, raises, call, ok, lam, allclose, \
-    approx, array
+from . import eq, neq, lt, le, ge, gt, raises, ok, allclose, approx, tensor
 
 
 def test_merge():
-    original = B.array([1, 2, 3, 4])
-    updates = B.array([5, 6])
+    original = torch.tensor([1, 2, 3, 4])
+    updates = torch.tensor([5, 6])
 
-    result = merge(original, updates, B.array([True, True, False, False]))
+    result = merge(original, updates, torch.tensor([True, True, False, False]))
     yield allclose, result, [5, 6, 3, 4]
 
-    result = merge(original, updates, B.array([True, False, True, False]))
+    result = merge(original, updates, torch.tensor([True, False, True, False]))
     yield allclose, result, [5, 2, 6, 4]
 
 
@@ -37,12 +36,12 @@ def test_last():
 
 
 def test_per_output():
-    y = B.array([[1, 2, np.nan, np.nan],
-                 [3, np.nan, 4, np.nan],
-                 [5, 6, 7, np.nan],
-                 [8, np.nan, np.nan, np.nan],
-                 [9, 10, np.nan, np.nan],
-                 [11, np.nan, np.nan, 12]])
+    y = torch.tensor([[1, 2, np.nan, np.nan],
+                      [3, np.nan, 4, np.nan],
+                      [5, 6, 7, np.nan],
+                      [8, np.nan, np.nan, np.nan],
+                      [9, 10, np.nan, np.nan],
+                      [11, np.nan, np.nan, 12]])
 
     expected = [([1, 3, 5, 8, 9, 11], [True, True, True, True, True, True]),
                 ([2, 6, 10], [True, False, True, False, True, False]),
@@ -78,7 +77,7 @@ def test_obs():
     e = GP(1e-8 * Delta(), graph=graph)
 
     # Check that it produces the correct observations.
-    x = B.linspace(0, 0.1, 10, dtype=torch.float64)
+    x = torch.linspace(0, 0.1, 10, dtype=torch.float64)
     y = f(x).sample()
 
     # Set some observations to be missing.
@@ -102,11 +101,11 @@ def test_update_inputs():
     graph = Graph()
     f = GP(EQ(), graph=graph)
 
-    x = array([[1], [2], [3]])
-    y = array([[4], [5], [6]])
+    x = tensor([[1], [2], [3]])
+    y = tensor([[4], [5], [6]])
     res = B.concat([x, y], axis=1)
-    x_ind = array([[6], [7]])
-    res_ind = array([[6, 0], [7, 0]])
+    x_ind = tensor([[6], [7]])
+    res_ind = tensor([[6, 0], [7, 0]])
 
     # Check vanilla case.
     gpar = GPAR(x_ind=x_ind)
@@ -143,8 +142,8 @@ def test_update_inputs():
           (this_res, res_ind)
 
     # Construct observations and update result for inducing points.
-    obs = Obs(f(array([1, 2, 3, 6, 7])), array([9, 10, 11, 12, 13]))
-    res_ind = array([[6, 12], [7, 13]])
+    obs = Obs(f(tensor([1, 2, 3, 6, 7])), tensor([9, 10, 11, 12, 13]))
+    res_ind = tensor([[6, 12], [7, 13]])
 
     # Check imputation with posterior.
     gpar = GPAR(impute=True, x_ind=x_ind)
@@ -185,10 +184,10 @@ def test_conditioning():
     f2, e2 = GP(EQ(), graph=graph), GP(2e-8 * Delta(), graph=graph)
     gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
 
-    x = array([[1], [2], [3]])
-    y = array([[4, 5],
-               [6, 7],
-               [8, 9]])
+    x = tensor([[1], [2], [3]])
+    y = tensor([[4, 5],
+                [6, 7],
+                [8, 9]])
     gpar = gpar | (x, y)
 
     # Extract posterior processes.
@@ -217,7 +216,7 @@ def test_logpdf():
     gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
 
     # Sample some data from GPAR.
-    x = B.linspace(0, 2, 10, dtype=torch.float64)[:, None]
+    x = torch.linspace(0, 2, 10, dtype=torch.float64)[:, None]
     y = gpar.sample(x, latent=True)
 
     # Compute logpdf.
@@ -242,7 +241,7 @@ def test_logpdf():
 
 def test_sample():
     graph = Graph()
-    x = array([1, 2, 3])[:, None]
+    x = tensor([1, 2, 3])[:, None]
 
     # Test that it produces random samples. Not sure how to test for
     # correctness.

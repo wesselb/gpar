@@ -189,7 +189,7 @@ class GPAR(object):
                 return a tuple containing the inputs and the inputs for the
                 inducing points with previous outputs concatenated
         """
-        logpdf = B.cast(0, dtype=B.dtype(x))
+        logpdf = B.cast(0, B.dtype(x))
         x_ind = self.x_ind if x_ind is None else x_ind
 
         y_per_output = per_output(y, self.impute or sample_missing)
@@ -226,7 +226,7 @@ class GPAR(object):
         Returns:
             tensor: Sample.
         """
-        sample = B.zeros((B.shape(x)[0], 0), dtype=B.dtype(x))
+        sample = B.zeros((B.shape(x)[0], 0), B.dtype(x))
         x_ind = self.x_ind
 
         for is_last, model in last(self.layers):

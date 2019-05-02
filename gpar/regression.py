@@ -24,14 +24,6 @@ squishing_transform = (lambda x: B.sign(x) * B.log(1 + B.abs(x)),
                        lambda x: B.sign(x) * (B.exp(B.abs(x)) - 1))
 
 
-def _uprank(x):
-    if np.ndim(x) > 2:
-        raise ValueError('Invalid rank {}.'.format(np.ndim(x)))
-    while 0 <= np.ndim(x) < 2:
-        x = np.expand_dims(x, 1)
-    return B.array(x)
-
-
 def _vector_from_init(init, length):
     # If only a single value is given, create ones.
     if np.size(init) == 1:
@@ -251,7 +243,10 @@ class GPARRegressor(object):
         self.replace = replace
         self.impute = impute
         self.sparse = x_ind is not None
-        self.x_ind = None if x_ind is None else _uprank(x_ind)
+        if x_ind is None:
+            self.x_ind = None
+        else:
+            self.x_ind = torch.tensor(B.uprank(x_ind))
         self.model_config = {
             'scale': scale,
             'scale_tie': scale_tie,
@@ -319,7 +314,8 @@ class GPARRegressor(object):
             raise NotImplementedError('Greedy search is not implemented yet.')
 
         # Store data.
-        self.x, self.y = _uprank(x), self._transform_y(_uprank(y))
+        self.x = torch.tensor(B.uprank(x))
+        self.y = torch.tensor(self._transform_y(B.uprank(y)))
         self.n, self.m = self.x.shape
         self.p = self.y.shape[1]
 
@@ -413,7 +409,8 @@ class GPARRegressor(object):
         Returns
             float: Estimate of the logpdf.
         """
-        x, y = _uprank(x), self._unnormalise_y(self._transform_y(_uprank(y)))
+        x = torch.tensor(B.uprank(x))
+        y = torch.tensor(self._unnormalise_y(self._transform_y(B.uprank(y))))
         m, p = x.shape[1], y.shape[1]
 
         if posterior and not self.is_fit:
@@ -445,7 +442,7 @@ class GPARRegressor(object):
             list[tensor]: Prior samples. If only a single sample is
                 generated, it will be returned directly instead of in a list.
         """
-        x = _uprank(x)
+        x = torch.tensor(B.uprank(x))
 
         # Check that model is fit if sampling from the posterior.
         if posterior and not self.is_fit:
