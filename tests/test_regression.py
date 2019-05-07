@@ -200,5 +200,5 @@ def test_scale_tying():
     reg = GPARRegressor(scale_tie=True)
     reg.sample(np.linspace(0, 10, 20), p=2)  # Instantiate variables.
     vs = reg.get_variables()
-    yield ok, (0, 'I/scales') in vs
-    yield ok, (1, 'I/scales') not in vs
+    yield ok, '0/input/scales' in vs
+    yield ok, '1/input/scales' not in vs

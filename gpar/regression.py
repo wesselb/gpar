@@ -81,12 +81,11 @@ def _model_generator(vs,
         m_inds, p_inds, p_num = _determine_indices(m, pi, markov)
 
         # Add nonlinear kernel over the inputs.
-        variance = vs.bnd(name=(pi, 'I/var'), group=pi, init=1.)
-        scales = vs.bnd(name=(0 if scale_tie else pi, 'I/scales'),
-                        group=0 if scale_tie else pi,
+        variance = vs.bnd(name='{}/input/var'.format(pi), init=1.)
+        scales = vs.bnd(name='{}/input/scales'.format(0 if scale_tie else pi),
                         init=_vector_from_init(scale, m))
         if rq:
-            k = RQ(vs.bnd(name=(pi, 'I/alpha'), group=pi, init=1e-2,
+            k = RQ(vs.bnd(name='{}/input/alpha', init=1e-2,
                           lower=1e-3, upper=1e3))
         else:
             k = EQ()
@@ -94,12 +93,12 @@ def _model_generator(vs,
 
         # Add a locally periodic kernel over the inputs.
         if per:
-            variance = vs.bnd(name=(pi, 'I/per/var'), group=pi, init=1.)
-            scales = vs.bnd(name=(pi, 'I/per/scales'), group=pi,
+            variance = vs.bnd(name='{}/input/per/var'.format(pi), init=1.)
+            scales = vs.bnd(name='{}/input/per/scales'.format(pi),
                             init=_vector_from_init(per_scale, 2 * m))
-            periods = vs.bnd(name=(pi, 'I/per/pers'), group=pi,
+            periods = vs.bnd(name='{}/input/per/pers'.format(pi),
                              init=_vector_from_init(per_period, m))
-            decays = vs.bnd(name=(pi, 'I/per/decay'), group=pi,
+            decays = vs.bnd(name='{}/input/per/decay'.format(pi),
                             init=_vector_from_init(per_decay, m))
             kernel_inputs += variance * \
                              EQ().stretch(scales).periodic(periods) * \
@@ -107,31 +106,31 @@ def _model_generator(vs,
 
         # Add a linear kernel over the inputs.
         if input_linear:
-            scales = vs.bnd(name=(pi, 'I/lin/scales'), group=pi,
+            scales = vs.bnd(name='{}/input/lin/scales'.format(pi),
                             init=_vector_from_init(input_linear_scale, m))
-            const = vs.get(name=(pi, 'I/lin/const'), group=pi, init=1.)
+            const = vs.get(name='{}/input/lin/const'.format(pi), init=1.)
             kernel_inputs += Linear().stretch(scales) + const
 
         # Add linear kernel over the outputs.
         if linear and pi > 0:
-            scales = vs.bnd(name=(pi, 'O/L/scales'), group=pi,
+            scales = vs.bnd(name='{}/output/lin/scales'.format(pi),
                             init=_vector_from_init(linear_scale, p_num))
             kernel_outputs += Linear().stretch(scales)
 
         # Add nonlinear kernel over the outputs.
         if nonlinear and pi > 0:
-            variance = vs.bnd(name=(pi, 'O/NL/var'), group=pi, init=1.)
-            scales = vs.bnd(name=(pi, 'O/NL/scales'), group=pi,
+            variance = vs.bnd(name='{}/output/nonlin/var'.format(pi), init=1.)
+            scales = vs.bnd(name='{}/output/nonlin/scales'.format(pi),
                             init=_vector_from_init(nonlinear_scale, p_num))
             if rq:
-                k = RQ(vs.bnd(name=(pi, 'O/NL/alpha'), group=pi, init=1e-2,
-                              lower=1e-3, upper=1e3))
+                k = RQ(vs.bnd(name='{}/output/nonlin/alpha'.format(pi),
+                              init=1e-2, lower=1e-3, upper=1e3))
             else:
                 k = EQ()
             kernel_outputs += variance * k.stretch(scales)
 
         # Construct noise kernel.
-        variance = vs.bnd(name=(pi, 'noise'), group=pi,
+        variance = vs.bnd(name='{}/noise'.format(pi),
                           init=_vector_from_init(noise, pi + 1)[pi],
                           lower=1e-8)  # Allow noise to be small.
         kernel_noise = variance * Delta()
@@ -286,7 +285,7 @@ class GPARRegressor(object):
             dict: Dictionary mapping variable names to variable values.
         """
         variables = {}
-        for name in self.vs.names.keys():
+        for name in self.vs.index_by_name.keys():
             variables[name] = self.vs[name].detach().numpy()
         return variables
 
@@ -383,11 +382,14 @@ class GPARRegressor(object):
                 else:
                     return -gpar.logpdf(self.x, self.y, only_last_layer=False)
 
+            # Determine names to optimise.
+            if fix:
+                names = ['{}/*'.format(pi)]
+            else:
+                names = ['{}/*'.format(i) for i in range(pi + 1)]
+
             # Perform the optimisation.
-            minimise_l_bfgs_b(objective,
-                              self.vs,
-                              groups=[pi] if fix else list(range(pi + 1)),
-                              **kw_args)
+            minimise_l_bfgs_b(objective, self.vs, names=names, **kw_args)
 
         # Print newline to end progress bar.
         sys.stdout.write('\n')
