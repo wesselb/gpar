@@ -336,7 +336,7 @@ class GPARRegressor(object):
                 if std > 0:
                     stds.append(std)
                 else:
-                    stds.append(B.cast(1, B.dtype(std)))
+                    stds.append(B.cast(B.dtype(std), 1))
 
             # Stack into a vector and create normalisers.
             means, stds = B.stack(*means)[None, :], B.stack(*stds)[None, :]

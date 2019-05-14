@@ -189,7 +189,7 @@ class GPAR(object):
                 return a tuple containing the inputs and the inputs for the
                 inducing points with previous outputs concatenated
         """
-        logpdf = B.cast(0, B.dtype(x))
+        logpdf = B.cast(B.dtype(x), 0)
         x_ind = self.x_ind if x_ind is None else x_ind
 
         y_per_output = per_output(y, self.impute or sample_missing)
