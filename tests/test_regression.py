@@ -171,7 +171,7 @@ def test_fit():
 
     # Test transformation and normalisation of outputs.
     z = torch.linspace(-1, 1, 10, dtype=torch.float64)
-    z = B.stack([z, 2 * z], axis=1)
+    z = B.stack(z, 2 * z, axis=1)
     yield allclose, reg._untransform_y(reg._transform_y(z)), z
     yield allclose, reg._unnormalise_y(reg._normalise_y(z)), z
 

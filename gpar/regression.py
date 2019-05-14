@@ -339,7 +339,7 @@ class GPARRegressor(object):
                     stds.append(B.cast(1, B.dtype(std)))
 
             # Stack into a vector and create normalisers.
-            means, stds = B.stack(means)[None, :], B.stack(stds)[None, :]
+            means, stds = B.stack(*means)[None, :], B.stack(*stds)[None, :]
 
             def normalise_y(y_):
                 return (y_ - means) / stds

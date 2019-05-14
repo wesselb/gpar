@@ -103,7 +103,7 @@ def test_update_inputs():
 
     x = tensor([[1], [2], [3]])
     y = tensor([[4], [5], [6]])
-    res = B.concat([x, y], axis=1)
+    res = B.concat(x, y, axis=1)
     x_ind = tensor([[6], [7]])
     res_ind = tensor([[6, 0], [7, 0]])
 
@@ -206,7 +206,7 @@ def test_conditioning():
 
     # Test posteriors.
     yield approx, f1_post.mean(x), y[:, 0:1]
-    yield approx, f2_post.mean(B.concat([x, y[:, 0:1]], axis=1)), y[:, 1:2]
+    yield approx, f2_post.mean(B.concat(x, y[:, 0:1], axis=1)), y[:, 1:2]
 
 
 def test_logpdf():
@@ -221,7 +221,7 @@ def test_logpdf():
 
     # Compute logpdf.
     logpdf1 = (f1 + e1)(x).logpdf(y[:, 0])
-    logpdf2 = (f2 + e2)(B.concat([x, y[:, 0:1]], axis=1)).logpdf(y[:, 1])
+    logpdf2 = (f2 + e2)(B.concat(x, y[:, 0:1], axis=1)).logpdf(y[:, 1])
 
     # Test computation of GPAR.
     yield eq, gpar.logpdf(x, y), logpdf1 + logpdf2

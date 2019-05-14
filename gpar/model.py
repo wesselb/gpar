@@ -24,7 +24,7 @@ def merge(x, updates, to_update):
         tensor: Updated tensor.
     """
     # Stack them, which screws up the order.
-    concat = B.concat([x[~to_update], updates], axis=0)
+    concat = B.concat(x[~to_update], updates, axis=0)
 
     # Generate an index mapping to fix the ordering.
     i_original = 0
@@ -226,7 +226,7 @@ class GPAR(object):
         Returns:
             tensor: Sample.
         """
-        sample = B.zeros((B.shape(x)[0], 0), B.dtype(x))
+        sample = B.zeros(B.dtype(x), B.shape(x)[0], 0)
         x_ind = self.x_ind
 
         for is_last, model in last(self.layers):
@@ -236,11 +236,11 @@ class GPAR(object):
                 # Sample latent function: use ancestral sampling.
                 f_sample = f(x).sample()
                 y_sample = f_sample + e(x).sample()
-                sample = B.concat([sample, f_sample], axis=1)
+                sample = B.concat(sample, f_sample, axis=1)
             else:
                 # Sample observed function.
                 y_sample = (f + e)(x).sample()
-                sample = B.concat([sample, y_sample], axis=1)
+                sample = B.concat(sample, y_sample, axis=1)
 
             # Update inputs.
             if not is_last:
@@ -265,7 +265,7 @@ class GPAR(object):
 
         # Update inputs of inducing points.
         if self.sparse:
-            x_ind = B.concat([x_ind, estimate(x_ind)], axis=1)
+            x_ind = B.concat(x_ind, estimate(x_ind), axis=1)
 
         # Impute missing data and replace available data.
         if self.impute and self.replace:
@@ -280,7 +280,7 @@ class GPAR(object):
                 y = merge(y, estimate(x[available]), available)
 
         # Finally, actually update inputs.
-        x = B.concat([x, y], axis=1)
+        x = B.concat(x, y, axis=1)
 
         return x, x_ind
 
