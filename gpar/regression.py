@@ -6,11 +6,11 @@ import logging
 import sys
 
 import numpy as np
-import torch
 from lab.torch import B
 from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear, ZeroKernel
 from varz import Vars
 from varz.torch import minimise_l_bfgs_b
+import torch
 
 from .model import GPAR
 
