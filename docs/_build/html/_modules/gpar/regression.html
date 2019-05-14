@@ -17,32 +17,35 @@
   
 
   
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
-
-  
-  <script src="../../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -157,7 +160,8 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">lab.torch</span> <span class="k">import</span> <span class="n">B</span>
 <span class="kn">from</span> <span class="nn">stheno.torch</span> <span class="k">import</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">GP</span><span class="p">,</span> <span class="n">EQ</span><span class="p">,</span> <span class="n">RQ</span><span class="p">,</span> <span class="n">Delta</span><span class="p">,</span> <span class="n">Linear</span><span class="p">,</span> <span class="n">ZeroKernel</span>
-<span class="kn">from</span> <span class="nn">varz</span> <span class="k">import</span> <span class="n">Vars</span><span class="p">,</span> <span class="n">minimise_l_bfgs_b</span>
+<span class="kn">from</span> <span class="nn">varz</span> <span class="k">import</span> <span class="n">Vars</span>
+<span class="kn">from</span> <span class="nn">varz.torch</span> <span class="k">import</span> <span class="n">minimise_l_bfgs_b</span>
 
 <span class="kn">from</span> <span class="nn">.model</span> <span class="k">import</span> <span class="n">GPAR</span>
 
@@ -170,14 +174,6 @@
 <span class="c1">#: Squishing transform for the data.</span>
 <span class="n">squishing_transform</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">B</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">B</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span>
                        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
-
-
-<span class="k">def</span> <span class="nf">_uprank</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid rank </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
-    <span class="k">while</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_vector_from_init</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
@@ -237,12 +233,11 @@
         <span class="n">m_inds</span><span class="p">,</span> <span class="n">p_inds</span><span class="p">,</span> <span class="n">p_num</span> <span class="o">=</span> <span class="n">_determine_indices</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">markov</span><span class="p">)</span>
 
         <span class="c1"># Add nonlinear kernel over the inputs.</span>
-        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/var&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
-        <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">scale_tie</span> <span class="k">else</span> <span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/scales&#39;</span><span class="p">),</span>
-                        <span class="n">group</span><span class="o">=</span><span class="mi">0</span> <span class="k">if</span> <span class="n">scale_tie</span> <span class="k">else</span> <span class="n">pi</span><span class="p">,</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/var&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+        <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">scale_tie</span> <span class="k">else</span> <span class="n">pi</span><span class="p">),</span>
                         <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">rq</span><span class="p">:</span>
-            <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/alpha&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/alpha&#39;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span>
                           <span class="n">lower</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1e3</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">k</span> <span class="o">=</span> <span class="n">EQ</span><span class="p">()</span>
@@ -250,12 +245,12 @@
 
         <span class="c1"># Add a locally periodic kernel over the inputs.</span>
         <span class="k">if</span> <span class="n">per</span><span class="p">:</span>
-            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/per/var&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/per/scales&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span>
+            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/var&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
                             <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_scale</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">m</span><span class="p">))</span>
-            <span class="n">periods</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/per/pers&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span>
+            <span class="n">periods</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/pers&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
                              <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_period</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
-            <span class="n">decays</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/per/decay&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span>
+            <span class="n">decays</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/decay&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
                             <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_decay</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
             <span class="n">kernel_inputs</span> <span class="o">+=</span> <span class="n">variance</span> <span class="o">*</span> \
                              <span class="n">EQ</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span><span class="o">.</span><span class="n">periodic</span><span class="p">(</span><span class="n">periods</span><span class="p">)</span> <span class="o">*</span> \
@@ -263,31 +258,31 @@
 
         <span class="c1"># Add a linear kernel over the inputs.</span>
         <span class="k">if</span> <span class="n">input_linear</span><span class="p">:</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/lin/scales&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/lin/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
                             <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">input_linear_scale</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
-            <span class="n">const</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;I/lin/const&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+            <span class="n">const</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/lin/const&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
             <span class="n">kernel_inputs</span> <span class="o">+=</span> <span class="n">Linear</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span> <span class="n">const</span>
 
         <span class="c1"># Add linear kernel over the outputs.</span>
         <span class="k">if</span> <span class="n">linear</span> <span class="ow">and</span> <span class="n">pi</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;O/L/scales&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/lin/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
                             <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">linear_scale</span><span class="p">,</span> <span class="n">p_num</span><span class="p">))</span>
             <span class="n">kernel_outputs</span> <span class="o">+=</span> <span class="n">Linear</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span>
 
         <span class="c1"># Add nonlinear kernel over the outputs.</span>
         <span class="k">if</span> <span class="n">nonlinear</span> <span class="ow">and</span> <span class="n">pi</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;O/NL/var&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;O/NL/scales&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span>
+            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/nonlin/var&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/nonlin/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
                             <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">nonlinear_scale</span><span class="p">,</span> <span class="n">p_num</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">rq</span><span class="p">:</span>
-                <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;O/NL/alpha&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span>
-                              <span class="n">lower</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1e3</span><span class="p">))</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/nonlin/alpha&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
+                              <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1e3</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">k</span> <span class="o">=</span> <span class="n">EQ</span><span class="p">()</span>
             <span class="n">kernel_outputs</span> <span class="o">+=</span> <span class="n">variance</span> <span class="o">*</span> <span class="n">k</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span>
 
         <span class="c1"># Construct noise kernel.</span>
-        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;noise&#39;</span><span class="p">),</span> <span class="n">group</span><span class="o">=</span><span class="n">pi</span><span class="p">,</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/noise&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
                           <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="n">pi</span><span class="p">],</span>
                           <span class="n">lower</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>  <span class="c1"># Allow noise to be small.</span>
         <span class="n">kernel_noise</span> <span class="o">=</span> <span class="n">variance</span> <span class="o">*</span> <span class="n">Delta</span><span class="p">()</span>
@@ -399,7 +394,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">replace</span> <span class="o">=</span> <span class="n">replace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">impute</span> <span class="o">=</span> <span class="n">impute</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sparse</span> <span class="o">=</span> <span class="n">x_ind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">x_ind</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_uprank</span><span class="p">(</span><span class="n">x_ind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x_ind</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x_ind</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="n">scale</span><span class="p">,</span>
             <span class="s1">&#39;scale_tie&#39;</span><span class="p">:</span> <span class="n">scale_tie</span><span class="p">,</span>
@@ -439,7 +437,7 @@
 <span class="sd">            dict: Dictionary mapping variable names to variable values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="o">.</span><span class="n">index_by_name</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">variables</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">variables</span></div>
 
@@ -467,7 +465,8 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Greedy search is not implemented yet.&#39;</span><span class="p">)</span>
 
         <span class="c1"># Store data.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">_uprank</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">_uprank</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
@@ -491,7 +490,7 @@
                     <span class="n">stds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">std</span><span class="p">)))</span>
 
             <span class="c1"># Stack into a vector and create normalisers.</span>
-            <span class="n">means</span><span class="p">,</span> <span class="n">stds</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">means</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">B</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">stds</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">means</span><span class="p">,</span> <span class="n">stds</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="o">*</span><span class="n">means</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">B</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="o">*</span><span class="n">stds</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
 
             <span class="k">def</span> <span class="nf">normalise_y</span><span class="p">(</span><span class="n">y_</span><span class="p">):</span>
                 <span class="k">return</span> <span class="p">(</span><span class="n">y_</span> <span class="o">-</span> <span class="n">means</span><span class="p">)</span> <span class="o">/</span> <span class="n">stds</span>
@@ -535,11 +534,14 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">return</span> <span class="o">-</span><span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
+            <span class="c1"># Determine names to optimise.</span>
+            <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/*&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/*&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+
             <span class="c1"># Perform the optimisation.</span>
-            <span class="n">minimise_l_bfgs_b</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span>
-                              <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span>
-                              <span class="n">groups</span><span class="o">=</span><span class="p">[</span><span class="n">pi</span><span class="p">]</span> <span class="k">if</span> <span class="n">fix</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span>
-                              <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
+            <span class="n">minimise_l_bfgs_b</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
 
         <span class="c1"># Print newline to end progress bar.</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -561,7 +563,8 @@
 <span class="sd">        Returns</span>
 <span class="sd">            float: Estimate of the logpdf.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">_uprank</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unnormalise_y</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">_uprank</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unnormalise_y</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">y</span><span class="p">))))</span>
         <span class="n">m</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">posterior</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fit</span><span class="p">:</span>
@@ -593,7 +596,7 @@
 <span class="sd">            list[tensor]: Prior samples. If only a single sample is</span>
 <span class="sd">                generated, it will be returned directly instead of in a list.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">_uprank</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
         <span class="c1"># Check that model is fit if sampling from the posterior.</span>
         <span class="k">if</span> <span class="n">posterior</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fit</span><span class="p">:</span>
@@ -672,7 +675,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -689,33 +692,16 @@
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

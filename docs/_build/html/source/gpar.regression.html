@@ -17,33 +17,36 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="gpar.model module" href="gpar.model.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -161,135 +164,196 @@
 <em class="property">class </em><code class="descclassname">gpar.regression.</code><code class="descname">GPARRegressor</code><span class="sig-paren">(</span><em>replace=False</em>, <em>impute=True</em>, <em>scale=1.0</em>, <em>scale_tie=False</em>, <em>per=False</em>, <em>per_period=1.0</em>, <em>per_scale=1.0</em>, <em>per_decay=10.0</em>, <em>input_linear=False</em>, <em>input_linear_scale=100.0</em>, <em>linear=True</em>, <em>linear_scale=100.0</em>, <em>nonlinear=False</em>, <em>nonlinear_scale=1.0</em>, <em>rq=False</em>, <em>markov=None</em>, <em>noise=0.1</em>, <em>x_ind=None</em>, <em>normalise_y=True</em>, <em>transform_y=(&lt;function GPARRegressor.&lt;lambda&gt;&gt;</em>, <em>&lt;function GPARRegressor.&lt;lambda&gt;&gt;)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/regression.html#GPARRegressor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.regression.GPARRegressor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>GPAR regressor.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>replace</strong> (<em>bool</em><em>, </em><em>optional</em>) – Replace observations with predictive means.
-Helps the model deal with noisy data points. Defaults to <cite>False</cite>.</li>
-<li><strong>impute</strong> (<em>bool</em><em>, </em><em>optional</em>) – Impute data with predictive means to make the
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>replace</strong> (<em>bool</em><em>, </em><em>optional</em>) – Replace observations with predictive means.
+Helps the model deal with noisy data points. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>impute</strong> (<em>bool</em><em>, </em><em>optional</em>) – Impute data with predictive means to make the
 data set closed downwards. Helps the model deal with missing data.
-Defaults to <cite>True</cite>.</li>
-<li><strong>scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length scale(s) over
-the inputs. Defaults to <cite>1.0</cite>.</li>
-<li><strong>scale_tie</strong> (<em>bool</em><em>, </em><em>optional</em>) – Tie the length scale(s) over the inputs.
-Defaults to <cite>False</cite>.</li>
-<li><strong>per</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use a locally periodic kernel over the inputs.
-Defaults to <cite>False</cite>.</li>
-<li><strong>per_period</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the period(s) of the
-locally periodic kernel. Defaults to <cite>1.0</cite>.</li>
-<li><strong>per_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length scale(s)
-of the locally periodic kernel. Defaults to <cite>1.0</cite>.</li>
-<li><strong>per_decay</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length scale(s)
+Defaults to <cite>True</cite>.</p></li>
+<li><p><strong>scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length scale(s) over
+the inputs. Defaults to <cite>1.0</cite>.</p></li>
+<li><p><strong>scale_tie</strong> (<em>bool</em><em>, </em><em>optional</em>) – Tie the length scale(s) over the inputs.
+Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>per</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use a locally periodic kernel over the inputs.
+Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>per_period</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the period(s) of the
+locally periodic kernel. Defaults to <cite>1.0</cite>.</p></li>
+<li><p><strong>per_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length scale(s)
+of the locally periodic kernel. Defaults to <cite>1.0</cite>.</p></li>
+<li><p><strong>per_decay</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length scale(s)
 of the local change of the locally periodic kernel. Defaults to
-<cite>10.0</cite>.</li>
-<li><strong>input_linear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use a linear kernel over the inputs.
-Defaults to <cite>False</cite>.</li>
-<li><strong>input_linear_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length
-scale(s) of the linear kernel over the inputs. Defaults to <cite>100.0</cite>.</li>
-<li><strong>linear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use linear dependencies between outputs.
-Defaults to <cite>True</cite>.</li>
-<li><strong>linear_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length
-scale(s) of the linear dependencies. Defaults to <cite>100.0</cite>.</li>
-<li><strong>nonlinear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use nonlinear dependencies between outputs.
-Defaults to <cite>True</cite>.</li>
-<li><strong>nonlinear_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length
-scale(s) over the outputs. Defaults to <cite>0.1</cite>.</li>
-<li><strong>rq</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use rational quadratic (RQ) kernels instead of
-exponentiated quadratic (EQ) kernels. Defaults to <cite>False</cite>.</li>
-<li><strong>markov</strong> (<em>int</em><em>, </em><em>optional</em>) – Markov order of conditionals. Set to <cite>None</cite> to
-have a fully connected structure. Defaults to <cite>None</cite>.</li>
-<li><strong>noise</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the observation noise(s).
-Defaults to <cite>0.01</cite>.</li>
-<li><strong>x_ind</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Locations of inducing points. Set to <cite>None</cite>
-if inducing points should not be used. Defaults to <cite>None</cite>.</li>
-<li><strong>normalise_y</strong> (<em>bool</em><em>, </em><em>optional</em>) – Normalise outputs. Defaults to <cite>True</cite>.</li>
-<li><strong>transform_y</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Tuple containing a transform and its
+<cite>10.0</cite>.</p></li>
+<li><p><strong>input_linear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use a linear kernel over the inputs.
+Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>input_linear_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length
+scale(s) of the linear kernel over the inputs. Defaults to <cite>100.0</cite>.</p></li>
+<li><p><strong>linear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use linear dependencies between outputs.
+Defaults to <cite>True</cite>.</p></li>
+<li><p><strong>linear_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length
+scale(s) of the linear dependencies. Defaults to <cite>100.0</cite>.</p></li>
+<li><p><strong>nonlinear</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use nonlinear dependencies between outputs.
+Defaults to <cite>True</cite>.</p></li>
+<li><p><strong>nonlinear_scale</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the length
+scale(s) over the outputs. Defaults to <cite>0.1</cite>.</p></li>
+<li><p><strong>rq</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use rational quadratic (RQ) kernels instead of
+exponentiated quadratic (EQ) kernels. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>markov</strong> (<em>int</em><em>, </em><em>optional</em>) – Markov order of conditionals. Set to <cite>None</cite> to
+have a fully connected structure. Defaults to <cite>None</cite>.</p></li>
+<li><p><strong>noise</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Initial value(s) for the observation noise(s).
+Defaults to <cite>0.01</cite>.</p></li>
+<li><p><strong>x_ind</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Locations of inducing points. Set to <cite>None</cite>
+if inducing points should not be used. Defaults to <cite>None</cite>.</p></li>
+<li><p><strong>normalise_y</strong> (<em>bool</em><em>, </em><em>optional</em>) – Normalise outputs. Defaults to <cite>True</cite>.</p></li>
+<li><p><strong>transform_y</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Tuple containing a transform and its
 inverse, which should be applied to the data before fitting.
-Defaults to the identity transform.</li>
+Defaults to the identity transform.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.replace">
 <code class="descname">replace</code><a class="headerlink" href="#gpar.regression.GPARRegressor.replace" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – Replace observations with predictive means.</p>
+<dd><p>Replace observations with predictive means.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.impute">
 <code class="descname">impute</code><a class="headerlink" href="#gpar.regression.GPARRegressor.impute" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – Impute missing data with predictive means to make the
+<dd><p>Impute missing data with predictive means to make the
 data set closed downwards.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.sparse">
 <code class="descname">sparse</code><a class="headerlink" href="#gpar.regression.GPARRegressor.sparse" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – Use inducing points.</p>
+<dd><p>Use inducing points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.x_ind">
 <code class="descname">x_ind</code><a class="headerlink" href="#gpar.regression.GPARRegressor.x_ind" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>tensor</em> – Locations of inducing points.</p>
+<dd><p>Locations of inducing points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.model_config">
 <code class="descname">model_config</code><a class="headerlink" href="#gpar.regression.GPARRegressor.model_config" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> – Summary of model configuration.</p>
+<dd><p>Summary of model configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.vs">
 <code class="descname">vs</code><a class="headerlink" href="#gpar.regression.GPARRegressor.vs" title="Permalink to this definition">¶</a></dt>
-<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">varz.Vars</span></code> – Model parameters.</p>
+<dd><p>Model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">varz.Vars</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.is_fit">
 <code class="descname">is_fit</code><a class="headerlink" href="#gpar.regression.GPARRegressor.is_fit" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – The model is fit.</p>
+<dd><p>The model is fit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.x">
 <code class="descname">x</code><a class="headerlink" href="#gpar.regression.GPARRegressor.x" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>tensor</em> – Inputs of training data.</p>
+<dd><p>Inputs of training data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.y">
 <code class="descname">y</code><a class="headerlink" href="#gpar.regression.GPARRegressor.y" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>tensor</em> – Outputs of training data.</p>
+<dd><p>Outputs of training data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.n">
 <code class="descname">n</code><a class="headerlink" href="#gpar.regression.GPARRegressor.n" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> – Number of training data points.</p>
+<dd><p>Number of training data points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.m">
 <code class="descname">m</code><a class="headerlink" href="#gpar.regression.GPARRegressor.m" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> – Number of input features.</p>
+<dd><p>Number of input features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.p">
 <code class="descname">p</code><a class="headerlink" href="#gpar.regression.GPARRegressor.p" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> – Number of outputs.</p>
+<dd><p>Number of outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="gpar.regression.GPARRegressor.normalise_y">
 <code class="descname">normalise_y</code><a class="headerlink" href="#gpar.regression.GPARRegressor.normalise_y" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> – Normalise outputs.</p>
+<dd><p>Normalise outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -297,65 +361,55 @@ data set closed downwards.</p>
 <code class="descname">fit</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>greedy=False</em>, <em>fix=True</em>, <em>**kw_args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/regression.html#GPARRegressor.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.regression.GPARRegressor.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit the model to data.</p>
 <p>Further takes in keyword arguments for <cite>Varz.minimise_l_bfgs_b</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x</strong> (<em>tensor</em>) – Inputs of training data.</li>
-<li><strong>y</strong> (<em>tensor</em>) – Outputs of training data.</li>
-<li><strong>greedy</strong> (<em>bool</em><em>, </em><em>optional</em>) – Greedily determine the ordering of the
-outputs. Defaults to <cite>False</cite>.</li>
-<li><strong>fix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Fix the parameters of a layer after
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>tensor</em>) – Inputs of training data.</p></li>
+<li><p><strong>y</strong> (<em>tensor</em>) – Outputs of training data.</p></li>
+<li><p><strong>greedy</strong> (<em>bool</em><em>, </em><em>optional</em>) – Greedily determine the ordering of the
+outputs. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>fix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Fix the parameters of a layer after
 training it. If set to <cite>False</cite>, the likelihood are
 accumulated and all parameters are optimised at every step.
-Defaults to <cite>True</cite>.</li>
+Defaults to <cite>True</cite>.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="gpar.regression.GPARRegressor.get_variables">
 <code class="descname">get_variables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/regression.html#GPARRegressor.get_variables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.regression.GPARRegressor.get_variables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a dictionary containing all the hyperparameters.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Dictionary mapping variable names to variable values.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary mapping variable names to variable values.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="gpar.regression.GPARRegressor.logpdf">
 <code class="descname">logpdf</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>sample_missing=False</em>, <em>posterior=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/regression.html#GPARRegressor.logpdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.regression.GPARRegressor.logpdf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the logpdf of observations.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x</strong> (<em>tensor</em>) – Inputs.</li>
-<li><strong>y</strong> (<em>tensor</em>) – Outputs.</li>
-<li><strong>sample_missing</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample missing data to compute an
-unbiased estimate of the pdf, <em>not</em> logpdf. Defaults to <cite>False</cite>.</li>
-<li><strong>posterior</strong> (<em>bool</em><em>, </em><em>optional</em>) – Compute logpdf under the posterior
-instead of the prior. Defaults to <cite>False</cite>.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>tensor</em>) – Inputs.</p></li>
+<li><p><strong>y</strong> (<em>tensor</em>) – Outputs.</p></li>
+<li><p><strong>sample_missing</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample missing data to compute an
+unbiased estimate of the pdf, <em>not</em> logpdf. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>posterior</strong> (<em>bool</em><em>, </em><em>optional</em>) – Compute logpdf under the posterior
+instead of the prior. Defaults to <cite>False</cite>.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="docutils">
-<dt>Returns</dt>
-<dd>float: Estimate of the logpdf.</dd>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns</dt><dd><p>float: Estimate of the logpdf.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -363,76 +417,66 @@ instead of the prior. Defaults to <cite>False</cite>.</li>
 <dt id="gpar.regression.GPARRegressor.predict">
 <code class="descname">predict</code><span class="sig-paren">(</span><em>x</em>, <em>num_samples=100</em>, <em>latent=False</em>, <em>credible_bounds=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/regression.html#GPARRegressor.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.regression.GPARRegressor.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Predict at new inputs.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>tensor</em>) – Inputs to predict at.</li>
-<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples. Defaults to <cite>100</cite>.</li>
-<li><strong>latent</strong> (<em>bool</em><em>, </em><em>optional</em>) – Predict the latent function instead of
-observations. Defaults to <cite>True</cite>.</li>
-<li><strong>credible_bounds</strong> (<em>bool</em><em>, </em><em>optional</em>) – Also return 95% central marginal
-credible bounds for the predictions.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>tensor</em>) – Inputs to predict at.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples. Defaults to <cite>100</cite>.</p></li>
+<li><p><strong>latent</strong> (<em>bool</em><em>, </em><em>optional</em>) – Predict the latent function instead of
+observations. Defaults to <cite>True</cite>.</p></li>
+<li><p><strong>credible_bounds</strong> (<em>bool</em><em>, </em><em>optional</em>) – Also return 95% central marginal
+credible bounds for the predictions.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
-<dt>Predictive means. If <cite>credible_bounds</cite> is set to true,</dt>
-<dd><p class="first last">a three-tuple will be returned containing the predictive means,
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Predictive means. If <cite>credible_bounds</cite> is set to true,</dt><dd><p>a three-tuple will be returned containing the predictive means,
 lower credible bounds, and upper credible bounds.</p>
 </dd>
 </dl>
 </p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tensor</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="gpar.regression.GPARRegressor.sample">
 <code class="descname">sample</code><span class="sig-paren">(</span><em>x</em>, <em>p=None</em>, <em>posterior=False</em>, <em>num_samples=1</em>, <em>latent=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/regression.html#GPARRegressor.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.regression.GPARRegressor.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from the prior or posterior.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>tensor</em>) – Inputs to sample at.</li>
-<li><strong>p</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of outputs to sample if sampling from
-the prior.</li>
-<li><strong>posterior</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample from the prior instead of the
-posterior.</li>
-<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples. Defaults to <cite>1</cite>.</li>
-<li><strong>latent</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample the latent function instead of
-observations. Defaults to <cite>False</cite>.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>tensor</em>) – Inputs to sample at.</p></li>
+<li><p><strong>p</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of outputs to sample if sampling from
+the prior.</p></li>
+<li><p><strong>posterior</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample from the prior instead of the
+posterior.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples. Defaults to <cite>1</cite>.</p></li>
+<li><p><strong>latent</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample the latent function instead of
+observations. Defaults to <cite>False</cite>.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
-<dt>Prior samples. If only a single sample is</dt>
-<dd><p class="first last">generated, it will be returned directly instead of in a list.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Prior samples. If only a single sample is</dt><dd><p>generated, it will be returned directly instead of in a list.</p>
 </dd>
 </dl>
 </p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list[tensor]</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list[tensor]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="data">
 <dt id="gpar.regression.log_transform">
-<code class="descclassname">gpar.regression.</code><code class="descname">log_transform</code><em class="property"> = (&lt;function &lt;function Proxy._resolve_attr.&lt;locals&gt;.function&gt; with 2 method(s)&gt;, &lt;function &lt;function Proxy._resolve_attr.&lt;locals&gt;.function&gt; with 2 method(s)&gt;)</em><a class="headerlink" href="#gpar.regression.log_transform" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gpar.regression.</code><code class="descname">log_transform</code><em class="property"> = (&lt;function &lt;function log&gt; with 4 method(s)&gt;, &lt;function &lt;function exp&gt; with 4 method(s)&gt;)</em><a class="headerlink" href="#gpar.regression.log_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Log transform for the data.</p>
 </dd></dl>
 
@@ -453,7 +497,7 @@ observations. Defaults to <cite>False</cite>.</li>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="gpar.model.html" class="btn btn-neutral" title="gpar.model module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="gpar.model.html" class="btn btn-neutral float-left" title="gpar.model module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -462,7 +506,7 @@ observations. Defaults to <cite>False</cite>.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -479,33 +523,16 @@ observations. Defaults to <cite>False</cite>.</li>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

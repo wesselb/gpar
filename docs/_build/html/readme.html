@@ -17,34 +17,37 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Application Programming Interface" href="api.html" />
     <link rel="prev" title="Welcome" href="index.html" /> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -169,18 +172,19 @@
 <p>See the <a class="reference external" href="https://arxiv.org/abs/1802.07182">paper</a>, and see the
 <a class="reference external" href="https://wesselb.github.io/gpar">docs</a>.</p>
 <ul class="simple">
-<li><a class="reference external" href="#installation">Installation</a></li>
-<li><a class="reference external" href="#basic-usage">Basic Usage</a></li>
-<li><a class="reference external" href="#features">Features</a><ul>
-<li><a class="reference external" href="#input-and-output-dependencies">Input and Output Dependencies</a></li>
-<li><a class="reference external" href="#output-transformation">Output Transformation</a></li>
-<li><a class="reference external" href="#sampling">Sampling</a></li>
-<li><a class="reference external" href="#logpdf-computation">Logpdf Computation</a></li>
-<li><a class="reference external" href="#inducing-points">Inducing Points</a></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p></li>
+<li><p><a class="reference external" href="#basic-usage">Basic Usage</a></p></li>
+<li><p><a class="reference external" href="#features">Features</a></p>
+<ul>
+<li><p><a class="reference external" href="#input-and-output-dependencies">Input and Output Dependencies</a></p></li>
+<li><p><a class="reference external" href="#output-transformation">Output Transformation</a></p></li>
+<li><p><a class="reference external" href="#sampling">Sampling</a></p></li>
+<li><p><a class="reference external" href="#logpdf-computation">Logpdf Computation</a></p></li>
+<li><p><a class="reference external" href="#inducing-points">Inducing Points</a></p></li>
 </ul>
 </li>
-<li><a class="reference external" href="#example-examples-paper-synthetic-py">Example
-(examples/paper/synthetic.py)</a></li>
+<li><p><a class="reference external" href="#example-examples-paper-synthetic-py">Example
+(examples/paper/synthetic.py)</a></p></li>
 </ul>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
@@ -198,42 +202,42 @@ everything works; this example assumes that <code class="docutils literal notran
 <div class="section" id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
 <p>A simple instance of GPAR can be created as follows:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gpar</span> <span class="k">import</span> <span class="n">GPARRegressor</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gpar</span> <span class="kn">import</span> <span class="n">GPARRegressor</span>
 
-<span class="n">gpar</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span><span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">impute</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="n">gpar</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span><span class="n">replace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">impute</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                      <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-                     <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
-                     <span class="n">nonlinear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                     <span class="n">linear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
+                     <span class="n">nonlinear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
                      <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                     <span class="n">normalise_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                     <span class="n">normalise_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Here the keyword arguments have the following meaning:</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">replace=True</span></code>: Replace data points with the posterior mean of the
+<li><p><code class="docutils literal notranslate"><span class="pre">replace=True</span></code>: Replace data points with the posterior mean of the
 previous layer before feeding them into the next layer. This helps
 the model deal with noisy data, but may discard important structure
-in the data if the fit is bad.</li>
-<li><code class="docutils literal notranslate"><span class="pre">impute=True</span></code>: GPAR requires that data is <em>closed downwards</em>. If
+in the data if the fit is bad.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">impute=True</span></code>: GPAR requires that data is <em>closed downwards</em>. If
 this is not the case, the model will be unable to use part of the
 data. Setting <code class="docutils literal notranslate"><span class="pre">impute</span></code> to <code class="docutils literal notranslate"><span class="pre">True</span></code> lets GPAR impute data points to
-ensure that the data is closed downwards.</li>
-<li><code class="docutils literal notranslate"><span class="pre">scale=1.0</span></code>: Initialisation of the length scale with respect to the
-inputs.</li>
-<li><code class="docutils literal notranslate"><span class="pre">linear=True</span></code>: Use linear dependencies between outputs.</li>
-<li><code class="docutils literal notranslate"><span class="pre">linear_scale=True</span></code>: Initialisation of the length scale of the
-linear dependencies between outputs.</li>
-<li><code class="docutils literal notranslate"><span class="pre">nonlinear=True</span></code>: Also use nonlinear dependencies between outputs.</li>
-<li><code class="docutils literal notranslate"><span class="pre">nonlinear_scale=1.0</span></code>: Initialisation of the length scale of the
+ensure that the data is closed downwards.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scale=1.0</span></code>: Initialisation of the length scale with respect to the
+inputs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linear=True</span></code>: Use linear dependencies between outputs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linear_scale=True</span></code>: Initialisation of the length scale of the
+linear dependencies between outputs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nonlinear=True</span></code>: Also use nonlinear dependencies between outputs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nonlinear_scale=1.0</span></code>: Initialisation of the length scale of the
 nonlinear dependencies between outputs. <em>Important:</em> this length
 scale applies <em>after</em> possible normalisation of the outputs (see
 below), in which case <code class="docutils literal notranslate"><span class="pre">nonlinear_scale=1.0</span></code> corresponds to a
-simple, but nonlinear relationship.</li>
-<li><code class="docutils literal notranslate"><span class="pre">noise=0.1</span></code>: Initialisation of the variance of the observation
-noise.</li>
-<li><code class="docutils literal notranslate"><span class="pre">normalise_y=True</span></code>: Internally, work with a normalised version of
+simple, but nonlinear relationship.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">noise=0.1</span></code>: Initialisation of the variance of the observation
+noise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normalise_y=True</span></code>: Internally, work with a normalised version of
 the outputs by subtracting the mean and dividing by the standard
-deviation. Predictions will be transformed back appropriately.</li>
+deviation. Predictions will be transformed back appropriately.</p></li>
 </ul>
 <p>In the above, any scalar hyperparameter may be replaced by a list of
 values to initialise each layer separately, e.g. <code class="docutils literal notranslate"><span class="pre">scale=[1.0,</span> <span class="pre">2.0]</span></code>.
@@ -246,13 +250,13 @@ the training inputs and <code class="docutils literal notranslate"><span class="
 features, and the outputs <code class="docutils literal notranslate"><span class="pre">y_train</span></code> must have shape <span class="math notranslate nohighlight">\(n\)</span> or
 <span class="math notranslate nohighlight">\(n \times p\)</span>, where <span class="math notranslate nohighlight">\(p\)</span> is the number of outputs.</p>
 <p>Finally, to make predictions, call</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">means</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">means</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>to get the predictive means, or</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">means</span><span class="p">,</span> <span class="n">lowers</span><span class="p">,</span> <span class="n">uppers</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">means</span><span class="p">,</span> <span class="n">lowers</span><span class="p">,</span> <span class="n">uppers</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span>
                                      <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-                                     <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                                     <span class="n">credible_bounds</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>to also get lower and upper 95% central marginal credible bounds. If you
@@ -267,19 +271,19 @@ values, set <code class="docutils literal notranslate"><span class="pre">latent=
 the dependencies with respect to the inputs and between the outputs. The
 following dependencies can be specified:</p>
 <ul class="simple">
-<li><strong>Linear input dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">linear_input=True</span></code> and specify
-the length scale with <code class="docutils literal notranslate"><span class="pre">linear_input_scale</span></code>.</li>
-<li><strong>Nonlinear input dependencies:</strong> This is enabled by default. The
+<li><p><strong>Linear input dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">linear_input=True</span></code> and specify
+the length scale with <code class="docutils literal notranslate"><span class="pre">linear_input_scale</span></code>.</p></li>
+<li><p><strong>Nonlinear input dependencies:</strong> This is enabled by default. The
 length scale can be specified using <code class="docutils literal notranslate"><span class="pre">scale</span></code>. To tie these length
-scales across all layers, set <code class="docutils literal notranslate"><span class="pre">scale_tie=True</span></code>.</li>
-<li><strong>Locally periodic input dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">per=True</span></code> and specify
+scales across all layers, set <code class="docutils literal notranslate"><span class="pre">scale_tie=True</span></code>.</p></li>
+<li><p><strong>Locally periodic input dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">per=True</span></code> and specify
 the period with <code class="docutils literal notranslate"><span class="pre">per_period</span></code>, the length scale with <code class="docutils literal notranslate"><span class="pre">per_scale</span></code>,
 and the length scale on which the periodicity changes with
-<code class="docutils literal notranslate"><span class="pre">per_decay</span></code>.</li>
-<li><strong>Linear output dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">linear=True</span></code> and specify the
-length scale with <code class="docutils literal notranslate"><span class="pre">linear_scale</span></code>.</li>
-<li><strong>Nonlinear output dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">nonlinear=True</span></code> and specify
-the length scale with <code class="docutils literal notranslate"><span class="pre">nonlinear_scale</span></code>.</li>
+<code class="docutils literal notranslate"><span class="pre">per_decay</span></code>.</p></li>
+<li><p><strong>Linear output dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">linear=True</span></code> and specify the
+length scale with <code class="docutils literal notranslate"><span class="pre">linear_scale</span></code>.</p></li>
+<li><p><strong>Nonlinear output dependencies:</strong> Set <code class="docutils literal notranslate"><span class="pre">nonlinear=True</span></code> and specify
+the length scale with <code class="docutils literal notranslate"><span class="pre">nonlinear_scale</span></code>.</p></li>
 </ul>
 <p>All nonlinear kernels are exponentiated quadratic kernels. If you wish
 to instead use rational quadratic kernels, set <code class="docutils literal notranslate"><span class="pre">rq=True</span></code>.</p>
@@ -296,9 +300,9 @@ transformation can be specified by setting the <code class="docutils literal not
 argument for <code class="docutils literal notranslate"><span class="pre">GPARRegressor</span></code>. The following transformations are
 available:</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">log_transform</span></code>: <span class="math notranslate nohighlight">\(y \mapsto \log(y)\)</span>.</li>
-<li><code class="docutils literal notranslate"><span class="pre">squishing_transform</span></code>:
-<span class="math notranslate nohighlight">\(y \mapsto \operatorname{sign}(y) \log(1 + |y|)\)</span>.</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log_transform</span></code>: <span class="math notranslate nohighlight">\(y \mapsto \log(y)\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">squishing_transform</span></code>:
+<span class="math notranslate nohighlight">\(y \mapsto \operatorname{sign}(y) \log(1 + |y|)\)</span>.</p></li>
 </ul>
 </div>
 <div class="section" id="sampling">
@@ -308,9 +312,9 @@ keyword argument <code class="docutils literal notranslate"><span class="pre">nu
 <code class="docutils literal notranslate"><span class="pre">latent</span></code> specifies whether to sample from the underlying latent
 function or the observed values. Sampling from the <em>prior</em> and
 <em>posterior</em> (model must be fit first) can be done as follows:</p>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Sample two outputs from the prior.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Sample two outputs from the prior.</span>
 
-<span class="n">sample</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Sample from the posterior.</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <span class="c1"># Sample from the posterior.</span>
 </pre></div>
 </div>
 </div>
@@ -329,13 +333,13 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
 </div>
 <div class="section" id="example-examples-paper-synthetic-py">
 <h2>Example (<code class="docutils literal notranslate"><span class="pre">examples/paper/synthetic.py</span></code>)<a class="headerlink" href="#example-examples-paper-synthetic-py" title="Permalink to this headline">¶</a></h2>
-<div class="figure" id="id1">
+<div class="figure align-center" id="id1">
 <img alt="Prediction" src="https://raw.githubusercontent.com/wesselb/gpar/master/readme_example_prediction.png" />
-<p class="caption"><span class="caption-text">Prediction</span></p>
+<p class="caption"><span class="caption-text">Prediction</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
 </div>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">gpar.regression</span> <span class="k">import</span> <span class="n">GPARRegressor</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">gpar.regression</span> <span class="kn">import</span> <span class="n">GPARRegressor</span>
 
 <span class="c1"># Create toy data set.</span>
 <span class="n">n</span> <span class="o">=</span> <span class="mi">200</span>
@@ -354,22 +358,22 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
 
 <span class="c1"># Fit and predict GPAR.</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                      <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
-                      <span class="n">nonlinear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                      <span class="n">linear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
+                      <span class="n">nonlinear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
                       <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                      <span class="n">impute</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">normalise_y</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                      <span class="n">impute</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">normalise_y</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">)</span>
 <span class="n">means</span><span class="p">,</span> <span class="n">lowers</span><span class="p">,</span> <span class="n">uppers</span> <span class="o">=</span> \
-    <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c1"># Fit and predict independent GPs: set markov=0.</span>
 <span class="n">igp</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                    <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
-                    <span class="n">nonlinear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                    <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">markov</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">normalise_y</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="n">linear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
+                    <span class="n">nonlinear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                    <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">markov</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">normalise_y</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 <span class="n">igp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">)</span>
 <span class="n">igp_means</span><span class="p">,</span> <span class="n">igp_lowers</span><span class="p">,</span> <span class="n">igp_uppers</span> <span class="o">=</span> \
-    <span class="n">igp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">igp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c1"># Plot the result.</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">))</span>
@@ -378,8 +382,8 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
     <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;right&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;top&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;right&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;top&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;bottom&#39;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Observations&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
@@ -391,7 +395,7 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
     <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">igp_lowers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">igp_uppers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
                      <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;tab:green&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">25</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;$t$&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;$y_</span><span class="si">{}</span><span class="s1">$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;$y_{}$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="n">leg</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;#eeeeee&#39;</span><span class="p">)</span>
         <span class="n">leg</span><span class="o">.</span><span class="n">get_frame</span><span class="p">()</span><span class="o">.</span><span class="n">set_linewidth</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -415,7 +419,7 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
         <a href="api.html" class="btn btn-neutral float-right" title="Application Programming Interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -424,7 +428,7 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -441,33 +445,16 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
