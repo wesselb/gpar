@@ -62,6 +62,10 @@ def test_per_output():
               for a, b in per_output(y, keep=True)]
     yield eq, result, expected
 
+    # Test caching.
+    yield eq, list(per_output({True: [2, 3], False: [3, 4]}, keep=True)), [2, 3]
+    yield eq, list(per_output({True: [2, 3], False: [4]}, keep=False)), [4]
+
 
 def test_misc():
     gpar = GPAR(x_ind=None)

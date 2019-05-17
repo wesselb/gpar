@@ -12,7 +12,7 @@ from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear, ZeroKernel
 from varz import Vars
 from varz.torch import minimise_l_bfgs_b
 
-from .model import GPAR
+from .model import GPAR, per_output
 
 __all__ = ['GPARRegressor', 'log_transform', 'squishing_transform']
 log = logging.getLogger(__name__)
@@ -332,7 +332,6 @@ class GPARRegressor(object):
 
                 # Calculate std: safely handle the zero case.
                 std = B.std(y_i)
-                log.debug(std)
                 if std > 0:
                     stds.append(std)
                 else:
@@ -354,6 +353,10 @@ class GPARRegressor(object):
             # Perform normalisation.
             self.y = normalise_y(self.y)
 
+        # Precompute the results of `per_output`. This can otherwise incur a
+        # significant overhead if the number of outputs is large.
+        y_cached = {k: list(per_output(self.y, keep=k)) for k in [True, False]}
+
         # Fit layer by layer.
         #   Note: `_construct_gpar` takes in the *number* of outputs.
         sys.stdout.write('Training conditionals (total: {}):'.format(self.p))
@@ -366,7 +369,7 @@ class GPARRegressor(object):
             # inputs. This speeds up the optimisation massively.
             if fix:
                 gpar = _construct_gpar(self, self.vs, self.m, pi + 1)
-                fixed_x, fixed_x_ind = gpar.logpdf(self.x, self.y,
+                fixed_x, fixed_x_ind = gpar.logpdf(self.x, y_cached,
                                                    only_last_layer=True,
                                                    outputs=list(range(pi)),
                                                    return_inputs=True)
@@ -376,12 +379,12 @@ class GPARRegressor(object):
                 # If the parameters of the previous layers are fixed, use the
                 # precomputed inputs.
                 if fix:
-                    return -gpar.logpdf(fixed_x, self.y,
+                    return -gpar.logpdf(fixed_x, y_cached,
                                         only_last_layer=True,
                                         outputs=[pi],
                                         x_ind=fixed_x_ind)
                 else:
-                    return -gpar.logpdf(self.x, self.y, only_last_layer=False)
+                    return -gpar.logpdf(self.x, y_cached, only_last_layer=False)
 
             # Determine names to optimise.
             if fix:

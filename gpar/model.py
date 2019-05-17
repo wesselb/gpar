@@ -302,6 +302,10 @@ def per_output(y, keep=False):
     """Return observations per output, respecting that the data must be
     closed downwards.
 
+    The function supports caching by feeding it a dictionary where the keys
+    the are values for `keep` and the values lists containing items
+    that the function should yield.
+
     Args:
         y (tensor): Outputs.
         keep (bool, optional): Also return missing observations that would
@@ -312,22 +316,26 @@ def per_output(y, keep=False):
             observations per layer and a mask which observations are not
             missing relative to the previous layer.
     """
+    # Handle cache, if that is given.
+    if isinstance(y, dict):
+        for yi in y[keep]:
+            yield yi
+        return
+
     p = B.shape_int(y)[1]  # Number of outputs
+    available = ~B.isnan(y)  # Availability of outputs.
 
     for i in range(p):
-        # Check current and future availability.
-        available = ~B.isnan(y)
-        future = B.any(available[:, i + 1:], axis=1)
-
         # Initialise the mask to current availability.
         mask = available[:, i]
 
         # Take into account future observations if necessary.
         if keep and i < p - 1:  # Check whether this is the last output.
-            mask = mask | future
+            mask = mask | B.any(available[:, i + 1:], axis=1)
 
         # Give stuff back.
         yield y[mask, i:i + 1], mask
 
-        # Filter observations.
+        # Filter observations and availability.
         y = y[mask]
+        available = available[mask]
