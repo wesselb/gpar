@@ -340,7 +340,7 @@
 <span class="sd">                return a tuple containing the inputs and the inputs for the</span>
 <span class="sd">                inducing points with previous outputs concatenated</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">logpdf</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">logpdf</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">x_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="k">if</span> <span class="n">x_ind</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x_ind</span>
 
         <span class="n">y_per_output</span> <span class="o">=</span> <span class="n">per_output</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">impute</span> <span class="ow">or</span> <span class="n">sample_missing</span><span class="p">)</span>
