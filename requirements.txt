@@ -2,7 +2,7 @@ nose
 coveralls
 numpy
 autograd
-scipy
+scipy<=1.2.1
 tensorflow
 torch
 git+git://github.com/wesselb/plum@master#egg=plum
