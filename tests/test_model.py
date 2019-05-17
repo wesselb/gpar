@@ -30,9 +30,11 @@ def test_construct_model():
 
 def test_last():
     xs = [1, 2, 3, 4]
-    yield eq, last(xs), [(False, 1), (False, 2), (False, 3), (True, 4)]
-    yield eq, last(xs, [1, 2]), [(False, 2), (False, 3)]
-    yield eq, last(xs, [0, 3]), [(False, 1), (True, 4)]
+    yield eq, list(last(xs)), [(False, 1), (False, 2), (False, 3), (True, 4)]
+    yield eq, list(last(xs, [1, 2])), [(False, 2), (False, 3)]
+    yield eq, list(last(xs, [0, 3])), [(False, 1), (True, 4)]
+    yield eq, list(last([])), []
+    yield eq, list(last([], [0, 1])), []
 
 
 def test_per_output():

@@ -68,16 +68,29 @@ def last(xs, select=None):
     Returns:
         list: `xs` zipped with a boolean on the left.
     """
-    # Zip with bools indicated whether it is the last element.
-    xs = list(xs)  # Generators cause the zip call to fail.
-    is_last = [False for _ in xs]
-    is_last[-1] = True
-    xs_with_last = list(zip(is_last, xs))
-    # Only return a subset if asked for.
-    if select is None:
-        return xs_with_last
-    else:
-        return [xs_with_last[i] for i in select]
+    # Convert `select` to a set if it is given.
+    if select is not None:
+        select = set(select)
+
+    # Initialise tracking variables.
+    saved_x = None
+    i = -1
+
+    # Construct a function that determines the element with index `i` should be
+    # yielded.
+    def should_yield(i_):
+        return i >= 0 and (select is None or i_ in select)
+
+    # Loop through `xs` and check to yield every *previous* element.
+    for x in xs:
+        if should_yield(i):
+            yield False, saved_x
+        saved_x = x
+        i += 1
+
+    # Check to yield the last element, if there is one.
+    if saved_x is not None and should_yield(i):
+        yield True, saved_x
 
 
 class GPAR(object):
