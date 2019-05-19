@@ -7,3 +7,6 @@ Features:
     ☐ Nice overview of trained hyperparameters
     ✓ Normalise/unnormalise data to make work with defaults values of hypers @done (19-04-11 12:17)
     ✓ Ability to specify transforms @done (19-04-11 12:17)
+
+Refactor:
+    ☐ Use WBML functionality everywhere. @high
