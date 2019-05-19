@@ -322,7 +322,7 @@ def per_output(y, keep=False):
             yield yi
         return
 
-    p = B.shape_int(y)[1]  # Number of outputs
+    p = B.shape(y)[1]  # Number of outputs
     available = ~B.isnan(y)  # Availability of outputs.
 
     for i in range(p):

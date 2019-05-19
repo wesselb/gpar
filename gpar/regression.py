@@ -465,7 +465,7 @@ class GPARRegressor(object):
             gpar = gpar | (self.x, self.y)
         else:
             # Construct prior GPAR.
-            gpar = _construct_gpar(self, self.vs, B.shape_int(x)[1], p)
+            gpar = _construct_gpar(self, self.vs, B.shape(x)[1], p)
 
         # Construct function to undo normalisation and transformation.
         def undo_transforms(y_):
