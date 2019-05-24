@@ -9,6 +9,6 @@ before_install:
 install:
   - pip install --no-cache-dir -U -r requirements.txt | cat
 script:
-  - pytest -v --cov=stheno --cov-report term-missing
+  - pytest -v --cov=gpar --cov-report term-missing
 after_success:
   - coveralls
