@@ -206,3 +206,9 @@ def test_scale_tying():
     vs = reg.get_variables()
     assert '0/input/scales' in vs
     assert '1/input/scales' not in vs
+
+
+def test_inducing_points_uprank():
+    reg = GPARRegressor(x_ind=np.linspace(0, 10, 20))
+    assert reg.x_ind is not None
+    assert B.rank(reg.x_ind) == 2
