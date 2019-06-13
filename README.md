@@ -19,19 +19,16 @@ See the [paper](https://arxiv.org/abs/1802.07182), and see the [docs](https://we
  * [Example (examples/paper/synthetic.py)](#example-examples-paper-synthetic-py)
 
 ## Installation
-The package is tested for Python 2.7 and Python 3.6, which are the versions 
-recommended to use.
-To install the package, please ensure that `gcc` and `gfortran` are 
-available, and then run the following commands:
+Before installing the package, please ensure that `gcc` and `gfortran` are 
+available.
+On OS X, these are both installed with `brew install gcc`;
+users of Anaconda may want to instead consider `conda install gcc`.
+The installation then proceeds as follows:
 
 ```
-git clone https://github.com/wesselb/gpar
-cd gpar
-make install
+pip install numpy cython  # These must be installed first.
+pip install gpar
 ```
-
-Try running `python examples/paper/synthetic.py` afterwards to see if 
-everything works; this example assumes that `matplotlib` is installed.
 
 ## Basic Usage
 A simple instance of GPAR can be created as follows:
