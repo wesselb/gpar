@@ -9,7 +9,7 @@ requirements = ['numpy',
 
                 'plum-dispatch',
                 'backends',
-                'stheno'
+                'stheno',
                 'varz']
 
 setup(packages=find_packages(exclude=['docs']),
