@@ -180,7 +180,7 @@ def test_fit():
     allclose(reg._unnormalise_y(reg._normalise_y(z)), z)
 
     # Test that fitting runs without issues.
-    vs = reg.vs.detach()
+    vs = reg.vs.copy(detach=True)
     reg.fit(x, y, fix=False)
     reg.vs = vs
     reg.fit(x, y, fix=True)
