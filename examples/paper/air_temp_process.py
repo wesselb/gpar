@@ -1,8 +1,6 @@
 import pickle
 
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import matplotlib.ticker as ticker
 import numpy as np
 from wbml.data.air_temp import load as load_temp
 
