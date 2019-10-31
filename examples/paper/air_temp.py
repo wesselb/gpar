@@ -12,8 +12,15 @@ d_size = 0 if len(sys.argv) < 2 else int(sys.argv[1])
 d_all, d_train, d_tests = load_temp()[d_size]
 n_ind = [10 * 10 + 1, 10 * 15 + 1, 10 * 31 + 1][d_size]
 
+
+def convert_index(d):
+    index = d.index - d_all.index[0]
+    return np.array([td.total_seconds() / 3600 / 24 for td in index])
+
+
 # Place inducing points evenly spaced.
-x_ind = np.linspace(d_all.x[:, 0].min(), d_all.x[:, 0].max(), n_ind)
+x = convert_index(d_all)
+x_ind = np.linspace(x.min(), x.max(), n_ind)
 
 # Fit and predict GPAR.
 #   Note: we use D-GPAR-L-NL here, as opposed to D-GPAR-L, to make the results
@@ -24,13 +31,13 @@ model = GPARRegressor(scale=0.2,
                       noise=0.1,
                       impute=True, replace=True, normalise_y=True,
                       x_ind=x_ind)
-model.fit(d_train.x, d_train.y)
+model.fit(convert_index(d_train), d_train.to_numpy())
 
 # Predict for the test sets.
 preds = []
 for i, d in enumerate(d_tests):
     print('Sampling', i + 1)
-    preds.append(model.predict(d.x,
+    preds.append(model.predict(convert_index(d),
                                num_samples=50,
                                credible_bounds=True,
                                latent=False))
