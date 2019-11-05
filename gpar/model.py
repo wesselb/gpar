@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import logging
 
 from lab import B
 from stheno import GP, Obs, SparseObs
 
 __all__ = ['GPAR']
+
 log = logging.getLogger(__name__)
 
 
@@ -93,7 +90,7 @@ def last(xs, select=None):
         yield True, saved_x
 
 
-class GPAR(object):
+class GPAR:
     """Basic GPAR model.
 
     Args:

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import logging
 import sys
 
@@ -15,6 +11,7 @@ from varz.torch import minimise_l_bfgs_b
 from .model import GPAR, per_output
 
 __all__ = ['GPARRegressor', 'log_transform', 'squishing_transform']
+
 log = logging.getLogger(__name__)
 
 #: Log transform for the data.
@@ -154,7 +151,7 @@ def _construct_gpar(reg, vs, m, p):
     return gpar
 
 
-class GPARRegressor(object):
+class GPARRegressor:
     """GPAR regressor.
 
     Args:

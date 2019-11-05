@@ -4,9 +4,10 @@
 [![Coverage Status](https://coveralls.io/repos/github/wesselb/gpar/badge.svg?branch=master&service=github)](https://coveralls.io/github/wesselb/gpar?branch=master)
 [![Latest Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://wesselb.github.io/gpar)
 
-Implementation of the Gaussian Process Autoregressive Regression Model
-
+Implementation of the Gaussian Process Autoregressive Regression Model.
 See the [paper](https://arxiv.org/abs/1802.07182), and see the [docs](https://wesselb.github.io/gpar).
+
+*Note:* GPAR requires Python 3.6 or higher.
 
 * [Installation](#installation)
 * [Basic Usage](#basic-usage)
