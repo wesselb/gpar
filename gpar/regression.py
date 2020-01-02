@@ -283,7 +283,7 @@ class GPARRegressor:
             dict: Dictionary mapping variable names to variable values.
         """
         variables = {}
-        for name in self.vs.index_by_name.keys():
+        for name in self.vs.names:
             variables[name] = self.vs[name].detach().numpy()
         return variables
 
