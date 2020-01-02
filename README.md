@@ -172,6 +172,10 @@ logpdf under the posterior, set `posterior=True`. To sample missing data to
 compute an unbiased estimate of the *pdf*, *not logpdf*, set 
 `sample_missing=True`.
 
+The logpdf can be computed without casting the inputs `x` and `y` to PyTorch
+tensors and without detaching the resulting logpdf from the computation
+graph. For this, set `differentiable=True` in `GPARRegressor.logpdf`.
+
 
 ### Inducing Points
 Inducing points can be used to scale GPAR to large data sets. Simply set `x_ind`

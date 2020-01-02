@@ -398,7 +398,12 @@ class GPARRegressor:
         # Store that the model is fit.
         self.is_fit = True
 
-    def logpdf(self, x, y, sample_missing=False, posterior=False):
+    def logpdf(self,
+               x,
+               y,
+               sample_missing=False,
+               posterior=False,
+               differentiable=False):
         """Compute the logpdf of observations.
 
         Args:
@@ -408,25 +413,39 @@ class GPARRegressor:
                 unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.
             posterior (bool, optional): Compute logpdf under the posterior
                 instead of the prior. Defaults to `False`.
+            differentiable (bool, optional): Do cast the inputs to PyTorch
+                tensors and detach the results afterwards. Defaults to `False`.
 
         Returns
             float: Estimate of the logpdf.
         """
-        x = torch.tensor(B.uprank(x))
-        y = torch.tensor(self._unnormalise_y(self._transform_y(B.uprank(y))))
+        x = B.uprank(x)
+        y = B.uprank(y)
+
+        if not differentiable:
+            x = torch.tensor(x)
+            y = torch.tensor(y)
+
+        x = B.uprank(x)
+        y = self._unnormalise_y(self._transform_y(B.uprank(y)))
         m, p = x.shape[1], y.shape[1]
 
         if posterior and not self.is_fit:
             raise RuntimeError('Must fit model before computing the logpdf '
                                'under the posterior.')
 
-        # Construct GPAR and sample logpdf.
+        # Construct GPAR and compute logpdf.
         gpar = _construct_gpar(self, self.vs, m, p)
         if posterior:
             gpar = gpar | (self.x, self.y)
-        return gpar.logpdf(x, y,
-                           only_last_layer=False,
-                           sample_missing=sample_missing).detach_().numpy()
+        value = gpar.logpdf(x, y,
+                            only_last_layer=False,
+                            sample_missing=sample_missing)
+
+        if not differentiable:
+            value = value.detach_().numpy()
+
+        return value
 
     def sample(self, x, p=None, posterior=False, num_samples=1, latent=False):
         """Sample from the prior or posterior.

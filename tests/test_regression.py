@@ -109,6 +109,22 @@ def test_logpdf():
                   reg.logpdf(x, y, sample_missing=True)) >= 1e-3
 
 
+def test_logpdf_differentiable():
+    reg = GPARRegressor(replace=False, impute=False,
+                        linear=True, linear_scale=1., nonlinear=False,
+                        noise=1e-8, normalise_y=False)
+    x = np.linspace(0, 5, 10)
+    y = reg.sample(x, p=2, latent=True)
+
+    # Test that gradient calculation works.
+    reg.vs.requires_grad(True)
+    for var in reg.vs.get_vars():
+        assert var.grad is None
+    reg.logpdf(torch.tensor(x), torch.tensor(y), differentiable=True).backward()
+    for var in reg.vs.get_vars():
+        assert var.grad is not None
+
+
 def test_sample_and_predict():
     reg = GPARRegressor(replace=False, impute=False,
                         linear=True, linear_scale=1., nonlinear=False,
