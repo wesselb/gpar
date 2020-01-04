@@ -1,14 +1,14 @@
 import logging
-import sys
 
 import numpy as np
 import torch
 from lab.torch import B
+from matrix import AbstractMatrix
+from plum import Dispatcher
 from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear, ZeroKernel
 from varz import Vars
 from varz.torch import minimise_l_bfgs_b
-from plum import Dispatcher
-from matrix import AbstractMatrix
+from wbml.out import Counter
 
 from .model import GPAR, per_output
 
@@ -382,44 +382,40 @@ class GPARRegressor:
 
         # Fit layer by layer.
         #   Note: `_construct_gpar` takes in the *number* of outputs.
-        sys.stdout.write('Training conditionals (total: {}):'.format(self.p))
-        sys.stdout.flush()
-        for pi in range(self.p):
-            sys.stdout.write(' {}'.format(pi + 1))
-            sys.stdout.flush()
+        with Counter(name='Training conditionals', total=self.p) as counter:
+            for pi in range(self.p):
+                counter.count()
 
-            # If we fix parameters of previous layers, we can precompute the
-            # inputs. This speeds up the optimisation massively.
-            if fix:
-                gpar = _construct_gpar(self, self.vs, self.m, pi + 1)
-                fixed_x, fixed_x_ind = gpar.logpdf(self.x, y_cached,
-                                                   only_last_layer=True,
-                                                   outputs=list(range(pi)),
-                                                   return_inputs=True)
-
-            def objective(vs):
-                gpar = _construct_gpar(self, vs, self.m, pi + 1)
-                # If the parameters of the previous layers are fixed, use the
-                # precomputed inputs.
+                # If we fix parameters of previous layers, we can precompute the
+                # inputs. This speeds up the optimisation massively.
                 if fix:
-                    return -gpar.logpdf(fixed_x, y_cached,
-                                        only_last_layer=True,
-                                        outputs=[pi],
-                                        x_ind=fixed_x_ind)
+                    gpar = _construct_gpar(self, self.vs, self.m, pi + 1)
+                    fixed_x, fixed_x_ind = gpar.logpdf(self.x, y_cached,
+                                                       only_last_layer=True,
+                                                       outputs=list(range(pi)),
+                                                       return_inputs=True)
+
+                def objective(vs):
+                    gpar = _construct_gpar(self, vs, self.m, pi + 1)
+                    # If the parameters of the previous layers are fixed, use
+                    # the precomputed inputs.
+                    if fix:
+                        return -gpar.logpdf(fixed_x, y_cached,
+                                            only_last_layer=True,
+                                            outputs=[pi],
+                                            x_ind=fixed_x_ind)
+                    else:
+                        return -gpar.logpdf(self.x, y_cached,
+                                            only_last_layer=False)
+
+                # Determine names to optimise.
+                if fix:
+                    names = ['{}/*'.format(pi)]
                 else:
-                    return -gpar.logpdf(self.x, y_cached, only_last_layer=False)
+                    names = ['{}/*'.format(i) for i in range(pi + 1)]
 
-            # Determine names to optimise.
-            if fix:
-                names = ['{}/*'.format(pi)]
-            else:
-                names = ['{}/*'.format(i) for i in range(pi + 1)]
-
-            # Perform the optimisation.
-            minimise_l_bfgs_b(objective, self.vs, names=names, **kw_args)
-
-        # Print newline to end progress bar.
-        sys.stdout.write('\n')
+                # Perform the optimisation.
+                minimise_l_bfgs_b(objective, self.vs, names=names, **kw_args)
 
     def logpdf(self,
                x,
@@ -510,14 +506,11 @@ class GPARRegressor:
 
         # Perform sampling.
         samples = []
-        sys.stdout.write('Sampling (total: {}):'.format(num_samples))
-        sys.stdout.flush()
-        for i in range(num_samples):
-            sys.stdout.write(' {}'.format(i + 1))
-            sys.stdout.flush()
-            samples.append(undo_transforms(gpar.sample(x, latent=latent))
-                           .detach_().numpy())
-        sys.stdout.write('\n')
+        with Counter(name='Sampling', total=num_samples) as counter:
+            for _ in range(num_samples):
+                counter.count()
+                samples.append(undo_transforms(gpar.sample(x, latent=latent))
+                               .detach_().numpy())
         return samples[0] if num_samples == 1 else samples
 
     def predict(self, x, num_samples=100, latent=False, credible_bounds=False):

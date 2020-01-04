@@ -7,6 +7,7 @@ from setuptools import find_packages, setup
 requirements = ['numpy>=1.16',
                 'torch',
 
+                'wbml',
                 'plum-dispatch',
                 'backends',
                 'backends-matrix',
