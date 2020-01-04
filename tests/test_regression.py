@@ -100,7 +100,7 @@ def test_logpdf():
     logpdf2 = (f2_post + e2_post)(tensor(x_stack)).logpdf(tensor(y[:, 1]))
     with pytest.raises(RuntimeError):
         reg.logpdf(x, y, posterior=True)
-    reg.fit(x, y, iters=0)
+    reg.condition(x, y)
     approx(reg.logpdf(x, y, posterior=True), logpdf1 + logpdf2, digits=6)
 
     # Test that sampling missing gives a stochastic estimate.
@@ -126,10 +126,12 @@ def test_logpdf_differentiable():
 
 
 def test_sample_and_predict():
+    # Use output transform to ensure that is handled correctly.
     reg = GPARRegressor(replace=False, impute=False,
                         linear=True, linear_scale=1., nonlinear=False,
-                        noise=1e-8, normalise_y=False)
-    x = np.linspace(0, 5, 10)
+                        noise=1e-8, normalise_y=False,
+                        transform_y=squishing_transform)
+    x = np.linspace(0, 5, 5)
 
     # Test checks.
     with pytest.raises(ValueError):
@@ -148,41 +150,40 @@ def test_sample_and_predict():
 
     # Test that mean of posterior samples are around the data.
     y = reg.sample(x, p=2)
-    reg.fit(x, y, iters=0)
+    reg.condition(x, y)
     approx(y, np.mean(reg.sample(x,
                                  posterior=True,
-                                 num_samples=20), axis=0), digits=4)
+                                 num_samples=100), axis=0), digits=3)
     approx(y, np.mean(reg.sample(x,
                                  latent=True,
                                  posterior=True,
-                                 num_samples=20), axis=0), digits=4)
+                                 num_samples=100), axis=0), digits=3)
 
     # Test that prediction is around the data.
-    approx(y, reg.predict(x, num_samples=20), digits=4)
-    approx(y, reg.predict(x, latent=True, num_samples=20), digits=4)
+    approx(y, reg.predict(x, num_samples=100), digits=3)
+    approx(y, reg.predict(x, latent=True, num_samples=100), digits=3)
 
     # Test that prediction is confident.
-    _, lowers, uppers = reg.predict(x, num_samples=10, credible_bounds=True)
-    assert np.less_equal(uppers - lowers, 1e-3).all()
+    _, lowers, uppers = reg.predict(x, num_samples=100, credible_bounds=True)
+    assert np.less_equal(uppers - lowers, 1e-2).all()
 
 
-def test_fit():
+def test_condition_and_fit():
     reg = GPARRegressor(replace=False, impute=False,
                         normalise_y=True, transform_y=squishing_transform)
     x = np.linspace(0, 5, 10)
     y = reg.sample(x, p=2)
 
-    # TODO: Remove this once greedy search is implemented.
-    with pytest.raises(NotImplementedError):
-        reg.fit(x, y, greedy=True)
+    # Test that data is correctly normalised.
+    reg.condition(x, y)
+    approx(B.mean(reg.y, axis=0), B.zeros(reg.p))
+    approx(B.std(reg.y, axis=0), B.ones(reg.p))
 
-    # Test that data is correctly transformed if it has an output with zero
+    # Test that data is correctly normalised if it has an output with zero
     # variance.
-    reg.fit(x, y, iters=0)
-    assert (~B.isnan(reg.y)).numpy().all()
     y_pathological = y.copy()
     y_pathological[:, 0] = 1
-    reg.fit(x, y_pathological, iters=0)
+    reg.condition(x, y_pathological)
     assert (~B.isnan(reg.y)).numpy().all()
 
     # Test transformation and normalisation of outputs.
@@ -196,6 +197,10 @@ def test_fit():
     reg.fit(x, y, fix=False)
     reg.vs = vs
     reg.fit(x, y, fix=True)
+
+    # TODO: Remove this once greedy search is implemented.
+    with pytest.raises(NotImplementedError):
+        reg.fit(x, y, greedy=True)
 
 
 def test_features():

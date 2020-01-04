@@ -313,35 +313,6 @@ class GPARRegressor:
         self.n, self.m = self.x.shape
         self.p = self.y.shape[1]
 
-        # Store that the model is conditioned.
-        self.is_conditioned = True
-
-    def fit(self,
-            x,
-            y,
-            greedy=False,
-            fix=True,
-            **kw_args):
-        """Fit the model to data.
-
-        Further takes in keyword arguments for `Varz.minimise_l_bfgs_b`.
-
-        Args:
-            x (tensor): Inputs of training data.
-            y (tensor): Outputs of training data.
-            greedy (bool, optional): Greedily determine the ordering of the
-                outputs. Defaults to `False`.
-            fix (bool, optional): Fix the parameters of a layer after
-                training it. If set to `False`, the likelihood are
-                accumulated and all parameters are optimised at every step.
-                Defaults to `True`.
-        """
-        # Conditioned the model before fitting.
-        self.condition(x, y)
-
-        if greedy:
-            raise NotImplementedError('Greedy search is not implemented yet.')
-
         # Perform normalisation, carefully handling missing values.
         if self.normalise_y:
             means, stds = [], []
@@ -375,6 +346,35 @@ class GPARRegressor:
 
             # Perform normalisation.
             self.y = normalise_y(self.y)
+
+        # Store that the model is conditioned.
+        self.is_conditioned = True
+
+    def fit(self,
+            x,
+            y,
+            greedy=False,
+            fix=True,
+            **kw_args):
+        """Fit the model to data.
+
+        Further takes in keyword arguments for `Varz.minimise_l_bfgs_b`.
+
+        Args:
+            x (tensor): Inputs of training data.
+            y (tensor): Outputs of training data.
+            greedy (bool, optional): Greedily determine the ordering of the
+                outputs. Defaults to `False`.
+            fix (bool, optional): Fix the parameters of a layer after
+                training it. If set to `False`, the likelihood are
+                accumulated and all parameters are optimised at every step.
+                Defaults to `True`.
+        """
+        # Conditioned the model before fitting.
+        self.condition(x, y)
+
+        if greedy:
+            raise NotImplementedError('Greedy search is not implemented yet.')
 
         # Precompute the results of `per_output`. This can otherwise incur a
         # significant overhead if the number of outputs is large.
