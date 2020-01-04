@@ -9,6 +9,7 @@ requirements = ['numpy>=1.16',
 
                 'plum-dispatch',
                 'backends',
+                'backends-matrix',
                 'stheno',
                 'varz']
 

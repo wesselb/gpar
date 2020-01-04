@@ -120,7 +120,7 @@ def test_logpdf_differentiable():
     reg.vs.requires_grad(True)
     for var in reg.vs.get_vars():
         assert var.grad is None
-    reg.logpdf(torch.tensor(x), torch.tensor(y), differentiable=True).backward()
+    reg.logpdf(torch.tensor(x), torch.tensor(y)).backward()
     for var in reg.vs.get_vars():
         assert var.grad is not None
 

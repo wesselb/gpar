@@ -7,12 +7,15 @@ from lab.torch import B
 from stheno.torch import Graph, GP, EQ, RQ, Delta, Linear, ZeroKernel
 from varz import Vars
 from varz.torch import minimise_l_bfgs_b
+from plum import Dispatcher
+from matrix import AbstractMatrix
 
 from .model import GPAR, per_output
 
 __all__ = ['GPARRegressor', 'log_transform', 'squishing_transform']
 
 log = logging.getLogger(__name__)
+_dispatch = Dispatcher()
 
 #: Log transform for the data.
 log_transform = (B.log, B.exp)
@@ -50,6 +53,16 @@ def _determine_indices(m, pi, markov):
     p_inds = list(range(m + p_start, m + p_last + 1))
 
     return m_inds, p_inds, p_num
+
+
+@_dispatch(B.NP)
+def _to_torch(x):
+    return torch.tensor(x)
+
+
+@_dispatch({B.Torch, AbstractMatrix})
+def _to_torch(x):
+    return x
 
 
 def _model_generator(vs,
@@ -206,7 +219,7 @@ class GPARRegressor:
         x_ind (tensor): Locations of inducing points.
         model_config (dict): Summary of model configuration.
         vs (:class:`varz.Vars`): Model parameters.
-        is_fit (bool): The model is fit.
+        is_conditioned (bool): The model is conditioned.
         x (tensor): Inputs of training data.
         y (tensor): Outputs of training data.
         n (int): Number of training data points.
@@ -243,7 +256,7 @@ class GPARRegressor:
         if x_ind is None:
             self.x_ind = None
         else:
-            self.x_ind = torch.tensor(B.uprank(x_ind))
+            self.x_ind = B.uprank(_to_torch(x_ind))
         self.model_config = {
             'scale': scale,
             'scale_tie': scale_tie,
@@ -264,7 +277,7 @@ class GPARRegressor:
 
         # Model fitting.
         self.vs = Vars(dtype=torch.float64)
-        self.is_fit = False
+        self.is_conditioned = False
         self.x = None  # Inputs of training data
         self.y = None  # Outputs of training data
         self.n = None  # Number of data points
@@ -287,6 +300,22 @@ class GPARRegressor:
             variables[name] = self.vs[name].detach().numpy()
         return variables
 
+    def condition(self, x, y):
+        """Condition the model on data, without training.
+
+        Args:
+            x (tensor): Inputs of training data.
+            y (tensor): Outputs of training data.
+        """
+        # Store data.
+        self.x = _to_torch(B.uprank(x))
+        self.y = _to_torch(self._transform_y(B.uprank(y)))
+        self.n, self.m = self.x.shape
+        self.p = self.y.shape[1]
+
+        # Store that the model is conditioned.
+        self.is_conditioned = True
+
     def fit(self,
             x,
             y,
@@ -307,14 +336,11 @@ class GPARRegressor:
                 accumulated and all parameters are optimised at every step.
                 Defaults to `True`.
         """
+        # Conditioned the model before fitting.
+        self.condition(x, y)
+
         if greedy:
             raise NotImplementedError('Greedy search is not implemented yet.')
-
-        # Store data.
-        self.x = torch.tensor(B.uprank(x))
-        self.y = torch.tensor(self._transform_y(B.uprank(y)))
-        self.n, self.m = self.x.shape
-        self.p = self.y.shape[1]
 
         # Perform normalisation, carefully handling missing values.
         if self.normalise_y:
@@ -395,16 +421,15 @@ class GPARRegressor:
         # Print newline to end progress bar.
         sys.stdout.write('\n')
 
-        # Store that the model is fit.
-        self.is_fit = True
-
     def logpdf(self,
                x,
                y,
                sample_missing=False,
-               posterior=False,
-               differentiable=False):
+               posterior=False):
         """Compute the logpdf of observations.
+
+        If either `x` or `y` is a PyTorch tensor, then the result will not be
+        detached from the computation graph and converted to NumPy.
 
         Args:
             x (tensor): Inputs.
@@ -413,26 +438,20 @@ class GPARRegressor:
                 unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.
             posterior (bool, optional): Compute logpdf under the posterior
                 instead of the prior. Defaults to `False`.
-            differentiable (bool, optional): Do cast the inputs to PyTorch
-                tensors and detach the results afterwards. Defaults to `False`.
 
         Returns
             float: Estimate of the logpdf.
         """
-        x = B.uprank(x)
-        y = B.uprank(y)
+        # Check whether either `x` or `y` was already PyTorch.
+        any_torch = isinstance(x, B.Torch) or isinstance(y, B.Torch)
 
-        if not differentiable:
-            x = torch.tensor(x)
-            y = torch.tensor(y)
-
-        x = B.uprank(x)
-        y = self._unnormalise_y(self._transform_y(B.uprank(y)))
+        x = B.uprank(_to_torch(x))
+        y = self._unnormalise_y(self._transform_y(B.uprank(_to_torch(y))))
         m, p = x.shape[1], y.shape[1]
 
-        if posterior and not self.is_fit:
-            raise RuntimeError('Must fit model before computing the logpdf '
-                               'under the posterior.')
+        if posterior and not self.is_conditioned:
+            raise RuntimeError('Must condition or fit model before computing '
+                               'the logpdf under the posterior.')
 
         # Construct GPAR and compute logpdf.
         gpar = _construct_gpar(self, self.vs, m, p)
@@ -442,7 +461,9 @@ class GPARRegressor:
                             only_last_layer=False,
                             sample_missing=sample_missing)
 
-        if not differentiable:
+        # If neither `x` nor `y` was already a PyTorch tensor, return the
+        # result as NumPy.
+        if not any_torch:
             value = value.detach_().numpy()
 
         return value
@@ -464,12 +485,12 @@ class GPARRegressor:
             list[tensor]: Prior samples. If only a single sample is
                 generated, it will be returned directly instead of in a list.
         """
-        x = torch.tensor(B.uprank(x))
+        x = _to_torch(B.uprank(x))
 
-        # Check that model is fit if sampling from the posterior.
-        if posterior and not self.is_fit:
-            raise RuntimeError('Must fit model before sampling form the '
-                               'posterior.')
+        # Check that model is conditioned or fit if sampling from the posterior.
+        if posterior and not self.is_conditioned:
+            raise RuntimeError('Must condition or fit model before sampling '
+                               'from the posterior.')
         # Check that the number of outputs is specified if sampling from the
         # prior.
         elif not posterior and p is None:

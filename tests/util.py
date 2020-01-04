@@ -1,6 +1,8 @@
 import torch
 from numpy.testing import assert_allclose, assert_array_almost_equal
 from plum import Dispatcher
+from matrix import AbstractMatrix
+import lab as B
 
 _dispatch = Dispatcher()
 
@@ -13,6 +15,11 @@ def convert(a):
 @_dispatch(torch.Tensor)
 def convert(a):
     return a.numpy()
+
+
+@_dispatch(AbstractMatrix)
+def convert(a):
+    return B.dense(a)
 
 
 @_dispatch(object, object)

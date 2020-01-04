@@ -84,10 +84,13 @@ documentation for a full overview of the keywords that may be passed to
 `GPARRegressor`.
 
 To fit GPAR, call `gpar.fit(x_train, y_train)` where `x_train` are the training 
-inputs and `y_train` the training outputs. The inputs `x_train` must have shape 
-$n$ or $n \times m$, where $n$ is  the number of data points and $m$ the 
-number of input features, and the outputs `y_train` must have shape $n$ or $n 
-\times p$, where $p$ is the number of outputs.
+inputs and `y_train` the training outputs.
+The inputs `x_train` must have shape $n$ or $n \times m$, where $n$ is the
+number of data points and $m$ the number of input features, and the outputs
+`y_train` must have shape $n$ or $n \times p$, where $p$ is the number of
+outputs.
+To condition GPAR on data without optimising its hyperparameters, use
+`gpar.condition(x_train, y_train)` instead.
 
 Finally, to make predictions, call
 
@@ -171,11 +174,6 @@ The logpdf of data can be computed with `GPARRegressor.logpdf`. To compute the
 logpdf under the posterior, set `posterior=True`. To sample missing data to 
 compute an unbiased estimate of the *pdf*, *not logpdf*, set 
 `sample_missing=True`.
-
-The logpdf can be computed without casting the inputs `x` and `y` to PyTorch
-tensors and without detaching the resulting logpdf from the computation
-graph. For this, set `differentiable=True` in `GPARRegressor.logpdf`.
-
 
 ### Inducing Points
 Inducing points can be used to scale GPAR to large data sets. Simply set `x_ind`
