@@ -60,7 +60,7 @@ def _to_torch(x):
     return torch.tensor(x)
 
 
-@_dispatch({B.Torch, AbstractMatrix})
+@_dispatch({B.Torch, AbstractMatrix, type(None)})
 def _to_torch(x):
     return x
 
@@ -164,6 +164,13 @@ def _construct_gpar(reg, vs, m, p):
     return gpar
 
 
+def _init_weights(w, y):
+    if w is None:
+        return B.ones(torch.float64, *B.shape(y))
+    else:
+        return _to_torch(w)
+
+
 class GPARRegressor:
     """GPAR regressor.
 
@@ -222,6 +229,7 @@ class GPARRegressor:
         is_conditioned (bool): The model is conditioned.
         x (tensor): Inputs of training data.
         y (tensor): Outputs of training data.
+        w (vector): Weights for every time stamp.
         n (int): Number of training data points.
         m (int): Number of input features.
         p (int): Number of outputs.
@@ -280,6 +288,7 @@ class GPARRegressor:
         self.is_conditioned = False
         self.x = None  # Inputs of training data
         self.y = None  # Outputs of training data
+        self.w = None  # Weights for every time stamp
         self.n = None  # Number of data points
         self.m = None  # Number of input features
         self.p = None  # Number of outputs
@@ -300,16 +309,18 @@ class GPARRegressor:
             variables[name] = self.vs[name].detach().numpy()
         return variables
 
-    def condition(self, x, y):
+    def condition(self, x, y, w=None):
         """Condition the model on data, without training.
 
         Args:
             x (tensor): Inputs of training data.
             y (tensor): Outputs of training data.
+            w (tensor, optional): Weights of training data.
         """
         # Store data.
-        self.x = _to_torch(B.uprank(x))
-        self.y = _to_torch(self._transform_y(B.uprank(y)))
+        self.x = B.uprank(_to_torch(x))
+        self.y = self._transform_y(B.uprank(_to_torch(y)))
+        self.w = _init_weights(w, y)
         self.n, self.m = self.x.shape
         self.p = self.y.shape[1]
 
@@ -353,6 +364,7 @@ class GPARRegressor:
     def fit(self,
             x,
             y,
+            w=None,
             greedy=False,
             fix=True,
             **kw_args):
@@ -363,6 +375,7 @@ class GPARRegressor:
         Args:
             x (tensor): Inputs of training data.
             y (tensor): Outputs of training data.
+            w (tensor, optional): Weights of training data.
             greedy (bool, optional): Greedily determine the ordering of the
                 outputs. Defaults to `False`.
             fix (bool, optional): Fix the parameters of a layer after
@@ -371,14 +384,15 @@ class GPARRegressor:
                 Defaults to `True`.
         """
         # Conditioned the model before fitting.
-        self.condition(x, y)
+        self.condition(x, y, w)
 
         if greedy:
             raise NotImplementedError('Greedy search is not implemented yet.')
 
         # Precompute the results of `per_output`. This can otherwise incur a
         # significant overhead if the number of outputs is large.
-        y_cached = {k: list(per_output(self.y, keep=k)) for k in [True, False]}
+        y_cached = {k: list(per_output(self.y, self.w, keep=k))
+                    for k in [True, False]}
 
         # Fit layer by layer.
         #   Note: `_construct_gpar` takes in the *number* of outputs.
@@ -390,7 +404,7 @@ class GPARRegressor:
                 # inputs. This speeds up the optimisation massively.
                 if fix:
                     gpar = _construct_gpar(self, self.vs, self.m, pi + 1)
-                    fixed_x, fixed_x_ind = gpar.logpdf(self.x, y_cached,
+                    fixed_x, fixed_x_ind = gpar.logpdf(self.x, y_cached, None,
                                                        only_last_layer=True,
                                                        outputs=list(range(pi)),
                                                        return_inputs=True)
@@ -400,12 +414,12 @@ class GPARRegressor:
                     # If the parameters of the previous layers are fixed, use
                     # the precomputed inputs.
                     if fix:
-                        return -gpar.logpdf(fixed_x, y_cached,
+                        return -gpar.logpdf(fixed_x, y_cached, None,
                                             only_last_layer=True,
                                             outputs=[pi],
                                             x_ind=fixed_x_ind)
                     else:
-                        return -gpar.logpdf(self.x, y_cached,
+                        return -gpar.logpdf(self.x, y_cached, None,
                                             only_last_layer=False)
 
                 # Determine names to optimise.
@@ -420,6 +434,7 @@ class GPARRegressor:
     def logpdf(self,
                x,
                y,
+               w=None,
                sample_missing=False,
                posterior=False):
         """Compute the logpdf of observations.
@@ -430,6 +445,7 @@ class GPARRegressor:
         Args:
             x (tensor): Inputs.
             y (tensor): Outputs.
+            w (tensor, optional): Weights.
             sample_missing (bool, optional): Sample missing data to compute an
                 unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.
             posterior (bool, optional): Compute logpdf under the posterior
@@ -443,6 +459,7 @@ class GPARRegressor:
 
         x = B.uprank(_to_torch(x))
         y = self._unnormalise_y(self._transform_y(B.uprank(_to_torch(y))))
+        w = _init_weights(w, y)
         m, p = x.shape[1], y.shape[1]
 
         if posterior and not self.is_conditioned:
@@ -452,8 +469,8 @@ class GPARRegressor:
         # Construct GPAR and compute logpdf.
         gpar = _construct_gpar(self, self.vs, m, p)
         if posterior:
-            gpar = gpar | (self.x, self.y)
-        value = gpar.logpdf(x, y,
+            gpar = gpar | (self.x, self.y, self.w)
+        value = gpar.logpdf(x, y, w,
                             only_last_layer=False,
                             sample_missing=sample_missing)
 
@@ -464,11 +481,18 @@ class GPARRegressor:
 
         return value
 
-    def sample(self, x, p=None, posterior=False, num_samples=1, latent=False):
+    def sample(self,
+               x,
+               w,
+               p=None,
+               posterior=False,
+               num_samples=1,
+               latent=False):
         """Sample from the prior or posterior.
 
         Args:
             x (tensor): Inputs to sample at.
+            w (tensor, optional): Weights.
             p (int, optional): Number of outputs to sample if sampling from
                 the prior.
             posterior (bool, optional): Sample from the prior instead of the
@@ -482,6 +506,7 @@ class GPARRegressor:
                 generated, it will be returned directly instead of in a list.
         """
         x = _to_torch(B.uprank(x))
+        w = _to_torch(w)
 
         # Check that model is conditioned or fit if sampling from the posterior.
         if posterior and not self.is_conditioned:
@@ -495,7 +520,7 @@ class GPARRegressor:
         if posterior:
             # Construct posterior GPAR.
             gpar = _construct_gpar(self, self.vs, self.m, self.p)
-            gpar = gpar | (self.x, self.y)
+            gpar = gpar | (self.x, self.y, self.w)
         else:
             # Construct prior GPAR.
             gpar = _construct_gpar(self, self.vs, B.shape(x)[1], p)
@@ -509,7 +534,8 @@ class GPARRegressor:
         with Counter(name='Sampling', total=num_samples) as counter:
             for _ in range(num_samples):
                 counter.count()
-                samples.append(undo_transforms(gpar.sample(x, latent=latent))
+                samples.append(undo_transforms(gpar.sample(x, w,
+                                                           latent=latent))
                                .detach_().numpy())
         return samples[0] if num_samples == 1 else samples
 

@@ -1,7 +1,7 @@
 import logging
 
 from lab import B
-from stheno import GP, Obs, SparseObs
+from stheno import GP, Obs, SparseObs, WeightedUnique
 
 __all__ = ['GPAR']
 
@@ -136,24 +136,25 @@ class GPAR:
         gpar.layers = list(self.layers) + [model_constructor]
         return gpar
 
-    def __or__(self, x_and_y):
+    def __or__(self, x_y_w):
         """Condition on data.
 
         Args:
             x (tensor): Inputs.
             y (tensor): Outputs.
+            w (tensor): Weights.
 
         Returns:
             :class:`.gpar.GPAR`: Updated GPAR model.
         """
-        x, y = x_and_y
+        x, y, w = x_y_w
         gpar, x_ind = self.copy(), self.x_ind
 
-        for is_last, ((y, mask), model) in \
-                last(zip(per_output(y, self.impute), self.layers)):
+        for is_last, ((y, w, mask), model) in \
+                last(zip(per_output(y, w, self.impute), self.layers)):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
-            obs = self._obs(x, x_ind, y, f, e)  # Construct observations.
+            obs = self._obs(x, x_ind, y, w, f, e)  # Construct observations.
 
             # Update with posterior.
             f_post = f | obs
@@ -169,6 +170,7 @@ class GPAR:
     def logpdf(self,
                x,
                y,
+               w,
                only_last_layer=False,
                sample_missing=False,
                return_inputs=False,
@@ -179,6 +181,7 @@ class GPAR:
         Args:
             x (tensor): Inputs.
             y (tensor): Outputs.
+            w (tensor): Weights.
             only_last_layer (bool, optional): Compute the logpdf for only the
                 last layer. Defaults to `False`.
             sample_missing (bool, optional): Sample missing data to compute an
@@ -202,12 +205,12 @@ class GPAR:
         logpdf = B.cast(B.dtype(x), 0)
         x_ind = self.x_ind if x_ind is None else x_ind
 
-        y_per_output = per_output(y, self.impute or sample_missing)
-        for is_last, ((y, mask), model) in \
+        y_per_output = per_output(y, w, self.impute or sample_missing)
+        for is_last, ((y, w, mask), model) in \
                 last(zip(y_per_output, self.layers), select=outputs):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
-            obs = self._obs(x, x_ind, y, f, e)  # Construct observations.
+            obs = self._obs(x, x_ind, y, w, f, e)  # Construct observations.
 
             # Accumulate logpdf.
             if not only_last_layer or (is_last and only_last_layer):
@@ -225,11 +228,12 @@ class GPAR:
         # Return inputs if asked for.
         return (x, x_ind) if return_inputs else logpdf
 
-    def sample(self, x, latent=False):
+    def sample(self, x, w, latent=False):
         """Sample.
 
         Args:
             x (tensor): Inputs to sample at.
+            w (tensor): Weights.
             latent (bool, optional): Sample latent function. Defaults to
                 `False`.
 
@@ -239,17 +243,19 @@ class GPAR:
         sample = B.zeros(B.dtype(x), B.shape(x)[0], 0)
         x_ind = self.x_ind
 
-        for is_last, model in last(self.layers):
+        for i, (is_last, model) in enumerate(last(self.layers)):
             f, e = model()  # Construct model.
+
+            x_weighted = WeightedUnique(x, w[:, i])
 
             if latent:
                 # Sample latent function: use ancestral sampling.
-                f_sample = f(x).sample()
-                y_sample = f_sample + e(x).sample()
+                f_sample = f(x_weighted).sample()
+                y_sample = f_sample + e(x_weighted).sample()
                 sample = B.concat(sample, f_sample, axis=1)
             else:
                 # Sample observed function.
-                y_sample = (f + e)(x).sample()
+                y_sample = (f + e)(x_weighted).sample()
                 sample = B.concat(sample, y_sample, axis=1)
 
             # Update inputs.
@@ -258,12 +264,20 @@ class GPAR:
 
         return sample
 
-    def _obs(self, x, x_ind, y, f, e):
+    def _obs(self, x, x_ind, y, w, f, e):
+        # Filter available data points.
         available = ~B.isnan(y[:, 0])
+        x = x[available]
+        y = y[available]
+        w = w[available]
+
+        # Perform weighting.
+        x = WeightedUnique(x, w=w)
+
         if self.sparse:
-            return SparseObs(f(x_ind), e, f(x[available]), y[available])
+            return SparseObs(f(x_ind), e, f(x), y)
         else:
-            return Obs((f + e)(x[available]), y[available])
+            return Obs((f + e)(x), y)
 
     def _update_inputs(self, x, x_ind, y, f, obs):
         available = ~B.isnan(y[:, 0])
@@ -292,10 +306,10 @@ class GPAR:
         # Finally, actually update inputs.
         x = B.concat(x, y, axis=1)
 
-        return x, x_ind
+        return B.dense(x), B.dense(x_ind)
 
 
-def per_output(y, keep=False):
+def per_output(y, w=None, keep=False):
     """Return observations per output, respecting that the data must be
     closed downwards.
 
@@ -305,6 +319,7 @@ def per_output(y, keep=False):
 
     Args:
         y (tensor): Outputs.
+        w (tensor): Weights.
         keep (bool, optional): Also return missing observations that would
             make the data closed downwards.
 
@@ -331,8 +346,9 @@ def per_output(y, keep=False):
             mask = mask | B.any(available[:, i + 1:], axis=1)
 
         # Give stuff back.
-        yield y[mask, i:i + 1], mask
+        yield y[mask, i:i + 1], w[mask, i], mask
 
         # Filter observations and availability.
         y = y[mask]
+        w = w[mask]
         available = available[mask]
