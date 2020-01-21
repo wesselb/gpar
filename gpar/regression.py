@@ -168,7 +168,7 @@ def _init_weights(w, y):
     if w is None:
         return B.ones(torch.float64, *B.shape(y))
     else:
-        return _to_torch(w)
+        return B.uprank(_to_torch(w))
 
 
 class GPARRegressor:
@@ -320,7 +320,7 @@ class GPARRegressor:
         # Store data.
         self.x = B.uprank(_to_torch(x))
         self.y = self._transform_y(B.uprank(_to_torch(y)))
-        self.w = _init_weights(w, y)
+        self.w = _init_weights(w, self.y)
         self.n, self.m = self.x.shape
         self.p = self.y.shape[1]
 
@@ -483,7 +483,7 @@ class GPARRegressor:
 
     def sample(self,
                x,
-               w,
+               w=None,
                p=None,
                posterior=False,
                num_samples=1,
@@ -491,8 +491,8 @@ class GPARRegressor:
         """Sample from the prior or posterior.
 
         Args:
-            x (tensor): Inputs to sample at.
-            w (tensor, optional): Weights.
+            x (matrix): Inputs to sample at.
+            w (matrix, optional): Weights of inputs to sample at.
             p (int, optional): Number of outputs to sample if sampling from
                 the prior.
             posterior (bool, optional): Sample from the prior instead of the
@@ -505,8 +505,7 @@ class GPARRegressor:
             list[tensor]: Prior samples. If only a single sample is
                 generated, it will be returned directly instead of in a list.
         """
-        x = _to_torch(B.uprank(x))
-        w = _to_torch(w)
+        x = B.uprank(_to_torch(x))
 
         # Check that model is conditioned or fit if sampling from the posterior.
         if posterior and not self.is_conditioned:
@@ -516,6 +515,15 @@ class GPARRegressor:
         # prior.
         elif not posterior and p is None:
             raise ValueError('Must specify number of outputs to sample.')
+
+        # Initialise weights.
+        if posterior:
+            w = _init_weights(w, self.y)
+        else:
+            if w is None:
+                w = B.ones(torch.float64, B.shape(x)[0], p)
+            else:
+                w = B.uprank(_to_torch(w))
 
         if posterior:
             # Construct posterior GPAR.
@@ -539,11 +547,17 @@ class GPARRegressor:
                                .detach_().numpy())
         return samples[0] if num_samples == 1 else samples
 
-    def predict(self, x, num_samples=100, latent=False, credible_bounds=False):
+    def predict(self,
+                x,
+                w=None,
+                num_samples=100,
+                latent=False,
+                credible_bounds=False):
         """Predict at new inputs.
 
         Args:
             x (tensor): Inputs to predict at.
+            w (tensor, optional): Weights of inputs to predict at.
             num_samples (int, optional): Number of samples. Defaults to `100`.
             latent (bool, optional): Predict the latent function instead of
                 observations. Defaults to `True`.
@@ -557,6 +571,7 @@ class GPARRegressor:
         """
         # Sample from posterior.
         samples = self.sample(x,
+                              w,
                               num_samples=num_samples,
                               latent=latent,
                               posterior=True)
