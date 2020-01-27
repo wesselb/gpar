@@ -517,13 +517,12 @@ class GPARRegressor:
             raise ValueError('Must specify number of outputs to sample.')
 
         # Initialise weights.
-        if posterior:
-            w = _init_weights(w, self.y)
+        if w is None:
+            w = B.ones(torch.float64,
+                       B.shape(x)[0],
+                       self.p if posterior else p)
         else:
-            if w is None:
-                w = B.ones(torch.float64, B.shape(x)[0], p)
-            else:
-                w = B.uprank(_to_torch(w))
+            w = B.uprank(_to_torch(w))
 
         if posterior:
             # Construct posterior GPAR.
