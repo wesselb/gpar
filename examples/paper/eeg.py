@@ -1,19 +1,24 @@
-import pickle
-
 import matplotlib.pyplot as plt
 import numpy as np
-from gpar import GPARRegressor
+import pandas as pd
+import wbml.out
+import wbml.plot
 from lab import B
+from wbml.data.eeg import load
+from wbml.experiment import WorkingDirectory
+
+from gpar import GPARRegressor
 
 B.epsilon = 1e-8
+wd = WorkingDirectory('_experiments', 'eeg')
 
-# Load and extract data.
-with open('examples/data/eeg/experiment.pickle', 'rb') as f:
-    trial = pickle.load(f)
-x = trial['x']
-y_train = trial['y_train']
-y_test = trial['y_test']
-y_labels = trial['y_labels']
+_, train, test = load()
+y_labels = list(train.columns)
+
+# Convert to NumPy.
+x = np.array(train.index)
+y_train = np.array(train)
+y_test = np.array(test)
 
 # Fit and predict GPAR.
 model = GPARRegressor(scale=0.02,
@@ -25,34 +30,31 @@ means, lowers, uppers = \
     model.predict(x, num_samples=100, credible_bounds=True, latent=True)
 
 # Compute SMSE.
-i_test = np.any(~np.isnan(y_test), axis=0)
-mse_mean = np.nanmean((y_test[:, i_test] - np.nanmean(y_test[:, i_test],
-                                                      axis=0, keepdims=True))
-                      ** 2)
-mse_gpar = np.nanmean((y_test[:, i_test] - means[:, i_test]) ** 2)
-print('SMSE:', mse_gpar / mse_mean)
+pred = pd.DataFrame(means, index=train.index, columns=train.columns)
+smse = ((pred - test) ** 2).mean().mean() / \
+       ((test.mean(axis=0) - test) ** 2).mean().mean()
+
+# Report and save average SMSE.
+wbml.out.kv('SMSE', smse)
 
 # Plot the result.
 plt.figure(figsize=(12, 9))
-plt.rcParams['font.family'] = 'serif'
-plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+wbml.plot.tex()
 
-for i, y_i in enumerate(range(len(y_labels) - 3, len(y_labels))):
+for i, label in enumerate(y_labels[-3:]):
+    y_i = y_labels.index(label)
     ax = plt.subplot(3, 1, i + 1)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.yaxis.set_ticks_position('left')
-    ax.xaxis.set_ticks_position('bottom')
     plt.plot(x, means[:, y_i], c='tab:blue')
     plt.fill_between(x, lowers[:, y_i], uppers[:, y_i],
                      facecolor='tab:blue', alpha=.25)
-    plt.scatter(x, y_train[:, y_i], c='tab:green', marker='x', s=10)
-    plt.scatter(x, y_test[:, y_i], c='tab:orange', marker='x', s=10)
+    plt.scatter(train.index, train[label], c='tab:green', marker='x', s=10)
+    plt.scatter(test.index, test[label], c='tab:orange', marker='x', s=10)
     plt.xlabel('Time (seconds)')
     plt.ylabel('Voltage (volt)')
     plt.title(y_labels[y_i])
-    plt.xlim(0, 1)
+    plt.xlim(0.4, 1)
+    wbml.plot.tweak(legend=False)
 
 plt.tight_layout()
-plt.savefig('examples/paper/eeg_prediction.pdf')
+plt.savefig(wd.file('prediction.pdf'))
 plt.show()
