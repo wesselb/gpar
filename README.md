@@ -9,7 +9,7 @@ See the [paper](https://arxiv.org/abs/1802.07182), and see the [docs](https://we
 
 *Note:* GPAR requires Python 3.6 or higher.
 
-* [Installation](#installation)
+* [Requirements and Installation](#requirements-and-installation)
 * [Basic Usage](#basic-usage)
 * [Features](#features)
     - [Input and Output Dependencies](#input-and-output-dependencies)
@@ -19,13 +19,9 @@ See the [paper](https://arxiv.org/abs/1802.07182), and see the [docs](https://we
     - [Inducing Points](#inducing-points)
  * [Example (examples/paper/synthetic.py)](#example-examples-paper-synthetic-py)
 
-## Installation
-Before installing the package, please ensure that `gcc` and `gfortran` are 
-available.
-On OS X, these are both installed with `brew install gcc`;
-users of Anaconda may want to instead consider `conda install gcc`.
-On Linux, `gcc` is most likely already available, and `gfortran` can be 
-installed with `apt-get install gfortran`.
+## Requirements and Installation
+
+See [the instructions here](https://gist.github.com/wesselb/4b44bf87f3789425f96e26c4308d0adc).
 Then simply
 
 ```
