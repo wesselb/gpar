@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import wbml.plot
+
 from gpar.regression import GPARRegressor
 
 x = np.linspace(0, 1, 100)
@@ -22,25 +24,15 @@ means, lowers, uppers = \
 
 # Plot the result.
 plt.figure(figsize=(8, 6))
-plt.rcParams['font.family'] = 'serif'
-plt.rcParams['mathtext.fontset'] = 'dejavuserif'
 
 for i in range(3):
-    ax = plt.subplot(3, 1, i + 1)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.yaxis.set_ticks_position('left')
-    ax.xaxis.set_ticks_position('bottom')
-    plt.ylabel('Output {}'.format(i + 1))
-    plt.scatter(x, y[:, i], label='Truth', c='tab:orange')
-    plt.scatter(x, y_obs[:, i], label='Observations', c='black')
-    plt.plot(x, means[:, i], label='Prediction', c='tab:blue')
-    plt.plot(x, lowers[:, i], c='tab:blue', ls='--')
-    plt.plot(x, uppers[:, i], c='tab:blue', ls='--')
-    if i == 2:
-        leg = plt.legend(facecolor='#eeeeee')
-        leg.get_frame().set_linewidth(0)
+    plt.subplot(3, 1, i + 1)
+    plt.plot(x, means[:, i], label='Prediction', style='pred')
+    plt.fill_between(x, lowers[:, i], uppers[:, i], style='pred')
+    plt.scatter(x, y[:, i], label='Truth', style='test')
+    plt.scatter(x, y_obs[:, i], label='Observations', style='train')
+    plt.ylabel(f'Output {i + 1}')
+    wbml.plot.tweak(legend=i == 0)
 
 plt.tight_layout()
-plt.savefig('examples/model_sample_prediction.pdf')
 plt.show()
