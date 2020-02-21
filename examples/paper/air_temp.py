@@ -15,7 +15,6 @@ def convert_index(df):
 
 
 if __name__ == '__main__':
-
     B.epsilon = 1e-6
     wbml.out.report_time = True
     wd = WorkingDirectory('_experiments', 'air_temp')
