@@ -3,26 +3,23 @@ import pickle
 import numpy as np
 import wbml.metric
 import wbml.out
-from lab import B
 from wbml.experiment import WorkingDirectory
 
 from gpar import GPARRegressor
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     wbml.out.report_time = True
-    wd = WorkingDirectory('_experiments', 'ml')
-    B.epsilon = 1e-8
+    wd = WorkingDirectory("_experiments", "ml")
 
     # Load data.
-    with open('examples/paper/ml_data/data.pickle', 'rb') as f:
-        results = pickle.load(f, encoding='latin1')
+    with open("examples/paper/ml_data/data.pickle", "rb") as f:
+        results = pickle.load(f, encoding="latin1")
 
     # Generate inputs and outputs.
     output_indices = [0, 5, 10, 15, 20]
     params = results.keys()
     x = np.array([list(p) for p in params])
-    y = np.array([np.take(results[p]['val_loss'], output_indices)
-                  for p in params])
+    y = np.array([np.take(results[p]["val_loss"], output_indices) for p in params])
 
     # Record number of outputs.
     num_outputs = len(output_indices)
@@ -30,8 +27,7 @@ if __name__ == '__main__':
     # Filter extreme data points to reduce noise.
     max_error_at_0 = 5
     min_log_learning_rate = -10
-    keep = np.logical_and(x[:, 3] > min_log_learning_rate,
-                          y[:, 0] < max_error_at_0)
+    keep = np.logical_and(x[:, 3] > min_log_learning_rate, y[:, 0] < max_error_at_0)
     x, y = x[keep, :], y[keep, :]
 
     # Randomly split up into training and testing.
@@ -48,7 +44,7 @@ if __name__ == '__main__':
     for i in range(1, num_outputs):
         # Drop indices randomly.
         n = len(indices_remain)
-        perm = np.random.permutation(n)[:int(np.round(0.3 * n))]
+        perm = np.random.permutation(n)[: int(np.round(0.3 * n))]
         indices_drop = indices_remain[perm]
         indices_remain = np.array(list(set(indices_remain) - set(indices_drop)))
 
@@ -56,16 +52,22 @@ if __name__ == '__main__':
         y_train[indices_drop, i:] = np.nan
 
     # Fit and predict GPAR.
-    model = GPARRegressor(scale=0.1,
-                          linear=True, linear_scale=100.,
-                          nonlinear=True, nonlinear_scale=1.0,
-                          noise=0.01,
-                          impute=True, replace=True, normalise_y=True)
+    model = GPARRegressor(
+        scale=0.1,
+        linear=True,
+        linear_scale=100.0,
+        nonlinear=True,
+        nonlinear_scale=1.0,
+        noise=0.01,
+        impute=True,
+        replace=True,
+        normalise_y=True,
+    )
     model.fit(x_train, y_train)
     means = model.predict(x_test, num_samples=100, latent=True)
 
     # Print remaining numbers:
-    wbml.out.kv('Remaining', np.sum(~np.isnan(y_train), axis=0))
+    wbml.out.kv("Remaining", np.sum(~np.isnan(y_train), axis=0))
 
     # Compute SMSEs for all but the first output.
-    wbml.out.kv('SMSE', wbml.metric.smse(means, y_test))
+    wbml.out.kv("SMSE", wbml.metric.smse(means, y_test))
