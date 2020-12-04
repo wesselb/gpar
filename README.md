@@ -194,7 +194,7 @@ from wbml.experiment import WorkingDirectory
 import wbml.plot
 
 if __name__ == "__main__":
-    wd = WorkingDirectory("_experiments", "synthetic")
+    wd = WorkingDirectory("_experiments", "synthetic", seed=1)
 
     # Create toy data set.
     n = 200
