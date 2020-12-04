@@ -8,8 +8,6 @@
 Implementation of the Gaussian Process Autoregressive Regression Model.
 See the [paper](https://arxiv.org/abs/1802.07182), and see the [docs](https://wesselb.github.io/gpar).
 
-*Note:* GPAR requires Python 3.6 or higher.
-
 * [Requirements and Installation](#requirements-and-installation)
 * [Basic Usage](#basic-usage)
 * [Features](#features)
