@@ -193,17 +193,17 @@ def test_sample_and_predict(x, w):
     y = reg.sample(x, w, p=2)
     reg.condition(x, y, w)
     approx(
-        y, np.mean(reg.sample(x, w, posterior=True, num_samples=100), axis=0), atol=1e-2
+        y, np.mean(reg.sample(x, w, posterior=True, num_samples=100), axis=0), atol=5e-2
     )
     approx(
         y,
         np.mean(reg.sample(x, w, latent=True, posterior=True, num_samples=100), axis=0),
-        atol=1e-3,
+        atol=5e-2,
     )
 
     # Test that prediction is around the data.
-    approx(y, reg.predict(x, w, num_samples=100), atol=1e-2)
-    approx(y, reg.predict(x, w, latent=True, num_samples=100), atol=1e-2)
+    approx(y, reg.predict(x, w, num_samples=100), atol=5e-2)
+    approx(y, reg.predict(x, w, latent=True, num_samples=100), atol=5e-2)
 
     # Test that prediction is confident.
     _, lowers, uppers = reg.predict(x, w, num_samples=100, credible_bounds=True)
