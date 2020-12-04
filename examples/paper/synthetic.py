@@ -5,7 +5,7 @@ from wbml.experiment import WorkingDirectory
 import wbml.plot
 
 if __name__ == "__main__":
-    wd = WorkingDirectory("_experiments", "synthetic")
+    wd = WorkingDirectory("_experiments", "synthetic", seed=1)
 
     # Create toy data set.
     n = 200
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     )
     model.fit(x_obs, y_obs)
     means, lowers, uppers = model.predict(
-        x, num_samples=100, credible_bounds=True, latent=True
+        x, num_samples=200, credible_bounds=True, latent=True
     )
 
     # Fit and predict independent GPs: set `markov=0` in GPAR.
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     )
     igp.fit(x_obs, y_obs)
     igp_means, igp_lowers, igp_uppers = igp.predict(
-        x, num_samples=100, credible_bounds=True, latent=True
+        x, num_samples=200, credible_bounds=True, latent=True
     )
 
     # Plot the result.
