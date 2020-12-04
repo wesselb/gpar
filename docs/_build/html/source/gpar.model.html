@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,28 +11,30 @@
   
 
   
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="gpar.regression module" href="gpar.regression.html" />
@@ -51,7 +52,7 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> gpar
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> gpar
           
 
           
@@ -78,6 +79,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -97,6 +99,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -135,7 +138,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../index.html">Docs</a> &raquo;</li>
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../api.html">Application Programming Interface</a> &raquo;</li>
         
@@ -160,26 +163,82 @@
             
   <div class="section" id="module-gpar.model">
 <span id="gpar-model-module"></span><h1>gpar.model module<a class="headerlink" href="#module-gpar.model" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="gpar.model.GPAR">
-<em class="property">class </em><code class="descclassname">gpar.model.</code><code class="descname">GPAR</code><span class="sig-paren">(</span><em>replace=False</em>, <em>impute=False</em>, <em>x_ind=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">gpar.model.</code><code class="sig-name descname">GPAR</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">replace</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">impute</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">x_ind</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Basic GPAR model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>replace</strong> (<em>bool</em><em>, </em><em>optional</em>) – Condition on the predictive mean instead of
-the data. Defaults to <cite>False</cite>.</p></li>
-<li><p><strong>impute</strong> (<em>bool</em><em>, </em><em>optional</em>) – Impute missing data points with the predictive
-mean to make the data set closed downwards. Defaults to <cite>False</cite>.</p></li>
-<li><p><strong>x_ind</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Locations of inducing points
-for a sparse approximation. Defaults to <cite>None</cite>.</p></li>
+<li><p><strong>replace</strong> (<em>bool</em><em>, </em><em>optional</em>) – Condition on the predictive mean instead of the
+data. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>impute</strong> (<em>bool</em><em>, </em><em>optional</em>) – Impute missing data points with the predictive mean
+to make the data set closed downwards. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>x_ind</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Locations of inducing points for a sparse
+approximation. Defaults to <cite>None</cite>.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py attribute">
+<dt id="gpar.model.GPAR.replace">
+<code class="sig-name descname">replace</code><a class="headerlink" href="#gpar.model.GPAR.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>See the argument <cite>replace</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="gpar.model.GPAR.impute">
+<code class="sig-name descname">impute</code><a class="headerlink" href="#gpar.model.GPAR.impute" title="Permalink to this definition">¶</a></dt>
+<dd><p>See the argument <cite>impute</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="gpar.model.GPAR.layers">
+<code class="sig-name descname">layers</code><a class="headerlink" href="#gpar.model.GPAR.layers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Layers of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="gpar.model.GPAR.sparse">
+<code class="sig-name descname">sparse</code><a class="headerlink" href="#gpar.model.GPAR.sparse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use a sparse approximation?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="gpar.model.GPAR.x_ind">
+<code class="sig-name descname">x_ind</code><a class="headerlink" href="#gpar.model.GPAR.x_ind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Locations of inducing points if a sparse
+approximation is used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>tensor or <cite>None</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="gpar.model.GPAR.add_layer">
-<code class="descname">add_layer</code><span class="sig-paren">(</span><em>model_constructor</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.add_layer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.add_layer" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_layer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_constructor</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.add_layer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.add_layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a layer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -195,9 +254,9 @@ return a tuple containing the latent and noise process.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="gpar.model.GPAR.copy">
-<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.copy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new GPAR model with the same configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -209,35 +268,34 @@ return a tuple containing the latent and noise process.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="gpar.model.GPAR.logpdf">
-<code class="descname">logpdf</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>only_last_layer=False</em>, <em>sample_missing=False</em>, <em>return_inputs=False</em>, <em>x_ind=None</em>, <em>outputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.logpdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.logpdf" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">logpdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">y</span></em>, <em class="sig-param"><span class="n">w</span></em>, <em class="sig-param"><span class="n">only_last_layer</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">sample_missing</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_inputs</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">x_ind</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">outputs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.logpdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.logpdf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the logpdf.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>tensor</em>) – Inputs.</p></li>
 <li><p><strong>y</strong> (<em>tensor</em>) – Outputs.</p></li>
-<li><p><strong>only_last_layer</strong> (<em>bool</em><em>, </em><em>optional</em>) – Compute the logpdf for only the
-last layer. Defaults to <cite>False</cite>.</p></li>
-<li><p><strong>sample_missing</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample missing data to compute an
+<li><p><strong>w</strong> (<em>tensor</em>) – Weights.</p></li>
+<li><p><strong>only_last_layer</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>, optional) – Compute the logpdf for only the last
+layer. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>sample_missing</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>, optional) – Sample missing data to compute an
 unbiased estimate of the pdf, <em>not</em> logpdf. Defaults to <cite>False</cite>.</p></li>
-<li><p><strong>return_inputs</strong> (<em>bool</em><em>, </em><em>optional</em>) – Instead return the inputs and
-inputs for the inducing points with previous outputs
-concatenated. This can be used to perform precomputation.
-Defaults to <cite>False</cite>.</p></li>
-<li><p><strong>x_ind</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Inputs for the inducing points. This
-can be used to resume a computation. Defaults to
-<code class="xref py py-attr docutils literal notranslate"><span class="pre">model.GPAR.x_ind</span></code>.</p></li>
-<li><p><strong>outputs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – Only compute the logpdf for a
-subset of outputs. The list specifies the indices of the
-outputs. Defaults to computing the logpdf for all outputs.</p></li>
+<li><p><strong>return_inputs</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>, optional) – Instead return the inputs and inputs for
+the inducing points with previous outputs concatenated. This can be used
+to perform precomputation. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>x_ind</strong> (<em>tensor</em><em>, </em><em>optional</em>) – Inputs for the inducing points. This can be
+used to resume a computation. Defaults to <a class="reference internal" href="#gpar.model.GPAR.x_ind" title="gpar.model.GPAR.x_ind"><code class="xref py py-attr docutils literal notranslate"><span class="pre">model.GPAR.x_ind</span></code></a>.</p></li>
+<li><p><strong>outputs</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list[int]</span></code>, optional) – Only compute the logpdf for a subset of
+outputs. The list specifies the indices of the outputs. Defaults to
+computing the logpdf for all outputs.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl class="simple">
-<dt>Logpdf. If <cite>return_inputs</cite> is set to <cite>True</cite>, instead</dt><dd><p>return a tuple containing the inputs and the inputs for the
-inducing points with previous outputs concatenated</p>
+<dt>Logpdf. If <cite>return_inputs</cite> is set to <cite>True</cite>, instead return a</dt><dd><p>tuple containing the inputs and the inputs for the inducing points
+with previous outputs concatenated</p>
 </dd>
 </dl>
 </p>
@@ -248,16 +306,16 @@ inducing points with previous outputs concatenated</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="gpar.model.GPAR.sample">
-<code class="descname">sample</code><span class="sig-paren">(</span><em>x</em>, <em>latent=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.sample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">w</span></em>, <em class="sig-param"><span class="n">latent</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/gpar/model.html#GPAR.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gpar.model.GPAR.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>tensor</em>) – Inputs to sample at.</p></li>
-<li><p><strong>latent</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sample latent function. Defaults to
-<cite>False</cite>.</p></li>
+<li><p><strong>w</strong> (<em>tensor</em>) – Weights.</p></li>
+<li><p><strong>latent</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>, optional) – Sample latent function. Defaults to <cite>False</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -293,11 +351,19 @@ inducing points with previous outputs concatenated</p>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -308,7 +374,6 @@ inducing points with previous outputs concatenated</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

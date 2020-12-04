@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,28 +11,30 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Application Programming Interface" href="api.html" />
@@ -51,7 +52,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> gpar
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> gpar
           
 
           
@@ -78,6 +79,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -87,7 +89,7 @@
             
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">GPAR</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements-and-installation">Requirements and Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#features">Features</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#input-and-output-dependencies">Input and Output Dependencies</a></li>
@@ -106,6 +108,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -144,7 +147,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>GPAR</li>
     
@@ -167,12 +170,12 @@
             
   <div class="section" id="gpar">
 <h1><a class="reference external" href="http://github.com/wesselb/gpar">GPAR</a><a class="headerlink" href="#gpar" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference external" href="https://travis-ci.org/wesselb/gpar"><img alt="Build" src="https://travis-ci.org/wesselb/gpar.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/wesselb/gpar?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/wesselb/gpar/badge.svg?branch=master&amp;service=github" /></a> <a class="reference external" href="https://wesselb.github.io/gpar"><img alt="Latest Docs" src="https://img.shields.io/badge/docs-latest-blue.svg" /></a></p>
-<p>Implementation of the Gaussian Process Autoregressive Regression Model</p>
-<p>See the <a class="reference external" href="https://arxiv.org/abs/1802.07182">paper</a>, and see the
+<p><a class="reference external" href="https://github.com/wesselb/gpar/actions?query=workflow%3ACI"><img alt="CI" src="https://github.com/wesselb/gpar/workflows/CI/badge.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/wesselb/gpar?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/wesselb/gpar/badge.svg?branch=master&amp;service=github" /></a> <a class="reference external" href="https://wesselb.github.io/gpar"><img alt="Latest Docs" src="https://img.shields.io/badge/docs-latest-blue.svg" /></a> <a class="reference external" href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a></p>
+<p>Implementation of the Gaussian Process Autoregressive Regression Model.
+See the <a class="reference external" href="https://arxiv.org/abs/1802.07182">paper</a>, and see the
 <a class="reference external" href="https://wesselb.github.io/gpar">docs</a>.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="#installation">Installation</a></p></li>
+<li><p><a class="reference external" href="#requirements-and-installation">Requirements and Installation</a></p></li>
 <li><p><a class="reference external" href="#basic-usage">Basic Usage</a></p></li>
 <li><p><a class="reference external" href="#features">Features</a></p>
 <ul>
@@ -186,31 +189,31 @@
 <li><p><a class="reference external" href="#example-examples-paper-synthetic-py">Example
 (examples/paper/synthetic.py)</a></p></li>
 </ul>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>The package is tested for Python 2.7 and Python 3.6, which are the
-versions recommended to use. To install the package, please ensure that
-<code class="docutils literal notranslate"><span class="pre">gcc</span></code> and <code class="docutils literal notranslate"><span class="pre">gfortran</span></code> are available, and then run the following
-commands:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">wesselb</span><span class="o">/</span><span class="n">gpar</span>
-<span class="n">cd</span> <span class="n">gpar</span>
-<span class="n">make</span> <span class="n">install</span>
+<div class="section" id="requirements-and-installation">
+<h2>Requirements and Installation<a class="headerlink" href="#requirements-and-installation" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference external" href="https://gist.github.com/wesselb/4b44bf87f3789425f96e26c4308d0adc">the instructions
+here</a>.
+Then simply</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">gpar</span>
 </pre></div>
 </div>
-<p>Try running <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">examples/paper/synthetic.py</span></code> afterwards to see if
-everything works; this example assumes that <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> is installed.</p>
 </div>
 <div class="section" id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
 <p>A simple instance of GPAR can be created as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gpar</span> <span class="kn">import</span> <span class="n">GPARRegressor</span>
 
-<span class="n">gpar</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span><span class="n">replace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">impute</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                     <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-                     <span class="n">linear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
-                     <span class="n">nonlinear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-                     <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                     <span class="n">normalise_y</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">gpar</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span>
+    <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">impute</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
+    <span class="n">nonlinear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">normalise_y</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>Here the keyword arguments have the following meaning:</p>
@@ -249,15 +252,19 @@ the training inputs and <code class="docutils literal notranslate"><span class="
 <code class="docutils literal notranslate"><span class="pre">x_train</span></code> must have shape <span class="math notranslate nohighlight">\(n\)</span> or <span class="math notranslate nohighlight">\(n \times m\)</span>, where
 <span class="math notranslate nohighlight">\(n\)</span> is the number of data points and <span class="math notranslate nohighlight">\(m\)</span> the number of input
 features, and the outputs <code class="docutils literal notranslate"><span class="pre">y_train</span></code> must have shape <span class="math notranslate nohighlight">\(n\)</span> or
-<span class="math notranslate nohighlight">\(n \times p\)</span>, where <span class="math notranslate nohighlight">\(p\)</span> is the number of outputs.</p>
+<span class="math notranslate nohighlight">\(n \times p\)</span>, where <span class="math notranslate nohighlight">\(p\)</span> is the number of outputs. To
+condition GPAR on data without optimising its hyperparameters, use
+<code class="docutils literal notranslate"><span class="pre">gpar.condition(x_train,</span> <span class="pre">y_train)</span></code> instead.</p>
 <p>Finally, to make predictions, call</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">means</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>to get the predictive means, or</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">means</span><span class="p">,</span> <span class="n">lowers</span><span class="p">,</span> <span class="n">uppers</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span>
-                                     <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-                                     <span class="n">credible_bounds</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">means</span><span class="p">,</span> <span class="n">lowers</span><span class="p">,</span> <span class="n">uppers</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+    <span class="n">x_test</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">True</span>
+  <span class="p">)</span>
 </pre></div>
 </div>
 <p>to also get lower and upper 95% central marginal credible bounds. If you
@@ -315,7 +322,7 @@ function or the observed values. Sampling from the <em>prior</em> and
 <em>posterior</em> (model must be fit first) can be done as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Sample two outputs from the prior.</span>
 
-<span class="n">sample</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <span class="c1"># Sample from the posterior.</span>
+<span class="n">sample</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Sample from the posterior.</span>
 </pre></div>
 </div>
 </div>
@@ -334,76 +341,91 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
 </div>
 <div class="section" id="example-examples-paper-synthetic-py">
 <h2>Example (<code class="docutils literal notranslate"><span class="pre">examples/paper/synthetic.py</span></code>)<a class="headerlink" href="#example-examples-paper-synthetic-py" title="Permalink to this headline">¶</a></h2>
-<div class="figure align-center" id="id1">
+<div class="figure align-default" id="id1">
 <img alt="Prediction" src="https://raw.githubusercontent.com/wesselb/gpar/master/readme_example_prediction.png" />
 <p class="caption"><span class="caption-text">Prediction</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">gpar.regression</span> <span class="kn">import</span> <span class="n">GPARRegressor</span>
+<span class="kn">from</span> <span class="nn">wbml.experiment</span> <span class="kn">import</span> <span class="n">WorkingDirectory</span>
+<span class="kn">import</span> <span class="nn">wbml.plot</span>
 
-<span class="c1"># Create toy data set.</span>
-<span class="n">n</span> <span class="o">=</span> <span class="mi">200</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-<span class="n">noise</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">wd</span> <span class="o">=</span> <span class="n">WorkingDirectory</span><span class="p">(</span><span class="s2">&quot;_experiments&quot;</span><span class="p">,</span> <span class="s2">&quot;synthetic&quot;</span><span class="p">)</span>
 
-<span class="c1"># Draw functions depending on each other in complicated ways.</span>
-<span class="n">f1</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">4</span>
-<span class="n">f2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">f1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
-<span class="n">f3</span> <span class="o">=</span> <span class="n">f2</span> <span class="o">*</span> <span class="n">f1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x</span>
-<span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="c1"># Create toy data set.</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="mf">0.1</span>
 
-<span class="c1"># Add noise and subsample.</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">f</span> <span class="o">+</span> <span class="n">noise</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[::</span><span class="mi">8</span><span class="p">],</span> <span class="n">y</span><span class="p">[::</span><span class="mi">8</span><span class="p">]</span>
+    <span class="c1"># Draw functions depending on each other in complicated ways.</span>
+    <span class="n">f1</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">4</span>
+    <span class="n">f2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">f1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">f3</span> <span class="o">=</span> <span class="n">f2</span> <span class="o">*</span> <span class="n">f1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
 
-<span class="c1"># Fit and predict GPAR.</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                      <span class="n">linear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
-                      <span class="n">nonlinear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                      <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                      <span class="n">impute</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">normalise_y</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">)</span>
-<span class="n">means</span><span class="p">,</span> <span class="n">lowers</span><span class="p">,</span> <span class="n">uppers</span> <span class="o">=</span> \
-    <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="c1"># Add noise and subsample.</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">f</span> <span class="o">+</span> <span class="n">noise</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[::</span><span class="mi">8</span><span class="p">],</span> <span class="n">y</span><span class="p">[::</span><span class="mi">8</span><span class="p">]</span>
 
-<span class="c1"># Fit and predict independent GPs: set markov=0.</span>
-<span class="n">igp</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                    <span class="n">linear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span>
-                    <span class="n">nonlinear</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                    <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">markov</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">normalise_y</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="n">igp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">)</span>
-<span class="n">igp_means</span><span class="p">,</span> <span class="n">igp_lowers</span><span class="p">,</span> <span class="n">igp_uppers</span> <span class="o">=</span> \
-    <span class="n">igp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="c1"># Fit and predict GPAR.</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span>
+        <span class="n">scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">nonlinear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">impute</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">normalise_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">)</span>
+    <span class="n">means</span><span class="p">,</span> <span class="n">lowers</span><span class="p">,</span> <span class="n">uppers</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
 
-<span class="c1"># Plot the result.</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;font.family&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;serif&#39;</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;mathtext.fontset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;dejavuserif&#39;</span>
+    <span class="c1"># Fit and predict independent GPs: set `markov=0` in GPAR.</span>
+    <span class="n">igp</span> <span class="o">=</span> <span class="n">GPARRegressor</span><span class="p">(</span>
+        <span class="n">scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">linear_scale</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">nonlinear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">markov</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">normalise_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">igp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">)</span>
+    <span class="n">igp_means</span><span class="p">,</span> <span class="n">igp_lowers</span><span class="p">,</span> <span class="n">igp_uppers</span> <span class="o">=</span> <span class="n">igp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
 
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
-    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;right&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s1">&#39;top&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;bottom&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Observations&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Truth&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;tab:orange&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">means</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;GPAR&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;tab:blue&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lowers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">uppers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
-                     <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;tab:blue&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">25</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">igp_means</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;IGP&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;tab:green&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">igp_lowers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">igp_uppers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
-                     <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;tab:green&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">25</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;$t$&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;$y_{}$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="n">leg</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;#eeeeee&#39;</span><span class="p">)</span>
-        <span class="n">leg</span><span class="o">.</span><span class="n">get_frame</span><span class="p">()</span><span class="o">.</span><span class="n">set_linewidth</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># Plot the result.</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 
-<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;examples/paper/synthetic_prediction.pdf&#39;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Plot observations.</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_obs</span><span class="p">,</span> <span class="n">y_obs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Observations&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Truth&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot GPAR.</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">means</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GPAR&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;pred&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lowers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">uppers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;pred&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Plot independent GPs.</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">igp_means</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;IGP&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;pred2&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">igp_lowers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">igp_uppers</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;pred2&quot;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;$t$&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;$y_</span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">$&quot;</span><span class="p">)</span>
+        <span class="n">wbml</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">tweak</span><span class="p">(</span><span class="n">legend</span><span class="o">=</span><span class="n">i</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">wd</span><span class="o">.</span><span class="n">file</span><span class="p">(</span><span class="s2">&quot;synthetic.pdf&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -429,11 +451,19 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -444,7 +474,6 @@ logpdf</em>, set <code class="docutils literal notranslate"><span class="pre">sa
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

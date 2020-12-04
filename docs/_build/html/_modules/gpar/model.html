@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,28 +11,30 @@
   
 
   
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -49,7 +50,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> gpar
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> gpar
           
 
           
@@ -76,6 +77,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -91,6 +93,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -129,7 +132,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../index.html">Module code</a> &raquo;</li>
         
@@ -149,17 +152,17 @@
            <div itemprop="articleBody">
             
   <h1>Source code for gpar.model</h1><div class="highlight"><pre>
-<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">lab</span> <span class="kn">import</span> <span class="n">B</span>
+<span class="kn">from</span> <span class="nn">stheno</span> <span class="kn">import</span> <span class="n">GP</span><span class="p">,</span> <span class="n">Obs</span><span class="p">,</span> <span class="n">SparseObs</span><span class="p">,</span> <span class="n">WeightedUnique</span>
+<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
 
-<span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GPAR&quot;</span><span class="p">]</span>
 
-<span class="kn">from</span> <span class="nn">lab</span> <span class="k">import</span> <span class="n">B</span>
-<span class="kn">from</span> <span class="nn">stheno</span> <span class="k">import</span> <span class="n">GP</span><span class="p">,</span> <span class="n">Obs</span><span class="p">,</span> <span class="n">SparseObs</span>
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;GPAR&#39;</span><span class="p">]</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">updates</span><span class="p">,</span> <span class="n">to_update</span><span class="p">):</span>
@@ -168,8 +171,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        x (tensor): Tensor to merge updates into.</span>
 <span class="sd">        updates (tensor): Updates.</span>
-<span class="sd">        to_update (tensor): A boolean array indicating which elements of `x`</span>
-<span class="sd">            to update and replace with the corresponding element in `updates`.</span>
+<span class="sd">        to_update (tensor): A boolean array indicating which elements of `x` to</span>
+<span class="sd">            update and replace with the corresponding element in `updates`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tensor: Updated tensor.</span>
@@ -219,31 +222,52 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        list: `xs` zipped with a boolean on the left.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Zip with bools indicated whether it is the last element.</span>
-    <span class="n">xs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>  <span class="c1"># Generators cause the zip call to fail.</span>
-    <span class="n">is_last</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">]</span>
-    <span class="n">is_last</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">xs_with_last</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">is_last</span><span class="p">,</span> <span class="n">xs</span><span class="p">))</span>
-    <span class="c1"># Only return a subset if asked for.</span>
-    <span class="k">if</span> <span class="n">select</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">xs_with_last</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">xs_with_last</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">select</span><span class="p">]</span>
+    <span class="c1"># Convert `select` to a set if it is given.</span>
+    <span class="k">if</span> <span class="n">select</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">select</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">select</span><span class="p">)</span>
+
+    <span class="c1"># Initialise tracking variables.</span>
+    <span class="n">saved_x</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="c1"># Construct a function that determines the element with index `i` should be</span>
+    <span class="c1"># yielded.</span>
+    <span class="k">def</span> <span class="nf">should_yield</span><span class="p">(</span><span class="n">i_</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">select</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">i_</span> <span class="ow">in</span> <span class="n">select</span><span class="p">)</span>
+
+    <span class="c1"># Loop through `xs` and check to yield every *previous* element.</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">should_yield</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="kc">False</span><span class="p">,</span> <span class="n">saved_x</span>
+        <span class="n">saved_x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># Check to yield the last element, if there is one.</span>
+    <span class="k">if</span> <span class="n">saved_x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">should_yield</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="kc">True</span><span class="p">,</span> <span class="n">saved_x</span>
 
 
-<div class="viewcode-block" id="GPAR"><a class="viewcode-back" href="../../source/gpar.model.html#gpar.model.GPAR">[docs]</a><span class="k">class</span> <span class="nc">GPAR</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="GPAR"><a class="viewcode-back" href="../../source/gpar.model.html#gpar.model.GPAR">[docs]</a><span class="k">class</span> <span class="nc">GPAR</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Basic GPAR model.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        replace (bool, optional): Condition on the predictive mean instead of</span>
-<span class="sd">            the data. Defaults to `False`.</span>
-<span class="sd">        impute (bool, optional): Impute missing data points with the predictive</span>
-<span class="sd">            mean to make the data set closed downwards. Defaults to `False`.</span>
-<span class="sd">        x_ind (tensor, optional): Locations of inducing points</span>
-<span class="sd">            for a sparse approximation. Defaults to `None`.</span>
+<span class="sd">        replace (bool, optional): Condition on the predictive mean instead of the</span>
+<span class="sd">            data. Defaults to `False`.</span>
+<span class="sd">        impute (bool, optional): Impute missing data points with the predictive mean</span>
+<span class="sd">            to make the data set closed downwards. Defaults to `False`.</span>
+<span class="sd">        x_ind (tensor, optional): Locations of inducing points for a sparse</span>
+<span class="sd">            approximation. Defaults to `None`.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        replace (bool): See the argument `replace`.</span>
+<span class="sd">        impute (bool): See the argument `impute`.</span>
+<span class="sd">        layers (list): Layers of the model.</span>
+<span class="sd">        sparse (bool): Use a sparse approximation?</span>
+<span class="sd">        x_ind (tensor or `None`): Locations of inducing points if a sparse</span>
+<span class="sd">            approximation is used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">impute</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">x_ind</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">impute</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">x_ind</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">replace</span> <span class="o">=</span> <span class="n">replace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">impute</span> <span class="o">=</span> <span class="n">impute</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
@@ -258,9 +282,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            :class:`.gpar.GPAR`: New GPAR model with the same configuration.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">gpar</span> <span class="o">=</span> <span class="n">GPAR</span><span class="p">(</span><span class="n">replace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">replace</span><span class="p">,</span>
-                    <span class="n">impute</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">impute</span><span class="p">,</span>
-                    <span class="n">x_ind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span><span class="p">)</span>
+        <span class="n">gpar</span> <span class="o">=</span> <span class="n">GPAR</span><span class="p">(</span><span class="n">replace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">replace</span><span class="p">,</span> <span class="n">impute</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">impute</span><span class="p">,</span> <span class="n">x_ind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">gpar</span></div>
 
 <div class="viewcode-block" id="GPAR.add_layer"><a class="viewcode-back" href="../../source/gpar.model.html#gpar.model.GPAR.add_layer">[docs]</a>    <span class="k">def</span> <span class="nf">add_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_constructor</span><span class="p">):</span>
@@ -277,29 +299,31 @@
         <span class="n">gpar</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">model_constructor</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">gpar</span></div>
 
-    <span class="k">def</span> <span class="nf">__or__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_and_y</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__or__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_y_w</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Condition on data.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (tensor): Inputs.</span>
 <span class="sd">            y (tensor): Outputs.</span>
+<span class="sd">            w (tensor): Weights.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            :class:`.gpar.GPAR`: Updated GPAR model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x_and_y</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">x_y_w</span>
         <span class="n">gpar</span><span class="p">,</span> <span class="n">x_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span>
 
-        <span class="k">for</span> <span class="n">is_last</span><span class="p">,</span> <span class="p">((</span><span class="n">y</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span> <span class="n">model</span><span class="p">)</span> <span class="ow">in</span> \
-                <span class="n">last</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">per_output</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">impute</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">is_last</span><span class="p">,</span> <span class="p">((</span><span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span> <span class="n">model</span><span class="p">)</span> <span class="ow">in</span> <span class="n">last</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">per_output</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">impute</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>  <span class="c1"># Filter according to mask.</span>
             <span class="n">f</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">model</span><span class="p">()</span>  <span class="c1"># Construct model.</span>
-            <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>  <span class="c1"># Construct observations.</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>  <span class="c1"># Construct observations.</span>
 
             <span class="c1"># Update with posterior.</span>
-            <span class="n">f_post</span> <span class="o">=</span> <span class="n">f</span> <span class="o">|</span> <span class="n">obs</span>
-            <span class="n">e_new</span> <span class="o">=</span> <span class="n">GP</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">graph</span><span class="p">)</span>
-            <span class="n">gpar</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">construct_model</span><span class="p">(</span><span class="n">f_post</span><span class="p">,</span> <span class="n">e_new</span><span class="p">))</span>
+            <span class="n">post</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">measure</span> <span class="o">|</span> <span class="n">obs</span>
+            <span class="n">e_new</span> <span class="o">=</span> <span class="n">GP</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span> <span class="n">measure</span><span class="o">=</span><span class="n">post</span><span class="p">)</span>
+            <span class="n">gpar</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">construct_model</span><span class="p">(</span><span class="n">post</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">e_new</span><span class="p">))</span>
 
             <span class="c1"># Update inputs.</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">is_last</span><span class="p">:</span>
@@ -307,58 +331,63 @@
 
         <span class="k">return</span> <span class="n">gpar</span>
 
-<div class="viewcode-block" id="GPAR.logpdf"><a class="viewcode-back" href="../../source/gpar.model.html#gpar.model.GPAR.logpdf">[docs]</a>    <span class="k">def</span> <span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-               <span class="n">x</span><span class="p">,</span>
-               <span class="n">y</span><span class="p">,</span>
-               <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-               <span class="n">sample_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-               <span class="n">return_inputs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-               <span class="n">x_ind</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-               <span class="n">outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="GPAR.logpdf"><a class="viewcode-back" href="../../source/gpar.model.html#gpar.model.GPAR.logpdf">[docs]</a>    <span class="k">def</span> <span class="nf">logpdf</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">,</span>
+        <span class="n">w</span><span class="p">,</span>
+        <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">sample_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">return_inputs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">x_ind</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compute the logpdf.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (tensor): Inputs.</span>
 <span class="sd">            y (tensor): Outputs.</span>
-<span class="sd">            only_last_layer (bool, optional): Compute the logpdf for only the</span>
-<span class="sd">                last layer. Defaults to `False`.</span>
-<span class="sd">            sample_missing (bool, optional): Sample missing data to compute an</span>
+<span class="sd">            w (tensor): Weights.</span>
+<span class="sd">            only_last_layer (:obj:`bool`, optional): Compute the logpdf for only the last</span>
+<span class="sd">                layer. Defaults to `False`.</span>
+<span class="sd">            sample_missing (:obj:`bool`, optional): Sample missing data to compute an</span>
 <span class="sd">                unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.</span>
-<span class="sd">            return_inputs (bool, optional): Instead return the inputs and</span>
-<span class="sd">                inputs for the inducing points with previous outputs</span>
-<span class="sd">                concatenated. This can be used to perform precomputation.</span>
-<span class="sd">                Defaults to `False`.</span>
-<span class="sd">            x_ind (tensor, optional): Inputs for the inducing points. This</span>
-<span class="sd">                can be used to resume a computation. Defaults to</span>
-<span class="sd">                :attr:`.model.GPAR.x_ind`.</span>
-<span class="sd">            outputs (list[int], optional): Only compute the logpdf for a</span>
-<span class="sd">                subset of outputs. The list specifies the indices of the</span>
-<span class="sd">                outputs. Defaults to computing the logpdf for all outputs.</span>
+<span class="sd">            return_inputs (:obj:`bool`, optional): Instead return the inputs and inputs for</span>
+<span class="sd">                the inducing points with previous outputs concatenated. This can be used</span>
+<span class="sd">                to perform precomputation. Defaults to `False`.</span>
+<span class="sd">            x_ind (tensor, optional): Inputs for the inducing points. This can be</span>
+<span class="sd">                used to resume a computation. Defaults to :attr:`.model.GPAR.x_ind`.</span>
+<span class="sd">            outputs (:obj:`list[int]`, optional): Only compute the logpdf for a subset of</span>
+<span class="sd">                outputs. The list specifies the indices of the outputs. Defaults to</span>
+<span class="sd">                computing the logpdf for all outputs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            scalar: Logpdf. If `return_inputs` is set to `True`, instead</span>
-<span class="sd">                return a tuple containing the inputs and the inputs for the</span>
-<span class="sd">                inducing points with previous outputs concatenated</span>
+<span class="sd">            scalar: Logpdf. If `return_inputs` is set to `True`, instead return a</span>
+<span class="sd">                tuple containing the inputs and the inputs for the inducing points</span>
+<span class="sd">                with previous outputs concatenated</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logpdf</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">x_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="k">if</span> <span class="n">x_ind</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x_ind</span>
 
-        <span class="n">y_per_output</span> <span class="o">=</span> <span class="n">per_output</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">impute</span> <span class="ow">or</span> <span class="n">sample_missing</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">is_last</span><span class="p">,</span> <span class="p">((</span><span class="n">y</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span> <span class="n">model</span><span class="p">)</span> <span class="ow">in</span> \
-                <span class="n">last</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">y_per_output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">),</span> <span class="n">select</span><span class="o">=</span><span class="n">outputs</span><span class="p">):</span>
+        <span class="n">y_per_output</span> <span class="o">=</span> <span class="n">per_output</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">impute</span> <span class="ow">or</span> <span class="n">sample_missing</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">is_last</span><span class="p">,</span> <span class="p">((</span><span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">mask</span><span class="p">),</span> <span class="n">model</span><span class="p">)</span> <span class="ow">in</span> <span class="n">last</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">y_per_output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">),</span> <span class="n">select</span><span class="o">=</span><span class="n">outputs</span>
+        <span class="p">):</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>  <span class="c1"># Filter according to mask.</span>
             <span class="n">f</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">model</span><span class="p">()</span>  <span class="c1"># Construct model.</span>
-            <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>  <span class="c1"># Construct observations.</span>
+            <span class="n">obs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>  <span class="c1"># Construct observations.</span>
 
             <span class="c1"># Accumulate logpdf.</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">only_last_layer</span> <span class="ow">or</span> <span class="p">(</span><span class="n">is_last</span> <span class="ow">and</span> <span class="n">only_last_layer</span><span class="p">):</span>
-                <span class="n">logpdf</span> <span class="o">+=</span> <span class="n">f</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+                <span class="n">logpdf</span> <span class="o">+=</span> <span class="n">f</span><span class="o">.</span><span class="n">measure</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">is_last</span><span class="p">:</span>
                 <span class="n">missing</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
                 <span class="c1"># Sample missing data for an unbiased sample of the pdf.</span>
                 <span class="k">if</span> <span class="n">sample_missing</span> <span class="ow">and</span> <span class="n">B</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">missing</span><span class="p">):</span>
-                    <span class="n">y</span> <span class="o">=</span> <span class="n">merge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">((</span><span class="n">f</span> <span class="o">+</span> <span class="n">e</span><span class="p">)</span> <span class="o">|</span> <span class="n">obs</span><span class="p">)(</span><span class="n">x</span><span class="p">[</span><span class="n">missing</span><span class="p">])</span><span class="o">.</span><span class="n">sample</span><span class="p">(),</span> <span class="n">missing</span><span class="p">)</span>
+                    <span class="n">post</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">measure</span> <span class="o">|</span> <span class="n">obs</span>
+                    <span class="n">x_missing_weighted</span> <span class="o">=</span> <span class="n">WeightedUnique</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">missing</span><span class="p">],</span> <span class="n">w</span><span class="p">[</span><span class="n">missing</span><span class="p">])</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">merge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">post</span><span class="p">(</span><span class="n">f</span> <span class="o">+</span> <span class="n">e</span><span class="p">)(</span><span class="n">x_missing_weighted</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(),</span> <span class="n">missing</span><span class="p">)</span>
 
                 <span class="c1"># Update inputs.</span>
                 <span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">obs</span><span class="p">)</span>
@@ -366,13 +395,13 @@
         <span class="c1"># Return inputs if asked for.</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_inputs</span> <span class="k">else</span> <span class="n">logpdf</span></div>
 
-<div class="viewcode-block" id="GPAR.sample"><a class="viewcode-back" href="../../source/gpar.model.html#gpar.model.GPAR.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="GPAR.sample"><a class="viewcode-back" href="../../source/gpar.model.html#gpar.model.GPAR.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (tensor): Inputs to sample at.</span>
-<span class="sd">            latent (bool, optional): Sample latent function. Defaults to</span>
-<span class="sd">                `False`.</span>
+<span class="sd">            w (tensor): Weights.</span>
+<span class="sd">            latent (:obj:`bool`, optional): Sample latent function. Defaults to `False`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            tensor: Sample.</span>
@@ -380,17 +409,19 @@
         <span class="n">sample</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">x_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span>
 
-        <span class="k">for</span> <span class="n">is_last</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">last</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">is_last</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">last</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">)):</span>
             <span class="n">f</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">model</span><span class="p">()</span>  <span class="c1"># Construct model.</span>
+
+            <span class="n">x_weighted</span> <span class="o">=</span> <span class="n">WeightedUnique</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
 
             <span class="k">if</span> <span class="n">latent</span><span class="p">:</span>
                 <span class="c1"># Sample latent function: use ancestral sampling.</span>
-                <span class="n">f_sample</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
-                <span class="n">y_sample</span> <span class="o">=</span> <span class="n">f_sample</span> <span class="o">+</span> <span class="n">e</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+                <span class="n">f_sample</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x_weighted</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+                <span class="n">y_sample</span> <span class="o">=</span> <span class="n">f_sample</span> <span class="o">+</span> <span class="n">e</span><span class="p">(</span><span class="n">x_weighted</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
                 <span class="n">sample</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">f_sample</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Sample observed function.</span>
-                <span class="n">y_sample</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span> <span class="o">+</span> <span class="n">e</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+                <span class="n">y_sample</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span> <span class="o">+</span> <span class="n">e</span><span class="p">)(</span><span class="n">x_weighted</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
                 <span class="n">sample</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">y_sample</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
             <span class="c1"># Update inputs.</span>
@@ -399,12 +430,20 @@
 
         <span class="k">return</span> <span class="n">sample</span></div>
 
-    <span class="k">def</span> <span class="nf">_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+        <span class="c1"># Filter available data points.</span>
         <span class="n">available</span> <span class="o">=</span> <span class="o">~</span><span class="n">B</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">available</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">available</span><span class="p">]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="n">available</span><span class="p">]</span>
+
+        <span class="c1"># Perform weighting.</span>
+        <span class="n">x_weighted</span> <span class="o">=</span> <span class="n">WeightedUnique</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">SparseObs</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">x_ind</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">available</span><span class="p">]),</span> <span class="n">y</span><span class="p">[</span><span class="n">available</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">SparseObs</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">x_ind</span><span class="p">),</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">x_weighted</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Obs</span><span class="p">((</span><span class="n">f</span> <span class="o">+</span> <span class="n">e</span><span class="p">)(</span><span class="n">x</span><span class="p">[</span><span class="n">available</span><span class="p">]),</span> <span class="n">y</span><span class="p">[</span><span class="n">available</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">Obs</span><span class="p">((</span><span class="n">f</span> <span class="o">+</span> <span class="n">e</span><span class="p">)(</span><span class="n">x_weighted</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_update_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">obs</span><span class="p">):</span>
         <span class="n">available</span> <span class="o">=</span> <span class="o">~</span><span class="n">B</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
@@ -412,7 +451,11 @@
         <span class="k">def</span> <span class="nf">estimate</span><span class="p">(</span><span class="n">x_</span><span class="p">):</span>
             <span class="c1"># If observations are available, estimate using the posterior mean;</span>
             <span class="c1"># otherwise, use the prior mean.</span>
-            <span class="k">return</span> <span class="p">((</span><span class="n">f</span> <span class="o">|</span> <span class="n">obs</span><span class="p">)</span> <span class="k">if</span> <span class="n">obs</span> <span class="k">else</span> <span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x_</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">obs</span><span class="p">:</span>
+                <span class="n">post</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">measure</span> <span class="o">|</span> <span class="n">obs</span>
+                <span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x_</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x_</span><span class="p">)</span>
 
         <span class="c1"># Update inputs of inducing points.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse</span><span class="p">:</span>
@@ -433,42 +476,53 @@
         <span class="c1"># Finally, actually update inputs.</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_ind</span></div>
+        <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">B</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">x_ind</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">per_output</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="nd">@_dispatch</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">Numeric</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">Numeric</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">per_output</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return observations per output, respecting that the data must be</span>
 <span class="sd">    closed downwards.</span>
 
+<span class="sd">    The function supports caching by feeding it a dictionary where the keys the are</span>
+<span class="sd">    values for `keep` and the values lists containing items that the function should</span>
+<span class="sd">    yield.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        y (tensor): Outputs.</span>
-<span class="sd">        keep (bool, optional): Also return missing observations that would</span>
-<span class="sd">            make the data closed downwards.</span>
+<span class="sd">        w (tensor): Weights.</span>
+<span class="sd">        keep (bool, optional): Also return missing observations that would make the</span>
+<span class="sd">            data closed downwards.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        generator: Generator that generates tuples containing the</span>
-<span class="sd">            observations per layer and a mask which observations are not</span>
-<span class="sd">            missing relative to the previous layer.</span>
+<span class="sd">        generator: Generator that generates tuples containing the observations per</span>
+<span class="sd">            layer and a mask which observations are not missing relative to the</span>
+<span class="sd">            previous layer.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape_int</span><span class="p">(</span><span class="n">y</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Number of outputs</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">y</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Number of outputs</span>
+    <span class="n">available</span> <span class="o">=</span> <span class="o">~</span><span class="n">B</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>  <span class="c1"># Availability of outputs.</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
-        <span class="c1"># Check current and future availability.</span>
-        <span class="n">available</span> <span class="o">=</span> <span class="o">~</span><span class="n">B</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-        <span class="n">future</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">available</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
         <span class="c1"># Initialise the mask to current availability.</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">available</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
 
         <span class="c1"># Take into account future observations if necessary.</span>
         <span class="k">if</span> <span class="n">keep</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Check whether this is the last output.</span>
-            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">|</span> <span class="n">future</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">|</span> <span class="n">B</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">available</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="c1"># Give stuff back.</span>
-        <span class="k">yield</span> <span class="n">y</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mask</span>
+        <span class="k">yield</span> <span class="n">y</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">w</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">i</span><span class="p">],</span> <span class="n">mask</span>
 
-        <span class="c1"># Filter observations.</span>
+        <span class="c1"># Filter observations and availability.</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="n">available</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+
+<span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">per_output</span><span class="p">(</span><span class="n">cache</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">yi</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">[</span><span class="n">keep</span><span class="p">]:</span>
+        <span class="k">yield</span> <span class="n">yi</span>
 </pre></div>
 
            </div>
@@ -481,11 +535,19 @@
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -496,7 +558,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

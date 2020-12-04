@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,28 +11,30 @@
   
 
   
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script type="text/javascript" src="../../_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -49,7 +50,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> gpar
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> gpar
           
 
           
@@ -76,6 +77,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -91,6 +93,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -129,7 +132,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../index.html">Module code</a> &raquo;</li>
         
@@ -149,31 +152,34 @@
            <div itemprop="articleBody">
             
   <h1>Source code for gpar.regression</h1><div class="highlight"><pre>
-<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
-
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">sys</span>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">lab.torch</span> <span class="k">import</span> <span class="n">B</span>
-<span class="kn">from</span> <span class="nn">stheno.torch</span> <span class="k">import</span> <span class="n">Graph</span><span class="p">,</span> <span class="n">GP</span><span class="p">,</span> <span class="n">EQ</span><span class="p">,</span> <span class="n">RQ</span><span class="p">,</span> <span class="n">Delta</span><span class="p">,</span> <span class="n">Linear</span><span class="p">,</span> <span class="n">ZeroKernel</span>
-<span class="kn">from</span> <span class="nn">varz</span> <span class="k">import</span> <span class="n">Vars</span>
-<span class="kn">from</span> <span class="nn">varz.torch</span> <span class="k">import</span> <span class="n">minimise_l_bfgs_b</span>
+<span class="kn">from</span> <span class="nn">lab.torch</span> <span class="kn">import</span> <span class="n">B</span>
+<span class="kn">from</span> <span class="nn">matrix</span> <span class="kn">import</span> <span class="n">AbstractMatrix</span>
+<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span> <span class="nn">stheno.torch</span> <span class="kn">import</span> <span class="n">Measure</span><span class="p">,</span> <span class="n">GP</span><span class="p">,</span> <span class="n">EQ</span><span class="p">,</span> <span class="n">RQ</span><span class="p">,</span> <span class="n">Delta</span><span class="p">,</span> <span class="n">Linear</span><span class="p">,</span> <span class="n">ZeroKernel</span>
+<span class="kn">from</span> <span class="nn">varz</span> <span class="kn">import</span> <span class="n">Vars</span>
+<span class="kn">from</span> <span class="nn">varz.torch</span> <span class="kn">import</span> <span class="n">minimise_l_bfgs_b</span>
+<span class="kn">from</span> <span class="nn">wbml.out</span> <span class="kn">import</span> <span class="n">Counter</span>
 
-<span class="kn">from</span> <span class="nn">.model</span> <span class="k">import</span> <span class="n">GPAR</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">GPAR</span><span class="p">,</span> <span class="n">per_output</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;GPARRegressor&#39;</span><span class="p">,</span> <span class="s1">&#39;log_transform&#39;</span><span class="p">,</span> <span class="s1">&#39;squishing_transform&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GPARRegressor&quot;</span><span class="p">,</span> <span class="s2">&quot;log_transform&quot;</span><span class="p">,</span> <span class="s2">&quot;squishing_transform&quot;</span><span class="p">]</span>
+
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
 
 <span class="c1">#: Log transform for the data.</span>
 <span class="n">log_transform</span> <span class="o">=</span> <span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">log</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">exp</span><span class="p">)</span>
 
 <span class="c1">#: Squishing transform for the data.</span>
-<span class="n">squishing_transform</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">B</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">B</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span>
-                       <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">squishing_transform</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">B</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">))),</span>
+    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">B</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">B</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="mi">1</span><span class="p">),</span>
+<span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_vector_from_init</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
@@ -184,10 +190,11 @@
     <span class="c1"># Multiple values are given. Check that enough values are available.</span>
     <span class="n">init_squeezed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">init_squeezed</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Incorrect shape </span><span class="si">{}</span><span class="s1"> of hyperparameters.&#39;</span>
-                         <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">init</span><span class="p">)))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Incorrect shape </span><span class="si">{}</span><span class="s2"> of hyperparameters.&quot;</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">init</span><span class="p">))</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">init_squeezed</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">length</span><span class="p">:</span>  <span class="c1"># Squeezed doesn&#39;t change size.</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Not enough hyperparameters specified.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not enough hyperparameters specified.&quot;</span><span class="p">)</span>
 
     <span class="c1"># Return initialisation.</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">init_squeezed</span><span class="p">)[:</span><span class="n">length</span><span class="p">]</span>
@@ -206,24 +213,36 @@
     <span class="k">return</span> <span class="n">m_inds</span><span class="p">,</span> <span class="n">p_inds</span><span class="p">,</span> <span class="n">p_num</span>
 
 
-<span class="k">def</span> <span class="nf">_model_generator</span><span class="p">(</span><span class="n">vs</span><span class="p">,</span>
-                     <span class="n">m</span><span class="p">,</span>  <span class="c1"># This is the _number_ of inputs.</span>
-                     <span class="n">pi</span><span class="p">,</span>  <span class="c1"># This is the _index_ of the output modelled.</span>
-                     <span class="n">scale</span><span class="p">,</span>
-                     <span class="n">scale_tie</span><span class="p">,</span>
-                     <span class="n">per</span><span class="p">,</span>
-                     <span class="n">per_period</span><span class="p">,</span>
-                     <span class="n">per_scale</span><span class="p">,</span>
-                     <span class="n">per_decay</span><span class="p">,</span>
-                     <span class="n">input_linear</span><span class="p">,</span>
-                     <span class="n">input_linear_scale</span><span class="p">,</span>
-                     <span class="n">linear</span><span class="p">,</span>
-                     <span class="n">linear_scale</span><span class="p">,</span>
-                     <span class="n">nonlinear</span><span class="p">,</span>
-                     <span class="n">nonlinear_scale</span><span class="p">,</span>
-                     <span class="n">rq</span><span class="p">,</span>
-                     <span class="n">markov</span><span class="p">,</span>
-                     <span class="n">noise</span><span class="p">):</span>
+<span class="nd">@_dispatch</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">NP</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_to_torch</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="nd">@_dispatch</span><span class="p">({</span><span class="n">B</span><span class="o">.</span><span class="n">Torch</span><span class="p">,</span> <span class="n">AbstractMatrix</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)})</span>
+<span class="k">def</span> <span class="nf">_to_torch</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="k">def</span> <span class="nf">_model_generator</span><span class="p">(</span>
+    <span class="n">vs</span><span class="p">,</span>
+    <span class="n">m</span><span class="p">,</span>  <span class="c1"># This is the _number_ of inputs.</span>
+    <span class="n">pi</span><span class="p">,</span>  <span class="c1"># This is the _index_ of the output modelled.</span>
+    <span class="n">scale</span><span class="p">,</span>
+    <span class="n">scale_tie</span><span class="p">,</span>
+    <span class="n">per</span><span class="p">,</span>
+    <span class="n">per_period</span><span class="p">,</span>
+    <span class="n">per_scale</span><span class="p">,</span>
+    <span class="n">per_decay</span><span class="p">,</span>
+    <span class="n">input_linear</span><span class="p">,</span>
+    <span class="n">input_linear_scale</span><span class="p">,</span>
+    <span class="n">linear</span><span class="p">,</span>
+    <span class="n">linear_scale</span><span class="p">,</span>
+    <span class="n">nonlinear</span><span class="p">,</span>
+    <span class="n">nonlinear_scale</span><span class="p">,</span>
+    <span class="n">rq</span><span class="p">,</span>
+    <span class="n">markov</span><span class="p">,</span>
+    <span class="n">noise</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="k">def</span> <span class="nf">model</span><span class="p">():</span>
         <span class="c1"># Start with a zero kernels.</span>
         <span class="n">kernel_inputs</span> <span class="o">=</span> <span class="n">ZeroKernel</span><span class="p">()</span>  <span class="c1"># Kernel over inputs.</span>
@@ -233,65 +252,87 @@
         <span class="n">m_inds</span><span class="p">,</span> <span class="n">p_inds</span><span class="p">,</span> <span class="n">p_num</span> <span class="o">=</span> <span class="n">_determine_indices</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">markov</span><span class="p">)</span>
 
         <span class="c1"># Add nonlinear kernel over the inputs.</span>
-        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/var&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
-        <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">scale_tie</span> <span class="k">else</span> <span class="n">pi</span><span class="p">),</span>
-                        <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/input/var&quot;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">0</span> <span class="k">if</span> <span class="n">scale_tie</span> <span class="k">else</span> <span class="n">pi</span><span class="si">}</span><span class="s2">/input/scales&quot;</span><span class="p">,</span>
+            <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">rq</span><span class="p">:</span>
-            <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/alpha&#39;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span>
-                          <span class="n">lower</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1e3</span><span class="p">))</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/input/alpha&quot;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1e3</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">k</span> <span class="o">=</span> <span class="n">EQ</span><span class="p">()</span>
         <span class="n">kernel_inputs</span> <span class="o">+=</span> <span class="n">variance</span> <span class="o">*</span> <span class="n">k</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span>
 
         <span class="c1"># Add a locally periodic kernel over the inputs.</span>
         <span class="k">if</span> <span class="n">per</span><span class="p">:</span>
-            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/var&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                            <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_scale</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">m</span><span class="p">))</span>
-            <span class="n">periods</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/pers&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                             <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_period</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
-            <span class="n">decays</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/per/decay&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                            <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_decay</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
-            <span class="n">kernel_inputs</span> <span class="o">+=</span> <span class="n">variance</span> <span class="o">*</span> \
-                             <span class="n">EQ</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span><span class="o">.</span><span class="n">periodic</span><span class="p">(</span><span class="n">periods</span><span class="p">)</span> <span class="o">*</span> \
-                             <span class="n">EQ</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">decays</span><span class="p">)</span>
+            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/input/per/var&quot;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/input/per/scales&quot;</span><span class="p">,</span>
+                <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_scale</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">m</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">periods</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/input/per/pers&quot;</span><span class="p">,</span>
+                <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_period</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">decays</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/input/per/decay&quot;</span><span class="p">,</span>
+                <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">per_decay</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">kernel_inputs</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="n">variance</span> <span class="o">*</span> <span class="n">EQ</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span><span class="o">.</span><span class="n">periodic</span><span class="p">(</span><span class="n">periods</span><span class="p">)</span> <span class="o">*</span> <span class="n">EQ</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">decays</span><span class="p">)</span>
+            <span class="p">)</span>
 
         <span class="c1"># Add a linear kernel over the inputs.</span>
         <span class="k">if</span> <span class="n">input_linear</span><span class="p">:</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/lin/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                            <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">input_linear_scale</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
-            <span class="n">const</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/input/lin/const&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/input/lin/scales&quot;</span><span class="p">,</span>
+                <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">input_linear_scale</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">const</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/input/lin/const&quot;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
             <span class="n">kernel_inputs</span> <span class="o">+=</span> <span class="n">Linear</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span> <span class="n">const</span>
 
         <span class="c1"># Add linear kernel over the outputs.</span>
         <span class="k">if</span> <span class="n">linear</span> <span class="ow">and</span> <span class="n">pi</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/lin/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                            <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">linear_scale</span><span class="p">,</span> <span class="n">p_num</span><span class="p">))</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/output/lin/scales&quot;</span><span class="p">,</span>
+                <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">linear_scale</span><span class="p">,</span> <span class="n">p_num</span><span class="p">),</span>
+            <span class="p">)</span>
             <span class="n">kernel_outputs</span> <span class="o">+=</span> <span class="n">Linear</span><span class="p">()</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span>
 
         <span class="c1"># Add nonlinear kernel over the outputs.</span>
         <span class="k">if</span> <span class="n">nonlinear</span> <span class="ow">and</span> <span class="n">pi</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/nonlin/var&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
-            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/nonlin/scales&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                            <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">nonlinear_scale</span><span class="p">,</span> <span class="n">p_num</span><span class="p">))</span>
+            <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/output/nonlin/var&quot;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">scales</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/output/nonlin/scales&quot;</span><span class="p">,</span>
+                <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">nonlinear_scale</span><span class="p">,</span> <span class="n">p_num</span><span class="p">),</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="n">rq</span><span class="p">:</span>
-                <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/output/nonlin/alpha&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                              <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="mf">1e3</span><span class="p">))</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">RQ</span><span class="p">(</span>
+                    <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/output/nonlin/alpha&quot;</span><span class="p">,</span>
+                        <span class="n">init</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span>
+                        <span class="n">lower</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+                        <span class="n">upper</span><span class="o">=</span><span class="mf">1e3</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">k</span> <span class="o">=</span> <span class="n">EQ</span><span class="p">()</span>
             <span class="n">kernel_outputs</span> <span class="o">+=</span> <span class="n">variance</span> <span class="o">*</span> <span class="n">k</span><span class="o">.</span><span class="n">stretch</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span>
 
         <span class="c1"># Construct noise kernel.</span>
-        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/noise&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">),</span>
-                          <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="n">pi</span><span class="p">],</span>
-                          <span class="n">lower</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>  <span class="c1"># Allow noise to be small.</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">bnd</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/noise&quot;</span><span class="p">,</span>
+            <span class="n">init</span><span class="o">=</span><span class="n">_vector_from_init</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="n">pi</span><span class="p">],</span>
+            <span class="n">lower</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span>
+        <span class="p">)</span>  <span class="c1"># Allow noise to be small.</span>
         <span class="n">kernel_noise</span> <span class="o">=</span> <span class="n">variance</span> <span class="o">*</span> <span class="n">Delta</span><span class="p">()</span>
 
         <span class="c1"># Construct model and return.</span>
-        <span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">()</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">GP</span><span class="p">(</span><span class="n">kernel_inputs</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">m_inds</span><span class="p">)</span> <span class="o">+</span>
-               <span class="n">kernel_outputs</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">p_inds</span><span class="p">),</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">)</span>
-        <span class="n">e</span> <span class="o">=</span> <span class="n">GP</span><span class="p">(</span><span class="n">kernel_noise</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">)</span>
+        <span class="n">prior</span> <span class="o">=</span> <span class="n">Measure</span><span class="p">()</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">GP</span><span class="p">(</span>
+            <span class="n">kernel_inputs</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">m_inds</span><span class="p">)</span> <span class="o">+</span> <span class="n">kernel_outputs</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">p_inds</span><span class="p">),</span> <span class="n">measure</span><span class="o">=</span><span class="n">prior</span>
+        <span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">GP</span><span class="p">(</span><span class="n">kernel_noise</span><span class="p">,</span> <span class="n">measure</span><span class="o">=</span><span class="n">prior</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">e</span>
 
     <span class="k">return</span> <span class="n">model</span>
@@ -305,91 +346,99 @@
     <span class="k">return</span> <span class="n">gpar</span>
 
 
-<div class="viewcode-block" id="GPARRegressor"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor">[docs]</a><span class="k">class</span> <span class="nc">GPARRegressor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_init_weights</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="o">*</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="GPARRegressor"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor">[docs]</a><span class="k">class</span> <span class="nc">GPARRegressor</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;GPAR regressor.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        replace (bool, optional): Replace observations with predictive means.</span>
+<span class="sd">        replace (:obj:`bool`, optional): Replace observations with predictive means.</span>
 <span class="sd">            Helps the model deal with noisy data points. Defaults to `False`.</span>
-<span class="sd">        impute (bool, optional): Impute data with predictive means to make the</span>
+<span class="sd">        impute (:obj:`bool`, optional): Impute data with predictive means to make the</span>
 <span class="sd">            data set closed downwards. Helps the model deal with missing data.</span>
 <span class="sd">            Defaults to `True`.</span>
-<span class="sd">        scale (tensor, optional): Initial value(s) for the length scale(s) over</span>
-<span class="sd">            the inputs. Defaults to `1.0`.</span>
-<span class="sd">        scale_tie (bool, optional): Tie the length scale(s) over the inputs.</span>
+<span class="sd">        scale (tensor, optional): Initial value(s) for the length scale(s) over the</span>
+<span class="sd">            inputs. Defaults to `1.0`.</span>
+<span class="sd">        scale_tie (:obj:`bool`, optional): Tie the length scale(s) over the inputs.</span>
 <span class="sd">            Defaults to `False`.</span>
-<span class="sd">        per (bool, optional): Use a locally periodic kernel over the inputs.</span>
+<span class="sd">        per (:obj:`bool`, optional): Use a locally periodic kernel over the inputs.</span>
 <span class="sd">            Defaults to `False`.</span>
 <span class="sd">        per_period (tensor, optional): Initial value(s) for the period(s) of the</span>
 <span class="sd">            locally periodic kernel. Defaults to `1.0`.</span>
-<span class="sd">        per_scale (tensor, optional): Initial value(s) for the length scale(s)</span>
-<span class="sd">            of the locally periodic kernel. Defaults to `1.0`.</span>
-<span class="sd">        per_decay (tensor, optional): Initial value(s) for the length scale(s)</span>
-<span class="sd">            of the local change of the locally periodic kernel. Defaults to</span>
-<span class="sd">            `10.0`.</span>
-<span class="sd">        input_linear (bool, optional): Use a linear kernel over the inputs.</span>
+<span class="sd">        per_scale (tensor, optional): Initial value(s) for the length scale(s) of the</span>
+<span class="sd">            locally periodic kernel. Defaults to `1.0`.</span>
+<span class="sd">        per_decay (tensor, optional): Initial value(s) for the length scale(s) of the</span>
+<span class="sd">            local change of the locally periodic kernel. Defaults to `10.0`.</span>
+<span class="sd">        input_linear (:obj:`bool`, optional): Use a linear kernel over the inputs.</span>
 <span class="sd">            Defaults to `False`.</span>
 <span class="sd">        input_linear_scale (tensor, optional): Initial value(s) for the length</span>
 <span class="sd">            scale(s) of the linear kernel over the inputs. Defaults to `100.0`.</span>
-<span class="sd">        linear (bool, optional): Use linear dependencies between outputs.</span>
+<span class="sd">        linear (:obj:`bool`, optional): Use linear dependencies between outputs.</span>
 <span class="sd">            Defaults to `True`.</span>
-<span class="sd">        linear_scale (tensor, optional): Initial value(s) for the length</span>
-<span class="sd">            scale(s) of the linear dependencies. Defaults to `100.0`.</span>
-<span class="sd">        nonlinear (bool, optional): Use nonlinear dependencies between outputs.</span>
+<span class="sd">        linear_scale (tensor, optional): Initial value(s) for the length scale(s) of</span>
+<span class="sd">            the linear dependencies. Defaults to `100.0`.</span>
+<span class="sd">        nonlinear (:obj:`bool`, optional): Use nonlinear dependencies between outputs.</span>
 <span class="sd">            Defaults to `True`.</span>
-<span class="sd">        nonlinear_scale (tensor, optional): Initial value(s) for the length</span>
-<span class="sd">            scale(s) over the outputs. Defaults to `0.1`.</span>
-<span class="sd">        rq (bool, optional): Use rational quadratic (RQ) kernels instead of</span>
+<span class="sd">        nonlinear_scale (tensor, optional): Initial value(s) for the length scale(s)</span>
+<span class="sd">            over the outputs. Defaults to `0.1`.</span>
+<span class="sd">        rq (:obj:`bool`, optional): Use rational quadratic (RQ) kernels instead of</span>
 <span class="sd">            exponentiated quadratic (EQ) kernels. Defaults to `False`.</span>
-<span class="sd">        markov (int, optional): Markov order of conditionals. Set to `None` to</span>
+<span class="sd">        markov (:obj:`int`, optional): Markov order of conditionals. Set to `None` to</span>
 <span class="sd">            have a fully connected structure. Defaults to `None`.</span>
 <span class="sd">        noise (tensor, optional): Initial value(s) for the observation noise(s).</span>
 <span class="sd">            Defaults to `0.01`.</span>
-<span class="sd">        x_ind (tensor, optional): Locations of inducing points. Set to `None`</span>
-<span class="sd">            if inducing points should not be used. Defaults to `None`.</span>
-<span class="sd">        normalise_y (bool, optional): Normalise outputs. Defaults to `True`.</span>
-<span class="sd">        transform_y (tuple, optional): Tuple containing a transform and its</span>
-<span class="sd">            inverse, which should be applied to the data before fitting.</span>
-<span class="sd">            Defaults to the identity transform.</span>
+<span class="sd">        x_ind (tensor, optional): Locations of inducing points. Set to `None` if</span>
+<span class="sd">            inducing points should not be used. Defaults to `None`.</span>
+<span class="sd">        normalise_y (:obj:`bool`, optional): Normalise outputs. Defaults to `True`.</span>
+<span class="sd">        transform_y (:obj:`tuple`, optional): Tuple containing a transform and its</span>
+<span class="sd">            inverse, which should be applied to the data before fitting. Defaults to</span>
+<span class="sd">            the identity transform.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        replace (bool): Replace observations with predictive means.</span>
-<span class="sd">        impute (bool): Impute missing data with predictive means to make the</span>
-<span class="sd">            data set closed downwards.</span>
+<span class="sd">        impute (bool): Impute missing data with predictive means to make the data set closed downwards.</span>
 <span class="sd">        sparse (bool): Use inducing points.</span>
 <span class="sd">        x_ind (tensor): Locations of inducing points.</span>
 <span class="sd">        model_config (dict): Summary of model configuration.</span>
 <span class="sd">        vs (:class:`varz.Vars`): Model parameters.</span>
-<span class="sd">        is_fit (bool): The model is fit.</span>
+<span class="sd">        is_conditioned (bool): The model is conditioned.</span>
 <span class="sd">        x (tensor): Inputs of training data.</span>
 <span class="sd">        y (tensor): Outputs of training data.</span>
+<span class="sd">        w (vector): Weights for every time stamp.</span>
 <span class="sd">        n (int): Number of training data points.</span>
 <span class="sd">        m (int): Number of input features.</span>
 <span class="sd">        p (int): Number of outputs.</span>
 <span class="sd">        normalise_y (bool): Normalise outputs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">impute</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                 <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-                 <span class="n">scale_tie</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">per</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">per_period</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-                 <span class="n">per_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-                 <span class="n">per_decay</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
-                 <span class="n">input_linear</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">input_linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
-                 <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                 <span class="n">linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
-                 <span class="n">nonlinear</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
-                 <span class="n">rq</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">markov</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                 <span class="n">x_ind</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">normalise_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                 <span class="n">transform_y</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">impute</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">scale_tie</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">per</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">per_period</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">per_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">per_decay</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">input_linear</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">input_linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
+        <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">linear_scale</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
+        <span class="n">nonlinear</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">nonlinear_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">rq</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">markov</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">x_ind</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">normalise_y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">transform_y</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">),</span>
+    <span class="p">):</span>
         <span class="c1"># Model configuration.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">replace</span> <span class="o">=</span> <span class="n">replace</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">impute</span> <span class="o">=</span> <span class="n">impute</span>
@@ -397,30 +446,31 @@
         <span class="k">if</span> <span class="n">x_ind</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x_ind</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_ind</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">x_ind</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="n">scale</span><span class="p">,</span>
-            <span class="s1">&#39;scale_tie&#39;</span><span class="p">:</span> <span class="n">scale_tie</span><span class="p">,</span>
-            <span class="s1">&#39;per&#39;</span><span class="p">:</span> <span class="n">per</span><span class="p">,</span>
-            <span class="s1">&#39;per_period&#39;</span><span class="p">:</span> <span class="n">per_period</span><span class="p">,</span>
-            <span class="s1">&#39;per_scale&#39;</span><span class="p">:</span> <span class="n">per_scale</span><span class="p">,</span>
-            <span class="s1">&#39;per_decay&#39;</span><span class="p">:</span> <span class="n">per_decay</span><span class="p">,</span>
-            <span class="s1">&#39;input_linear&#39;</span><span class="p">:</span> <span class="n">input_linear</span><span class="p">,</span>
-            <span class="s1">&#39;input_linear_scale&#39;</span><span class="p">:</span> <span class="n">input_linear_scale</span><span class="p">,</span>
-            <span class="s1">&#39;linear&#39;</span><span class="p">:</span> <span class="n">linear</span><span class="p">,</span>
-            <span class="s1">&#39;linear_scale&#39;</span><span class="p">:</span> <span class="n">linear_scale</span><span class="p">,</span>
-            <span class="s1">&#39;nonlinear&#39;</span><span class="p">:</span> <span class="n">nonlinear</span><span class="p">,</span>
-            <span class="s1">&#39;nonlinear_scale&#39;</span><span class="p">:</span> <span class="n">nonlinear_scale</span><span class="p">,</span>
-            <span class="s1">&#39;rq&#39;</span><span class="p">:</span> <span class="n">rq</span><span class="p">,</span>
-            <span class="s1">&#39;markov&#39;</span><span class="p">:</span> <span class="n">markov</span><span class="p">,</span>
-            <span class="s1">&#39;noise&#39;</span><span class="p">:</span> <span class="n">noise</span>
+            <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="n">scale</span><span class="p">,</span>
+            <span class="s2">&quot;scale_tie&quot;</span><span class="p">:</span> <span class="n">scale_tie</span><span class="p">,</span>
+            <span class="s2">&quot;per&quot;</span><span class="p">:</span> <span class="n">per</span><span class="p">,</span>
+            <span class="s2">&quot;per_period&quot;</span><span class="p">:</span> <span class="n">per_period</span><span class="p">,</span>
+            <span class="s2">&quot;per_scale&quot;</span><span class="p">:</span> <span class="n">per_scale</span><span class="p">,</span>
+            <span class="s2">&quot;per_decay&quot;</span><span class="p">:</span> <span class="n">per_decay</span><span class="p">,</span>
+            <span class="s2">&quot;input_linear&quot;</span><span class="p">:</span> <span class="n">input_linear</span><span class="p">,</span>
+            <span class="s2">&quot;input_linear_scale&quot;</span><span class="p">:</span> <span class="n">input_linear_scale</span><span class="p">,</span>
+            <span class="s2">&quot;linear&quot;</span><span class="p">:</span> <span class="n">linear</span><span class="p">,</span>
+            <span class="s2">&quot;linear_scale&quot;</span><span class="p">:</span> <span class="n">linear_scale</span><span class="p">,</span>
+            <span class="s2">&quot;nonlinear&quot;</span><span class="p">:</span> <span class="n">nonlinear</span><span class="p">,</span>
+            <span class="s2">&quot;nonlinear_scale&quot;</span><span class="p">:</span> <span class="n">nonlinear_scale</span><span class="p">,</span>
+            <span class="s2">&quot;rq&quot;</span><span class="p">:</span> <span class="n">rq</span><span class="p">,</span>
+            <span class="s2">&quot;markov&quot;</span><span class="p">:</span> <span class="n">markov</span><span class="p">,</span>
+            <span class="s2">&quot;noise&quot;</span><span class="p">:</span> <span class="n">noise</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="c1"># Model fitting.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">vs</span> <span class="o">=</span> <span class="n">Vars</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_fit</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_conditioned</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Inputs of training data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Outputs of training data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Weights for every time stamp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Number of data points</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Number of input features</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Number of outputs</span>
@@ -437,36 +487,22 @@
 <span class="sd">            dict: Dictionary mapping variable names to variable values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="o">.</span><span class="n">index_by_name</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
             <span class="n">variables</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">variables</span></div>
 
-<div class="viewcode-block" id="GPARRegressor.fit"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-            <span class="n">x</span><span class="p">,</span>
-            <span class="n">y</span><span class="p">,</span>
-            <span class="n">greedy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">fix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the model to data.</span>
-
-<span class="sd">        Further takes in keyword arguments for `Varz.minimise_l_bfgs_b`.</span>
+<div class="viewcode-block" id="GPARRegressor.condition"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.condition">[docs]</a>    <span class="k">def</span> <span class="nf">condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Condition the model on data, without training.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (tensor): Inputs of training data.</span>
 <span class="sd">            y (tensor): Outputs of training data.</span>
-<span class="sd">            greedy (bool, optional): Greedily determine the ordering of the</span>
-<span class="sd">                outputs. Defaults to `False`.</span>
-<span class="sd">            fix (bool, optional): Fix the parameters of a layer after</span>
-<span class="sd">                training it. If set to `False`, the likelihood are</span>
-<span class="sd">                accumulated and all parameters are optimised at every step.</span>
-<span class="sd">                Defaults to `True`.</span>
+<span class="sd">            w (tensor, optional): Weights of training data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">greedy</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Greedy search is not implemented yet.&#39;</span><span class="p">)</span>
-
         <span class="c1"># Store data.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">_init_weights</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
@@ -483,7 +519,6 @@
 
                 <span class="c1"># Calculate std: safely handle the zero case.</span>
                 <span class="n">std</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">y_i</span><span class="p">)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">std</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">stds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -493,10 +528,10 @@
             <span class="n">means</span><span class="p">,</span> <span class="n">stds</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="o">*</span><span class="n">means</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">B</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="o">*</span><span class="n">stds</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
 
             <span class="k">def</span> <span class="nf">normalise_y</span><span class="p">(</span><span class="n">y_</span><span class="p">):</span>
-                <span class="k">return</span> <span class="p">(</span><span class="n">y_</span> <span class="o">-</span> <span class="n">means</span><span class="p">)</span> <span class="o">/</span> <span class="n">stds</span>
+                <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span> <span class="n">means</span><span class="p">),</span> <span class="n">stds</span><span class="p">)</span>
 
             <span class="k">def</span> <span class="nf">unnormalise_y</span><span class="p">(</span><span class="n">y_</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">y_</span> <span class="o">*</span> <span class="n">stds</span> <span class="o">+</span> <span class="n">means</span>
+                <span class="k">return</span> <span class="n">B</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span> <span class="n">stds</span><span class="p">),</span> <span class="n">means</span><span class="p">)</span>
 
             <span class="c1"># Save normalisers.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_normalise_y</span> <span class="o">=</span> <span class="n">normalise_y</span>
@@ -505,56 +540,89 @@
             <span class="c1"># Perform normalisation.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">normalise_y</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
 
-        <span class="c1"># Fit layer by layer.</span>
-        <span class="c1">#   Note: `_construct_gpar` takes in the *number* of outputs.</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Training conditionals (total: </span><span class="si">{}</span><span class="s1">):&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">))</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">pi</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">):</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="c1"># Store that the model is conditioned.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_conditioned</span> <span class="o">=</span> <span class="kc">True</span></div>
 
-            <span class="c1"># If we fix parameters of previous layers, we can precompute the</span>
-            <span class="c1"># inputs. This speeds up the optimisation massively.</span>
-            <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
-                <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="n">fixed_x</span><span class="p">,</span> <span class="n">fixed_x_ind</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
-                                                   <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                                   <span class="n">outputs</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">pi</span><span class="p">)),</span>
-                                                   <span class="n">return_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="GPARRegressor.fit"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">greedy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit the model to data.</span>
 
-            <span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">vs</span><span class="p">):</span>
-                <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-                <span class="c1"># If the parameters of the previous layers are fixed, use the</span>
-                <span class="c1"># precomputed inputs.</span>
+<span class="sd">        Further takes in keyword arguments for `Varz.minimise_l_bfgs_b`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (tensor): Inputs of training data.</span>
+<span class="sd">            y (tensor): Outputs of training data.</span>
+<span class="sd">            w (tensor, optional): Weights of training data.</span>
+<span class="sd">            greedy (bool, optional): Greedily determine the ordering of the outputs.</span>
+<span class="sd">                Defaults to `False`.</span>
+<span class="sd">            fix (bool, optional): Fix the parameters of a layer after training it. If</span>
+<span class="sd">                set to `False`, the likelihood are accumulated and all parameters are</span>
+<span class="sd">                optimised at every step. Defaults to `True`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Conditioned the model before fitting.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">greedy</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Greedy search is not implemented yet.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Precompute the results of `per_output`. This can otherwise incur a</span>
+        <span class="c1"># significant overhead if the number of outputs is large.</span>
+        <span class="n">y_cached</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">per_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">]}</span>
+
+        <span class="c1"># Fit layer by layer. NOTE: `_construct_gpar` takes in the *number* of outputs.</span>
+        <span class="k">with</span> <span class="n">Counter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Training conditionals&quot;</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span> <span class="k">as</span> <span class="n">counter</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">pi</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">):</span>
+                <span class="n">counter</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+                <span class="c1"># If we fix parameters of previous layers, we can precompute the</span>
+                <span class="c1"># inputs. This speeds up the optimisation massively.</span>
                 <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="o">-</span><span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">fixed_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
-                                        <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                        <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">pi</span><span class="p">],</span>
-                                        <span class="n">x_ind</span><span class="o">=</span><span class="n">fixed_x_ind</span><span class="p">)</span>
+                    <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">fixed_x</span><span class="p">,</span> <span class="n">fixed_x_ind</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                        <span class="n">y_cached</span><span class="p">,</span>
+                        <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">outputs</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">pi</span><span class="p">)),</span>
+                        <span class="n">return_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                <span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">vs</span><span class="p">):</span>
+                    <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="c1"># If the parameters of the previous layers are fixed, use</span>
+                    <span class="c1"># the precomputed inputs.</span>
+                    <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="o">-</span><span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
+                            <span class="n">fixed_x</span><span class="p">,</span>
+                            <span class="n">y_cached</span><span class="p">,</span>
+                            <span class="kc">None</span><span class="p">,</span>
+                            <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                            <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">pi</span><span class="p">],</span>
+                            <span class="n">x_ind</span><span class="o">=</span><span class="n">fixed_x_ind</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="o">-</span><span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">y_cached</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">False</span>
+                        <span class="p">)</span>
+
+                <span class="c1"># Determine names to optimise.</span>
+                <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
+                    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pi</span><span class="si">}</span><span class="s2">/*&quot;</span><span class="p">]</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="o">-</span><span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">/*&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
 
-            <span class="c1"># Determine names to optimise.</span>
-            <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
-                <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/*&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pi</span><span class="p">)]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/*&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+                <span class="c1"># Perform the optimisation.</span>
+                <span class="n">minimise_l_bfgs_b</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span></div>
 
-            <span class="c1"># Perform the optimisation.</span>
-            <span class="n">minimise_l_bfgs_b</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
-
-        <span class="c1"># Print newline to end progress bar.</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-
-        <span class="c1"># Store that the model is fit.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_fit</span> <span class="o">=</span> <span class="kc">True</span></div>
-
-<div class="viewcode-block" id="GPARRegressor.logpdf"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.logpdf">[docs]</a>    <span class="k">def</span> <span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sample_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="GPARRegressor.logpdf"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.logpdf">[docs]</a>    <span class="k">def</span> <span class="nf">logpdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compute the logpdf of observations.</span>
+
+<span class="sd">        If either `x` or `y` is a PyTorch tensor, then the result will not be</span>
+<span class="sd">        detached from the computation graph and converted to NumPy.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (tensor): Inputs.</span>
 <span class="sd">            y (tensor): Outputs.</span>
+<span class="sd">            w (tensor, optional): Weights.</span>
 <span class="sd">            sample_missing (bool, optional): Sample missing data to compute an</span>
 <span class="sd">                unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.</span>
 <span class="sd">            posterior (bool, optional): Compute logpdf under the posterior</span>
@@ -563,57 +631,78 @@
 <span class="sd">        Returns</span>
 <span class="sd">            float: Estimate of the logpdf.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unnormalise_y</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">y</span><span class="p">))))</span>
+        <span class="c1"># Check whether either `x` or `y` was already PyTorch.</span>
+        <span class="n">any_torch</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">Torch</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">Torch</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unnormalise_y</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform_y</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">y</span><span class="p">))))</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">_init_weights</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">m</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="n">posterior</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fit</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Must fit model before computing the logpdf &#39;</span>
-                               <span class="s1">&#39;under the posterior.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">posterior</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_conditioned</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Must condition or fit model before computing &quot;</span>
+                <span class="s2">&quot;the logpdf under the posterior.&quot;</span>
+            <span class="p">)</span>
 
-        <span class="c1"># Construct GPAR and sample logpdf.</span>
+        <span class="c1"># Construct GPAR and compute logpdf.</span>
         <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">posterior</span><span class="p">:</span>
-            <span class="n">gpar</span> <span class="o">=</span> <span class="n">gpar</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
-                           <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                           <span class="n">sample_missing</span><span class="o">=</span><span class="n">sample_missing</span><span class="p">)</span><span class="o">.</span><span class="n">detach_</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></div>
+            <span class="n">gpar</span> <span class="o">=</span> <span class="n">gpar</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">gpar</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">only_last_layer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sample_missing</span><span class="o">=</span><span class="n">sample_missing</span>
+        <span class="p">)</span>
 
-<div class="viewcode-block" id="GPARRegressor.sample"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># If neither `x` nor `y` was already a PyTorch tensor, return the</span>
+        <span class="c1"># result as NumPy.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">any_torch</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">detach_</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="GPARRegressor.sample"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Sample from the prior or posterior.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x (tensor): Inputs to sample at.</span>
-<span class="sd">            p (int, optional): Number of outputs to sample if sampling from</span>
+<span class="sd">            x (matrix): Inputs to sample at.</span>
+<span class="sd">            w (matrix, optional): Weights of inputs to sample at.</span>
+<span class="sd">            p (:obj:`int`, optional): Number of outputs to sample if sampling from</span>
 <span class="sd">                the prior.</span>
-<span class="sd">            posterior (bool, optional): Sample from the prior instead of the</span>
+<span class="sd">            posterior (:obj:`bool`, optional): Sample from the prior instead of the</span>
 <span class="sd">                posterior.</span>
-<span class="sd">            num_samples (int, optional): Number of samples. Defaults to `1`.</span>
-<span class="sd">            latent (bool, optional): Sample the latent function instead of</span>
+<span class="sd">            num_samples (:obj:`int`, optional): Number of samples. Defaults to `1`.</span>
+<span class="sd">            latent (:obj:`int`, optional): Sample the latent function instead of</span>
 <span class="sd">                observations. Defaults to `False`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list[tensor]: Prior samples. If only a single sample is</span>
 <span class="sd">                generated, it will be returned directly instead of in a list.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
-        <span class="c1"># Check that model is fit if sampling from the posterior.</span>
-        <span class="k">if</span> <span class="n">posterior</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fit</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Must fit model before sampling form the &#39;</span>
-                               <span class="s1">&#39;posterior.&#39;</span><span class="p">)</span>
+        <span class="c1"># Check that model is conditioned or fit if sampling from the posterior.</span>
+        <span class="k">if</span> <span class="n">posterior</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_conditioned</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Must condition or fit model before sampling &quot;</span> <span class="s2">&quot;from the posterior.&quot;</span>
+            <span class="p">)</span>
         <span class="c1"># Check that the number of outputs is specified if sampling from the</span>
         <span class="c1"># prior.</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">posterior</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Must specify number of outputs to sample.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must specify number of outputs to sample.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Initialise weights.</span>
+        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="k">if</span> <span class="n">posterior</span> <span class="k">else</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">uprank</span><span class="p">(</span><span class="n">_to_torch</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">posterior</span><span class="p">:</span>
             <span class="c1"># Construct posterior GPAR.</span>
             <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
-            <span class="n">gpar</span> <span class="o">=</span> <span class="n">gpar</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+            <span class="n">gpar</span> <span class="o">=</span> <span class="n">gpar</span> <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Construct prior GPAR.</span>
-            <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">shape_int</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">)</span>
+            <span class="n">gpar</span> <span class="o">=</span> <span class="n">_construct_gpar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vs</span><span class="p">,</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">)</span>
 
         <span class="c1"># Construct function to undo normalisation and transformation.</span>
         <span class="k">def</span> <span class="nf">undo_transforms</span><span class="p">(</span><span class="n">y_</span><span class="p">):</span>
@@ -621,25 +710,24 @@
 
         <span class="c1"># Perform sampling.</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Sampling (total: </span><span class="si">{}</span><span class="s1">):&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_samples</span><span class="p">))</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-            <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">undo_transforms</span><span class="p">(</span><span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="n">latent</span><span class="p">))</span>
-                           <span class="o">.</span><span class="n">detach_</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">Counter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Sampling&quot;</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span> <span class="k">as</span> <span class="n">counter</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
+                <span class="n">counter</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">undo_transforms</span><span class="p">(</span><span class="n">gpar</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="n">latent</span><span class="p">))</span><span class="o">.</span><span class="n">detach_</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                <span class="p">)</span>
         <span class="k">return</span> <span class="n">samples</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">num_samples</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">samples</span></div>
 
-<div class="viewcode-block" id="GPARRegressor.predict"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="GPARRegressor.predict"><a class="viewcode-back" href="../../source/gpar.regression.html#gpar.regression.GPARRegressor.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">credible_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Predict at new inputs.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (tensor): Inputs to predict at.</span>
-<span class="sd">            num_samples (int, optional): Number of samples. Defaults to `100`.</span>
-<span class="sd">            latent (bool, optional): Predict the latent function instead of</span>
+<span class="sd">            w (tensor, optional): Weights of inputs to predict at.</span>
+<span class="sd">            num_samples (:obj:`int`, optional): Number of samples. Defaults to `100`.</span>
+<span class="sd">            latent (:obj:`bool`, optional): Predict the latent function instead of</span>
 <span class="sd">                observations. Defaults to `True`.</span>
-<span class="sd">            credible_bounds (bool, optional): Also return 95% central marginal</span>
+<span class="sd">            credible_bounds (:obj:`bool`, optional): Also return 95% central marginal</span>
 <span class="sd">                credible bounds for the predictions.</span>
 
 <span class="sd">        Returns:</span>
@@ -648,10 +736,9 @@
 <span class="sd">                lower credible bounds, and upper credible bounds.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Sample from posterior.</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>
-                              <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span>
-                              <span class="n">latent</span><span class="o">=</span><span class="n">latent</span><span class="p">,</span>
-                              <span class="n">posterior</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">latent</span><span class="o">=</span><span class="n">latent</span><span class="p">,</span> <span class="n">posterior</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
         <span class="c1"># Compute mean.</span>
         <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -675,11 +762,19 @@
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -690,7 +785,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
