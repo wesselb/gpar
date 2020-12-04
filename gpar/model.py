@@ -225,7 +225,7 @@ class GPAR:
 
             # Accumulate logpdf.
             if not only_last_layer or (is_last and only_last_layer):
-                logpdf += f.measure.logpdf(obs)
+                logpdf = logpdf + f.measure.logpdf(obs)
 
             if not is_last:
                 missing = B.isnan(y[:, 0])
