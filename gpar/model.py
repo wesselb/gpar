@@ -2,10 +2,13 @@ import logging
 
 from lab import B
 from stheno import GP, Obs, SparseObs, WeightedUnique
+from plum import Dispatcher
 
-__all__ = ['GPAR']
+__all__ = ["GPAR"]
 
 log = logging.getLogger(__name__)
+
+_dispatch = Dispatcher()
 
 
 def merge(x, updates, to_update):
@@ -14,8 +17,8 @@ def merge(x, updates, to_update):
     Args:
         x (tensor): Tensor to merge updates into.
         updates (tensor): Updates.
-        to_update (tensor): A boolean array indicating which elements of `x`
-            to update and replace with the corresponding element in `updates`.
+        to_update (tensor): A boolean array indicating which elements of `x` to
+            update and replace with the corresponding element in `updates`.
 
     Returns:
         tensor: Updated tensor.
@@ -94,12 +97,20 @@ class GPAR:
     """Basic GPAR model.
 
     Args:
-        replace (bool, optional): Condition on the predictive mean instead of
-            the data. Defaults to `False`.
-        impute (bool, optional): Impute missing data points with the predictive
-            mean to make the data set closed downwards. Defaults to `False`.
-        x_ind (tensor, optional): Locations of inducing points
-            for a sparse approximation. Defaults to `None`.
+        replace (bool, optional): Condition on the predictive mean instead of the
+            data. Defaults to `False`.
+        impute (bool, optional): Impute missing data points with the predictive mean
+            to make the data set closed downwards. Defaults to `False`.
+        x_ind (tensor, optional): Locations of inducing points for a sparse
+            approximation. Defaults to `None`.
+
+    Attributes:
+        replace (bool): See the argument `replace`.
+        impute (bool): See the argument `impute`.
+        layers (list): Layers of the model.
+        sparse (bool): Use a sparse approximation?
+        x_ind (tensor or `None`): Locations of inducing points if a sparse
+            approximation is used.
     """
 
     def __init__(self, replace=False, impute=False, x_ind=None):
@@ -117,9 +128,7 @@ class GPAR:
         Returns:
             :class:`.gpar.GPAR`: New GPAR model with the same configuration.
         """
-        gpar = GPAR(replace=self.replace,
-                    impute=self.impute,
-                    x_ind=self.x_ind)
+        gpar = GPAR(replace=self.replace, impute=self.impute, x_ind=self.x_ind)
         return gpar
 
     def add_layer(self, model_constructor):
@@ -150,16 +159,17 @@ class GPAR:
         x, y, w = x_y_w
         gpar, x_ind = self.copy(), self.x_ind
 
-        for is_last, ((y, w, mask), model) in \
-                last(zip(per_output(y, w, self.impute), self.layers)):
+        for is_last, ((y, w, mask), model) in last(
+            zip(per_output(y, w, keep=self.impute), self.layers)
+        ):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
             obs = self._obs(x, x_ind, y, w, f, e)  # Construct observations.
 
             # Update with posterior.
-            f_post = f | obs
-            e_new = GP(e.kernel, e.mean, graph=f.graph)
-            gpar.layers.append(construct_model(f_post, e_new))
+            post = f.measure | obs
+            e_new = GP(e.mean, e.kernel, measure=post)
+            gpar.layers.append(construct_model(post(f), e_new))
 
             # Update inputs.
             if not is_last:
@@ -167,60 +177,63 @@ class GPAR:
 
         return gpar
 
-    def logpdf(self,
-               x,
-               y,
-               w,
-               only_last_layer=False,
-               sample_missing=False,
-               return_inputs=False,
-               x_ind=None,
-               outputs=None):
+    def logpdf(
+        self,
+        x,
+        y,
+        w,
+        only_last_layer=False,
+        sample_missing=False,
+        return_inputs=False,
+        x_ind=None,
+        outputs=None,
+    ):
         """Compute the logpdf.
 
         Args:
             x (tensor): Inputs.
             y (tensor): Outputs.
             w (tensor): Weights.
-            only_last_layer (bool, optional): Compute the logpdf for only the
-                last layer. Defaults to `False`.
-            sample_missing (bool, optional): Sample missing data to compute an
+            only_last_layer (:obj:`bool`, optional): Compute the logpdf for only the last
+                layer. Defaults to `False`.
+            sample_missing (:obj:`bool`, optional): Sample missing data to compute an
                 unbiased estimate of the pdf, *not* logpdf. Defaults to `False`.
-            return_inputs (bool, optional): Instead return the inputs and
-                inputs for the inducing points with previous outputs
-                concatenated. This can be used to perform precomputation.
-                Defaults to `False`.
-            x_ind (tensor, optional): Inputs for the inducing points. This
-                can be used to resume a computation. Defaults to
-                :attr:`.model.GPAR.x_ind`.
-            outputs (list[int], optional): Only compute the logpdf for a
-                subset of outputs. The list specifies the indices of the
-                outputs. Defaults to computing the logpdf for all outputs.
+            return_inputs (:obj:`bool`, optional): Instead return the inputs and inputs for
+                the inducing points with previous outputs concatenated. This can be used
+                to perform precomputation. Defaults to `False`.
+            x_ind (tensor, optional): Inputs for the inducing points. This can be
+                used to resume a computation. Defaults to :attr:`.model.GPAR.x_ind`.
+            outputs (:obj:`list[int]`, optional): Only compute the logpdf for a subset of
+                outputs. The list specifies the indices of the outputs. Defaults to
+                computing the logpdf for all outputs.
 
         Returns:
-            scalar: Logpdf. If `return_inputs` is set to `True`, instead
-                return a tuple containing the inputs and the inputs for the
-                inducing points with previous outputs concatenated
+            scalar: Logpdf. If `return_inputs` is set to `True`, instead return a
+                tuple containing the inputs and the inputs for the inducing points
+                with previous outputs concatenated
         """
         logpdf = B.cast(B.dtype(x), 0)
         x_ind = self.x_ind if x_ind is None else x_ind
 
-        y_per_output = per_output(y, w, self.impute or sample_missing)
-        for is_last, ((y, w, mask), model) in \
-                last(zip(y_per_output, self.layers), select=outputs):
+        y_per_output = per_output(y, w, keep=self.impute or sample_missing)
+        for is_last, ((y, w, mask), model) in last(
+            zip(y_per_output, self.layers), select=outputs
+        ):
             x = x[mask]  # Filter according to mask.
             f, e = model()  # Construct model.
             obs = self._obs(x, x_ind, y, w, f, e)  # Construct observations.
 
             # Accumulate logpdf.
             if not only_last_layer or (is_last and only_last_layer):
-                logpdf += f.graph.logpdf(obs)
+                logpdf += f.measure.logpdf(obs)
 
             if not is_last:
                 missing = B.isnan(y[:, 0])
                 # Sample missing data for an unbiased sample of the pdf.
                 if sample_missing and B.any(missing):
-                    y = merge(y, ((f + e) | obs)(x[missing]).sample(), missing)
+                    post = f.measure | obs
+                    x_missing_weighted = WeightedUnique(x[missing], w[missing])
+                    y = merge(y, post(f + e)(x_missing_weighted).sample(), missing)
 
                 # Update inputs.
                 x, x_ind = self._update_inputs(x, x_ind, y, f, obs)
@@ -234,8 +247,7 @@ class GPAR:
         Args:
             x (tensor): Inputs to sample at.
             w (tensor): Weights.
-            latent (bool, optional): Sample latent function. Defaults to
-                `False`.
+            latent (:obj:`bool`, optional): Sample latent function. Defaults to `False`.
 
         Returns:
             tensor: Sample.
@@ -272,12 +284,12 @@ class GPAR:
         w = w[available]
 
         # Perform weighting.
-        x = WeightedUnique(x, w=w)
+        x_weighted = WeightedUnique(x, w)
 
         if self.sparse:
-            return SparseObs(f(x_ind), e, f(x), y)
+            return SparseObs(f(x_ind), e, f(x_weighted), y)
         else:
-            return Obs((f + e)(x), y)
+            return Obs((f + e)(x_weighted), y)
 
     def _update_inputs(self, x, x_ind, y, f, obs):
         available = ~B.isnan(y[:, 0])
@@ -285,7 +297,11 @@ class GPAR:
         def estimate(x_):
             # If observations are available, estimate using the posterior mean;
             # otherwise, use the prior mean.
-            return ((f | obs) if obs else f).mean(x_)
+            if obs:
+                post = f.measure | obs
+                return post(f).mean(x_)
+            else:
+                return f.mean(x_)
 
         # Update inputs of inducing points.
         if self.sparse:
@@ -309,31 +325,26 @@ class GPAR:
         return B.dense(x), B.dense(x_ind)
 
 
-def per_output(y, w=None, keep=False):
+@_dispatch(B.Numeric, B.Numeric)
+def per_output(y, w, keep=False):
     """Return observations per output, respecting that the data must be
     closed downwards.
 
-    The function supports caching by feeding it a dictionary where the keys
-    the are values for `keep` and the values lists containing items
-    that the function should yield.
+    The function supports caching by feeding it a dictionary where the keys the are
+    values for `keep` and the values lists containing items that the function should
+    yield.
 
     Args:
         y (tensor): Outputs.
         w (tensor): Weights.
-        keep (bool, optional): Also return missing observations that would
-            make the data closed downwards.
+        keep (bool, optional): Also return missing observations that would make the
+            data closed downwards.
 
     Returns:
-        generator: Generator that generates tuples containing the
-            observations per layer and a mask which observations are not
-            missing relative to the previous layer.
+        generator: Generator that generates tuples containing the observations per
+            layer and a mask which observations are not missing relative to the
+            previous layer.
     """
-    # Handle cache, if that is given.
-    if isinstance(y, dict):
-        for yi in y[keep]:
-            yield yi
-        return
-
     p = B.shape(y)[1]  # Number of outputs
     available = ~B.isnan(y)  # Availability of outputs.
 
@@ -343,12 +354,18 @@ def per_output(y, w=None, keep=False):
 
         # Take into account future observations if necessary.
         if keep and i < p - 1:  # Check whether this is the last output.
-            mask = mask | B.any(available[:, i + 1:], axis=1)
+            mask = mask | B.any(available[:, i + 1 :], axis=1)
 
         # Give stuff back.
-        yield y[mask, i:i + 1], w[mask, i], mask
+        yield y[mask, i : i + 1], w[mask, i], mask
 
         # Filter observations and availability.
         y = y[mask]
         w = w[mask]
         available = available[mask]
+
+
+@_dispatch(dict, type(None))
+def per_output(cache, _, keep=False):
+    for yi in cache[keep]:
+        yield yi
