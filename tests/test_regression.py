@@ -24,7 +24,7 @@ def x(request):
 def w(request):
     use_w = request.param
     if use_w:
-        return B.rand(10, 2) + 1e-1
+        return B.rand(10, 2) + 1
     else:
         return None
 
