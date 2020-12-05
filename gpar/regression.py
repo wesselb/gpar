@@ -104,7 +104,7 @@ def _model_generator(
             init=_vector_from_init(scale, m),
         )
         if rq:
-            k = RQ(vs.bnd(name="{}/input/alpha", init=1e-2, lower=1e-3, upper=1e3))
+            k = RQ(vs.bnd(name=f"{pi}/input/alpha", init=1e-2, lower=1e-3, upper=1e3))
         else:
             k = EQ()
         kernel_inputs += variance * k.stretch(scales)
