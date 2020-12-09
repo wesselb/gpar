@@ -83,7 +83,7 @@ to initialise each layer separately, e.g. `scale=[1.0, 2.0]`. See the
 documentation for a full overview of the keywords that may be passed to 
 `GPARRegressor`.
 
-By default, GPAR models the dependencies between outputs as follows:
+By default, GPAR models dependencies between outputs as follows:
 
 1.
     the first output `y1` is modelled as a function of only the inputs `x`:
@@ -94,7 +94,7 @@ By default, GPAR models the dependencies between outputs as follows:
     `y2 = y2(y1(x), x)`;
     
 3.
-    the third output `y2` is modelled as a function of `y2`, `y1`, and the inputs:
+    the third output `y3` is modelled as a function of `y2`, `y1`, and the inputs:
     `y3 = y3(y2(x), y1(x), x)`;
 
 4. *et cetera*.
