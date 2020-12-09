@@ -62,7 +62,7 @@ Here the keyword arguments have the following meaning:
 
 * `linear=True`: Use linear dependencies between outputs.
 
-* `linear_scale=True`: Initialisation of the length scale of the linear 
+* `linear_scale=100.0`: Initialisation of the length scale of the linear 
     dependencies between outputs.
     
 * `nonlinear=True`: Also use nonlinear dependencies between outputs.
@@ -83,14 +83,33 @@ to initialise each layer separately, e.g. `scale=[1.0, 2.0]`. See the
 documentation for a full overview of the keywords that may be passed to 
 `GPARRegressor`.
 
+By default, GPAR models the dependencies between outputs as follows:
+
+1.
+    the first output `y1` is modelled as a function of only the inputs `x`:
+    `y1 = y1(x)`;
+    
+2.
+    the second output `y2` is modelled as a function of `y1` and the inputs `x`:
+    `y2 = y2(y1(x), x)`;
+    
+3.
+    the third output `y2` is modelled as a function of `y2`, `y1`, and the inputs:
+    `y3 = y3(y2(x), y1(x), x)`;
+
+4. *et cetera*.
+
 To fit GPAR, call `gpar.fit(x_train, y_train)` where `x_train` are the training 
 inputs and `y_train` the training outputs.
-The inputs `x_train` must have shape $n$ or $n \times m$, where $n$ is the
-number of data points and $m$ the number of input features, and the outputs
-`y_train` must have shape $n$ or $n \times p$, where $p$ is the number of
+The inputs `x_train` must have shape `(n,)` or `(n, m)`, where `n` is the
+number of data points and `m` the number of input features, and the outputs
+`y_train` must have shape `(n,)` or `(n, p)`, where `p` is the number of
 outputs.
+Missing data can simply be set to `np.nan`s.
 To condition GPAR on data without optimising its hyperparameters, use
 `gpar.condition(x_train, y_train)` instead.
+
+
 
 Finally, to make predictions, call
 
