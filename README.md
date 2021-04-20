@@ -90,12 +90,12 @@ By default, GPAR models dependencies between outputs as follows:
     `y1 = y1(x)`;
     
 2.
-    the second output `y2` is modelled as a function of `y1` and the inputs `x`:
-    `y2 = y2(y1(x), x)`;
+    the second output `y2` is modelled as a function of the previous output `y1` and
+    the inputs `x`: `y2 = y2(y1, x)`;
     
 3.
-    the third output `y3` is modelled as a function of `y2`, `y1`, and the inputs:
-    `y3 = y3(y2(x), y1(x), x)`;
+    the third output `y3` is modelled as a function of the previous outputs `y2` and
+    `y1` and the inputs `x`: `y3 = y3(y2, y1, x)`;
 
 4. *et cetera*.
 
