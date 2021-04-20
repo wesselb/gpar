@@ -8,7 +8,7 @@ __all__ = ["approx", "all_different", "tensor"]
 _dispatch = Dispatcher()
 
 
-@_dispatch(object, object)
+@_dispatch
 def approx(a, b, rtol=1e-7, atol=1e-12):
     """Assert that two objects are approximately equal.
 
@@ -21,8 +21,8 @@ def approx(a, b, rtol=1e-7, atol=1e-12):
     assert_allclose(B.to_numpy(a), B.to_numpy(b), rtol=rtol, atol=atol)
 
 
-@_dispatch(tuple, tuple)
-def approx(a, b, **kw_args):
+@_dispatch
+def approx(a: tuple, b: tuple, **kw_args):
     if len(a) != len(b):
         raise AssertionError(f'Inputs "{a}" and "{b}" are not of the same length.')
     for x, y in zip(a, b):

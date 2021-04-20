@@ -325,8 +325,8 @@ class GPAR:
         return B.dense(x), B.dense(x_ind)
 
 
-@_dispatch(B.Numeric, B.Numeric)
-def per_output(y, w, keep=False):
+@_dispatch
+def per_output(y: B.Numeric, w: B.Numeric, keep=False):
     """Return observations per output, respecting that the data must be
     closed downwards.
 
@@ -365,7 +365,7 @@ def per_output(y, w, keep=False):
         available = available[mask]
 
 
-@_dispatch(dict, type(None))
-def per_output(cache, _, keep=False):
+@_dispatch
+def per_output(cache: dict, _: type(None), keep=False):
     for yi in cache[keep]:
         yield yi

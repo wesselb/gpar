@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from lab.torch import B
 from matrix import AbstractMatrix
-from plum import Dispatcher
+from plum import Dispatcher, Union
 from stheno.torch import Measure, GP, EQ, RQ, Delta, Linear, ZeroKernel
 from varz import Vars
 from varz.torch import minimise_l_bfgs_b
@@ -59,13 +59,13 @@ def _determine_indices(m, pi, markov):
     return m_inds, p_inds, p_num
 
 
-@_dispatch(B.NP)
-def _to_torch(x):
+@_dispatch
+def _to_torch(x: B.NP):
     return torch.tensor(x)
 
 
-@_dispatch({B.Torch, AbstractMatrix, type(None)})
-def _to_torch(x):
+@_dispatch
+def _to_torch(x: Union[B.Torch, AbstractMatrix, type(None)]):
     return x
 
 
