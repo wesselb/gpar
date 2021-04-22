@@ -3,12 +3,12 @@ from setuptools import find_packages, setup
 requirements = [
     "numpy>=1.16",
     "torch",
-    "wbml",
-    "plum-dispatch",
-    "backends",
-    "backends-matrix",
-    "stheno>=0.4.3",
-    "varz",
+    "wbml>=0.3",
+    "plum-dispatch>=1",
+    "backends>=1",
+    "backends-matrix>=1",
+    "stheno>=1",
+    "varz>=0.6",
 ]
 
 setup(
