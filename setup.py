@@ -7,7 +7,7 @@ requirements = [
     "plum-dispatch>=1",
     "backends>=1",
     "backends-matrix>=1",
-    "stheno>=1",
+    "stheno>=1.1",
     "varz>=0.6",
 ]
 
