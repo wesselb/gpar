@@ -5,7 +5,7 @@ import torch
 from lab.torch import B
 from matrix import AbstractMatrix
 from plum import Dispatcher, Union
-from stheno.torch import Measure, GP, EQ, RQ, Delta, Linear, ZeroKernel
+from stheno.torch import Measure, GP, EQ, RQ, Linear, ZeroKernel
 from varz import Vars
 from varz.torch import minimise_l_bfgs_b
 from wbml.out import Counter
@@ -165,21 +165,19 @@ def _model_generator(
                 k = EQ()
             kernel_outputs += variance * k.stretch(scales)
 
-        # Construct noise kernel.
-        variance = vs.bnd(
+        # Construct noise.
+        noise_variance = vs.bnd(
             name=f"{pi}/noise",
             init=_vector_from_init(noise, pi + 1)[pi],
             lower=1e-8,
         )  # Allow noise to be small.
-        kernel_noise = variance * Delta()
 
         # Construct model and return.
         prior = Measure()
         f = GP(
             kernel_inputs.select(m_inds) + kernel_outputs.select(p_inds), measure=prior
         )
-        e = GP(kernel_noise, measure=prior)
-        return f, e
+        return f, noise_variance
 
     return model
 
@@ -203,16 +201,16 @@ class GPARRegressor:
     """GPAR regressor.
 
     Args:
-        replace (:obj:`bool`, optional): Replace observations with predictive means.
+        replace (bool, optional): Replace observations with predictive means.
             Helps the model deal with noisy data points. Defaults to `False`.
-        impute (:obj:`bool`, optional): Impute data with predictive means to make the
+        impute (bool, optional): Impute data with predictive means to make the
             data set closed downwards. Helps the model deal with missing data.
             Defaults to `True`.
         scale (tensor, optional): Initial value(s) for the length scale(s) over the
             inputs. Defaults to `1.0`.
-        scale_tie (:obj:`bool`, optional): Tie the length scale(s) over the inputs.
+        scale_tie (bool, optional): Tie the length scale(s) over the inputs.
             Defaults to `False`.
-        per (:obj:`bool`, optional): Use a locally periodic kernel over the inputs.
+        per (bool, optional): Use a locally periodic kernel over the inputs.
             Defaults to `False`.
         per_period (tensor, optional): Initial value(s) for the period(s) of the
             locally periodic kernel. Defaults to `1.0`.
@@ -220,34 +218,35 @@ class GPARRegressor:
             locally periodic kernel. Defaults to `1.0`.
         per_decay (tensor, optional): Initial value(s) for the length scale(s) of the
             local change of the locally periodic kernel. Defaults to `10.0`.
-        input_linear (:obj:`bool`, optional): Use a linear kernel over the inputs.
+        input_linear (bool, optional): Use a linear kernel over the inputs.
             Defaults to `False`.
         input_linear_scale (tensor, optional): Initial value(s) for the length
             scale(s) of the linear kernel over the inputs. Defaults to `100.0`.
-        linear (:obj:`bool`, optional): Use linear dependencies between outputs.
+        linear (bool, optional): Use linear dependencies between outputs.
             Defaults to `True`.
         linear_scale (tensor, optional): Initial value(s) for the length scale(s) of
             the linear dependencies. Defaults to `100.0`.
-        nonlinear (:obj:`bool`, optional): Use nonlinear dependencies between outputs.
+        nonlinear (bool, optional): Use nonlinear dependencies between outputs.
             Defaults to `True`.
         nonlinear_scale (tensor, optional): Initial value(s) for the length scale(s)
             over the outputs. Defaults to `0.1`.
-        rq (:obj:`bool`, optional): Use rational quadratic (RQ) kernels instead of
+        rq (bool, optional): Use rational quadratic (RQ) kernels instead of
             exponentiated quadratic (EQ) kernels. Defaults to `False`.
-        markov (:obj:`int`, optional): Markov order of conditionals. Set to `None` to
+        markov (int, optional): Markov order of conditionals. Set to `None` to
             have a fully connected structure. Defaults to `None`.
         noise (tensor, optional): Initial value(s) for the observation noise(s).
             Defaults to `0.01`.
         x_ind (tensor, optional): Locations of inducing points. Set to `None` if
             inducing points should not be used. Defaults to `None`.
-        normalise_y (:obj:`bool`, optional): Normalise outputs. Defaults to `True`.
-        transform_y (:obj:`tuple`, optional): Tuple containing a transform and its
+        normalise_y (bool, optional): Normalise outputs. Defaults to `True`.
+        transform_y (tuple, optional): Tuple containing a transform and its
             inverse, which should be applied to the data before fitting. Defaults to
             the identity transform.
 
     Attributes:
         replace (bool): Replace observations with predictive means.
-        impute (bool): Impute missing data with predictive means to make the data set closed downwards.
+        impute (bool): Impute missing data with predictive means to make the data set
+            closed downwards.
         sparse (bool): Use inducing points.
         x_ind (tensor): Locations of inducing points.
         model_config (dict): Summary of model configuration.
@@ -512,12 +511,12 @@ class GPARRegressor:
         Args:
             x (matrix): Inputs to sample at.
             w (matrix, optional): Weights of inputs to sample at.
-            p (:obj:`int`, optional): Number of outputs to sample if sampling from
+            p (int, optional): Number of outputs to sample if sampling from
                 the prior.
-            posterior (:obj:`bool`, optional): Sample from the prior instead of the
+            posterior (bool, optional): Sample from the prior instead of the
                 posterior.
-            num_samples (:obj:`int`, optional): Number of samples. Defaults to `1`.
-            latent (:obj:`int`, optional): Sample the latent function instead of
+            num_samples (int, optional): Number of samples. Defaults to `1`.
+            latent (int, optional): Sample the latent function instead of
                 observations. Defaults to `False`.
 
         Returns:
@@ -529,7 +528,7 @@ class GPARRegressor:
         # Check that model is conditioned or fit if sampling from the posterior.
         if posterior and not self.is_conditioned:
             raise RuntimeError(
-                "Must condition or fit model before sampling " "from the posterior."
+                "Must condition or fit model before sampling from the posterior."
             )
         # Check that the number of outputs is specified if sampling from the
         # prior.
@@ -570,10 +569,10 @@ class GPARRegressor:
         Args:
             x (tensor): Inputs to predict at.
             w (tensor, optional): Weights of inputs to predict at.
-            num_samples (:obj:`int`, optional): Number of samples. Defaults to `100`.
-            latent (:obj:`bool`, optional): Predict the latent function instead of
+            num_samples (int, optional): Number of samples. Defaults to `100`.
+            latent (bool, optional): Predict the latent function instead of
                 observations. Defaults to `True`.
-            credible_bounds (:obj:`bool`, optional): Also return 95% central marginal
+            credible_bounds (bool, optional): Also return 95% central marginal
                 credible bounds for the predictions.
 
         Returns:

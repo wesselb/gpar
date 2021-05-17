@@ -4,13 +4,10 @@ from lab.torch import B
 from stheno import (
     GP,
     EQ,
-    Delta,
     Measure,
     Obs,
     SparseObs,
-    ZeroKernel,
     Linear,
-    WeightedUnique,
 )
 
 from gpar.model import merge, construct_model, last, per_output, GPAR
@@ -121,11 +118,11 @@ def test_misc():
 def test_obs(x):
     prior = Measure()
     f = GP(EQ(), measure=prior)
-    e = GP(1e-1 * Delta(), measure=prior)
+    noise = 0.1
 
     # Generate some data.
     w = B.rand(B.shape(x)[0]) + 1e-2
-    y = f(x).sample()
+    y = f(x, 0.1).sample()
 
     # Set some observations to be missing.
     y_missing = y.copy()
@@ -133,21 +130,21 @@ def test_obs(x):
 
     # Check dense case.
     gpar = GPAR()
-    obs = gpar._obs(x, None, y_missing, w, f, e)
+    obs = gpar._obs(x, None, y_missing, w, f, noise)
     assert isinstance(obs, Obs)
     approx(
         prior.logpdf(obs),
-        (f + e)(WeightedUnique(x[1::2], w[1::2])).logpdf(y[1::2]),
+        f(x[1::2], noise / w[1::2]).logpdf(y[1::2]),
         atol=1e-6,
     )
 
     # Check sparse case.
     gpar = GPAR(x_ind=x)
-    obs = gpar._obs(x, x, y_missing, w, f, e)
+    obs = gpar._obs(x, x, y_missing, w, f, noise)
     assert isinstance(obs, SparseObs)
     approx(
         prior.logpdf(obs),
-        (f + e)(WeightedUnique(x[1::2], w[1::2])).logpdf(y[1::2]),
+        f(x[1::2], noise / w[1::2]).logpdf(y[1::2]),
         atol=1e-6,
     )
 
@@ -223,27 +220,21 @@ def test_update_inputs():
 
 def test_conditioning(x, w):
     prior = Measure()
-    f1, e1 = GP(EQ(), measure=prior), GP(1e-10 * Delta(), measure=prior)
-    f2, e2 = GP(EQ(), measure=prior), GP(2e-10 * Delta(), measure=prior)
-    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+    f1, noise1 = GP(EQ(), measure=prior), 1e-10
+    f2, noise2 = GP(EQ(), measure=prior), 2e-10
+    gpar = GPAR().add_layer(lambda: (f1, noise1)).add_layer(lambda: (f2, noise2))
 
     # Generate some data.
-    y = B.concat((f1 + e1)(x).sample(), (f2 + e2)(x).sample(), axis=1)
+    y = B.concat(f1(x, noise1).sample(), f2(x, noise2).sample(), axis=1)
 
     # Extract posterior processes.
     gpar = gpar | (x, y, w)
-    f1_post, e1_post = gpar.layers[0]()
-    f2_post, e2_post = gpar.layers[1]()
+    f1_post, noise1_post = gpar.layers[0]()
+    f2_post, noise2_post = gpar.layers[1]()
 
-    # Test independence of noises.
-    assert f1_post.measure.kernels[f1_post, e1_post] == ZeroKernel()
-    assert f2_post.measure.kernels[f2_post, e2_post] == ZeroKernel()
-
-    # Test form of noises.
-    assert e1.mean == e1_post.mean
-    assert e1.kernel == e1_post.kernel
-    assert e2.mean == e2_post.mean
-    assert e2.kernel == e2_post.kernel
+    # Test noises.
+    assert noise1 == noise1_post
+    assert noise2 == noise2_post
 
     # Test posteriors.
     approx(f1_post.mean(x), y[:, 0:1], atol=1e-3)
@@ -252,18 +243,18 @@ def test_conditioning(x, w):
 
 def test_logpdf(x, w):
     prior = Measure()
-    f1, e1 = GP(EQ(), measure=prior), GP(2e-1 * Delta(), measure=prior)
-    f2, e2 = GP(Linear(), measure=prior), GP(1e-1 * Delta(), measure=prior)
-    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+    f1, noise1 = GP(EQ(), measure=prior), 2e-1
+    f2, noise2 = GP(Linear(), measure=prior), 1e-1
+    gpar = GPAR().add_layer(lambda: (f1, noise1)).add_layer(lambda: (f2, noise2))
 
     # Generate some data.
     y = gpar.sample(x, w, latent=True)
 
     # Compute logpdf.
-    x1 = WeightedUnique(x, w[:, 0])
-    x2 = WeightedUnique(B.concat(x, y[:, 0:1], axis=1), w[:, 1])
-    logpdf1 = (f1 + e1)(x1).logpdf(y[:, 0])
-    logpdf2 = (f2 + e2)(x2).logpdf(y[:, 1])
+    x1 = x
+    x2 = B.concat(x, y[:, 0:1], axis=1)
+    logpdf1 = f1(x1, noise1 / w[:, 0]).logpdf(y[:, 0])
+    logpdf2 = f2(x2, noise2 / w[:, 1]).logpdf(y[:, 1])
 
     # Test computation of GPAR.
     assert gpar.logpdf(x, y, w) == logpdf1 + logpdf2
@@ -285,17 +276,17 @@ def test_sample(x, w):
     prior = Measure()
 
     # Test that it produces random samples.
-    f1, e1 = GP(EQ(), measure=prior), GP(1e-1 * Delta(), measure=prior)
-    f2, e2 = GP(EQ(), measure=prior), GP(2e-1 * Delta(), measure=prior)
-    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+    f1, noise1 = GP(EQ(), measure=prior), 1e-1
+    f2, noise2 = GP(EQ(), measure=prior), 2e-1
+    gpar = GPAR().add_layer(lambda: (f1, noise1)).add_layer(lambda: (f2, noise2))
     all_different(gpar.sample(x, w), gpar.sample(x, w))
     all_different(gpar.sample(x, w, latent=True), gpar.sample(x, w, latent=True))
 
     # Test that posterior latent samples are around the data that is conditioned on.
     prior = Measure()
-    f1, e1 = GP(EQ(), measure=prior), GP(1e-10 * Delta(), measure=prior)
-    f2, e2 = GP(EQ(), measure=prior), GP(2e-10 * Delta(), measure=prior)
-    gpar = GPAR().add_layer(lambda: (f1, e1)).add_layer(lambda: (f2, e2))
+    f1, noise1 = GP(EQ(), measure=prior), 1e-10
+    f2, noise2 = GP(EQ(), measure=prior), 2e-10
+    gpar = GPAR().add_layer(lambda: (f1, noise1)).add_layer(lambda: (f2, noise2))
     y = gpar.sample(x, w, latent=True)
     gpar = gpar | (x, y, w)
     approx(gpar.sample(x, w), y, atol=1e-3)

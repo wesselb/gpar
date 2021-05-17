@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from lab.torch import B
-from stheno import GP, WeightedUnique
 
 from gpar.regression import (
     _vector_from_init,
@@ -106,26 +105,25 @@ def test_logpdf(x, w):
 
     # Extract models.
     gpar = _construct_gpar(reg, reg.vs, B.shape(B.uprank(x))[1], 2)
-    f1, e1 = gpar.layers[0]()
-    f2, e2 = gpar.layers[1]()
+    f1, noise1 = gpar.layers[0]()
+    f2, noise2 = gpar.layers[1]()
+
+    if w is not None:
+        noise1 = noise1 / w[:, 0]
+        noise2 = noise2 / w[:, 1]
 
     # Test computation under prior.
     x1 = x
     x2 = B.concat(B.uprank(x), y[:, 0:1], axis=1)
-    if w is not None:
-        x1 = WeightedUnique(x1, w[:, 0])
-        x2 = WeightedUnique(x2, w[:, 1])
-    logpdf1 = (f1 + e1)(x1).logpdf(y[:, 0])
-    logpdf2 = (f2 + e2)(x2).logpdf(y[:, 1])
+    logpdf1 = f1(x1, noise1).logpdf(y[:, 0])
+    logpdf2 = f2(x2, noise2).logpdf(y[:, 1])
     approx(reg.logpdf(x, y, w), logpdf1 + logpdf2, atol=1e-6)
 
     # Test computation under posterior.
-    post1 = f1.measure | ((f1 + e1)(x1), y[:, 0])
-    post2 = f2.measure | ((f2 + e2)(x2), y[:, 1])
-    e1_post = GP(e1.mean, e1.kernel, measure=post1)
-    e2_post = GP(e2.mean, e2.kernel, measure=post2)
-    logpdf1 = (post1(f1) + e1_post)(x1).logpdf(y[:, 0])
-    logpdf2 = (post2(f2) + e2_post)(x2).logpdf(y[:, 1])
+    f1_post = f1 | (f1(x1, noise1), y[:, 0])
+    f2_post = f2 | (f2(x2, noise2), y[:, 1])
+    logpdf1 = f1_post(x1, noise1).logpdf(y[:, 0])
+    logpdf2 = f2_post(x2, noise2).logpdf(y[:, 1])
     with pytest.raises(RuntimeError):
         reg.logpdf(x, y, w, posterior=True)
     reg.condition(x, y, w)
