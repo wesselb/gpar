@@ -1,17 +1,18 @@
-Refactor:
-    ☐ Refactor tests to use PyTest: remove raises, fixtures, and parametrisation. @high
+TODO:
+    ☐ Refactor to use `probmods`. @high
+        ☐ More refined kernel design system
+    ☐ GPU support
+    ☐ Optimisation of inducing points
 
 Features:
-    ☐ More refined kernel design system @high
-    ☐ Optimisation of inducing points @high
     ☐ Greedy fitting
     ☐ Search over multiple hyperparameters
     ☐ Ability to exclude hyperparameters from optimisation
     ☐ Nice overview of trained hyperparameters
 
-
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ x Refactor tests to use PyTest: remove raises, fixtures, and parametrisation. @high @cancelled (22-03-30 19:42) @project(Refactor)
  ✓ Use WBML functionality everywhere. @high @done (20-01-04 14:28) @project(Refactor)
  ✓ Normalise/unnormalise data to make work with defaults values of hypers @done (19-04-11 12:17) @project(Features)
  ✓ Ability to specify transforms @done (19-04-11 12:17) @project(Features)
