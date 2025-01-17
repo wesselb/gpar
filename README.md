@@ -18,10 +18,7 @@ See the [paper](https://arxiv.org/abs/1802.07182), and see the [docs](https://we
     - [Inducing Points](#inducing-points)
  * [Example (examples/paper/synthetic.py)](#example-examples-paper-synthetic-py)
 
-## Requirements and Installation
-
-See [the instructions here](https://gist.github.com/wesselb/4b44bf87f3789425f96e26c4308d0adc).
-Then simply
+## Installation
 
 ```
 pip install gpar
