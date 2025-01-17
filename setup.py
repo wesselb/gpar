@@ -4,7 +4,7 @@ requirements = [
     "numpy>=1.16",
     "torch",
     "wbml>=0.3",
-    "plum-dispatch>=1",
+    "plum-dispatch>=2.5.7",
     "backends>=1",
     "backends-matrix>=1",
     "stheno>=1.1",
