@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from lab.torch import B
 from matrix import AbstractMatrix
-from plum import Dispatcher, Union
+from plum import Dispatcher, Union, isinstance
 from stheno.torch import Measure, GP, EQ, RQ, Linear, ZeroKernel
 from varz import Vars
 from varz.torch import minimise_l_bfgs_b
